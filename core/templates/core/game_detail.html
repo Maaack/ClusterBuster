@@ -6,10 +6,10 @@
 </head>
 <body>
 <h1>Game {{ game.pk }}</h1>
-{% for team in game.team_set.all %}
+{% for team in game.teams.all %}
     <h2>Team {{ forloop.counter }}</h2>
     <ul>
-        {% for player in team.player_set.all %}
+        {% for player in team.players.all %}
             <li>{{ player.name }}</li>
         {% endfor %}
     </ul>
