@@ -16,3 +16,8 @@ class GameListView(generic.ListView):
 
     def get_queryset(self):
         return Game.objects.order_by('-created')[:5]
+
+
+class GameDetailView(generic.DetailView):
+    model = Game
+
