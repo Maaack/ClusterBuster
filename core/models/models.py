@@ -1,9 +1,12 @@
 from django.db import models
+from django.db.models import Count
 from clusterbuster.mixins.models import TimeStamped
 from django.utils.translation import ugettext_lazy as _
 from core.models.mixins import SessionOptional, SessionRequired
 
 GAME_TEAM_COUNT = 2
+TEAM_PLAYER_COUNT = 4
+
 
 # Create your models here.
 class Player(TimeStamped, SessionRequired):
@@ -32,6 +35,14 @@ class Team(TimeStamped):
 
     players = models.ManyToManyField(Player)
 
+    def join(self, player):
+        if type(player) is Player:
+            if not self.has_max_players():
+                self.players.add(player)
+
+    def has_max_players(self):
+        return self.players.count() >= TEAM_PLAYER_COUNT
+
 
 class Game(TimeStamped, SessionRequired):
     class Meta:
@@ -41,16 +52,26 @@ class Game(TimeStamped, SessionRequired):
 
     teams = models.ManyToManyField(Team)
 
-    def create_teams(self, team_count):
-        for team_number in range(team_count):
-            self.teams.create()
-
     def save(self, *args, **kwargs):
         super(Game, self).save(*args, **kwargs)
         current_team_count = self.teams.count()
         if current_team_count < GAME_TEAM_COUNT:
             diff = GAME_TEAM_COUNT - current_team_count
             self.create_teams(diff)
+
+    def create_teams(self, team_count):
+        for team_number in range(team_count):
+            self.teams.create()
+
+    def join(self, player):
+        if type(player) is Player:
+            self.get_team_with_fewest_players().join(player)
+
+    def get_team_with_fewest_players(self):
+        return self.get_teams_with_player_counts()[0]
+
+    def get_teams_with_player_counts(self):
+        return self.teams.annotate(num_players=Count('players')).order_by('num_players')
 
 
 class TeamGameWord(TimeStamped):

@@ -6,6 +6,9 @@
 </head>
 <body>
 <h1>Game {{ game.pk }}</h1>
+<form method="post" action="{% url 'player_join_game' game.pk %}">{% csrf_token %}
+    <input type="submit" value="Join" />
+</form>
 {% for team in game.teams.all %}
     <h2>Team {{ forloop.counter }}</h2>
     <ul>

@@ -1,8 +1,10 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.views import generic
 from django.urls import reverse
+from django.core.exceptions import MultipleObjectsReturned
+
 from .models import Game, Player
 
 
@@ -34,6 +36,18 @@ class GameList(generic.ListView):
 
 class GameDetail(generic.DetailView):
     model = Game
+
+
+def player_join_game(request, pk):
+    if pk and request.session.session_key:
+        game = get_object_or_404(Game, pk=pk)
+        try:
+            player = get_object_or_404(Player, session_id=request.session.session_key)
+        except MultipleObjectsReturned:
+            player = Player.objects.filter(session_id=request.session.session_key).first()
+        game.join(player)
+
+    return HttpResponseRedirect(reverse('game_detail', kwargs={'pk': pk}))
 
 
 class PlayerCreate(generic.CreateView):
