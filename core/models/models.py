@@ -3,6 +3,7 @@ from clusterbuster.mixins.models import TimeStamped
 from django.utils.translation import ugettext_lazy as _
 from core.models.mixins import SessionOptional, SessionRequired
 
+GAME_TEAM_COUNT = 2
 
 # Create your models here.
 class Player(TimeStamped, SessionRequired):
@@ -39,6 +40,17 @@ class Game(TimeStamped, SessionOptional):
         ordering = ["-created"]
 
     teams = models.ManyToManyField(Team)
+
+    def create_teams(self, team_count):
+        for team_number in range(team_count):
+            self.teams.create()
+
+    def save(self, *args, **kwargs):
+        super(Game, self).save(*args, **kwargs)
+        current_team_count = self.teams.count()
+        if current_team_count < GAME_TEAM_COUNT:
+            diff = GAME_TEAM_COUNT - current_team_count
+            self.create_teams(diff)
 
 
 class TeamGameWord(TimeStamped):
