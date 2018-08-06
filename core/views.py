@@ -12,6 +12,19 @@ def index(request):
     return HttpResponse(template.render({}, request))
 
 
+class GameCreate(generic.CreateView):
+    model = Game
+    fields = []
+
+    def form_valid(self, form):
+        self.request.session.save()
+        form.instance.session_id = self.request.session.session_key
+        return super(GameCreate, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse('game_detail', kwargs={'pk': self.object.pk})
+
+
 class GameList(generic.ListView):
     context_object_name = 'latest_game_list'
 
