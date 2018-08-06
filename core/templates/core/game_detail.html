@@ -9,6 +9,10 @@
 <form method="post" action="{% url 'player_join_game' game.pk %}">{% csrf_token %}
     <input type="submit" value="Join" />
 </form>
+<h2>Players</h2>
+{% for player in game.players.all %}
+    <h3>{{ player.name }}</h3>
+{% endfor %}
 {% for team in game.teams.all %}
     <h2>Team {{ forloop.counter }}</h2>
     <ul>

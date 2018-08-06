@@ -33,7 +33,7 @@ class Team(TimeStamped):
         verbose_name_plural = _("Teams")
         ordering = ["-created"]
 
-    players = models.ManyToManyField(Player)
+    players = models.ManyToManyField(Player, blank=True)
 
     def join(self, player):
         if type(player) is Player:
@@ -51,6 +51,7 @@ class Game(TimeStamped, SessionRequired):
         ordering = ["-created"]
 
     teams = models.ManyToManyField(Team)
+    players = models.ManyToManyField(Player, blank=True)
 
     def save(self, *args, **kwargs):
         super(Game, self).save(*args, **kwargs)
@@ -65,13 +66,18 @@ class Game(TimeStamped, SessionRequired):
 
     def join(self, player):
         if type(player) is Player:
-            self.get_team_with_fewest_players().join(player)
+            if not self.has_player(player):
+                self.players.add(player)
+                self.get_team_with_fewest_players().join(player)
 
     def get_team_with_fewest_players(self):
         return self.get_teams_with_player_counts()[0]
 
     def get_teams_with_player_counts(self):
         return self.teams.annotate(num_players=Count('players')).order_by('num_players')
+
+    def has_player(self, player):
+        return self.players.filter(pk=player.pk).count() == 1
 
 
 class TeamGameWord(TimeStamped):
