@@ -24,7 +24,7 @@ class Word(TimeStamped):
     text = models.CharField(_("Text"), max_length=16)
 
 
-class Team(TimeStamped, SessionOptional):
+class Team(TimeStamped):
     class Meta:
         verbose_name = _("Team")
         verbose_name_plural = _("Teams")
@@ -33,7 +33,7 @@ class Team(TimeStamped, SessionOptional):
     players = models.ManyToManyField(Player)
 
 
-class Game(TimeStamped, SessionOptional):
+class Game(TimeStamped, SessionRequired):
     class Meta:
         verbose_name = _("Game")
         verbose_name_plural = _("Games")
