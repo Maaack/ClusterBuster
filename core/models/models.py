@@ -1,10 +1,11 @@
 from django.db import models
-from clusterbuster.mixins.models import TimeStamped, TimeStampedOwnable, Owned
+from clusterbuster.mixins.models import TimeStamped
 from django.utils.translation import ugettext_lazy as _
+from core.models.mixins import SessionOptional, SessionRequired
 
 
 # Create your models here.
-class Player(TimeStamped, Owned):
+class Player(TimeStamped, SessionRequired):
     class Meta:
         verbose_name = _("Player")
         verbose_name_plural = _("Players")
@@ -22,7 +23,7 @@ class Word(TimeStamped):
     text = models.CharField(_("Text"), max_length=16)
 
 
-class Team(TimeStampedOwnable):
+class Team(TimeStamped, SessionOptional):
     class Meta:
         verbose_name = _("Team")
         verbose_name_plural = _("Teams")
@@ -31,7 +32,7 @@ class Team(TimeStampedOwnable):
     players = models.ManyToManyField(Player)
 
 
-class Game(TimeStampedOwnable):
+class Game(TimeStamped, SessionOptional):
     class Meta:
         verbose_name = _("Game")
         verbose_name_plural = _("Games")
