@@ -120,6 +120,9 @@ class Round(TimeStamped):
 
 
 class TeamWord(TimeStamped):
+    class Meta:
+        default_related_name = 'team_words'
+
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     word = models.ForeignKey(Word, on_delete=models.CASCADE)
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
