@@ -16,18 +16,24 @@ class Player(TimeStamped, SessionRequired):
     class Meta:
         verbose_name = _("Player")
         verbose_name_plural = _("Players")
-        ordering = ["-created"]
+        ordering = ["name", "-created"]
 
     name = models.CharField(_("Name"), max_length=24)
+
+    def __str__(self):
+        return str(self.name)
 
 
 class Word(TimeStamped):
     class Meta:
         verbose_name = _("Word")
         verbose_name_plural = _("Words")
-        ordering = ["-created"]
+        ordering = ["text", "-created"]
 
     text = models.CharField(_("Text"), max_length=16, db_index=True)
+
+    def __str__(self):
+        return str(self.text)
 
 
 class Team(TimeStamped):
