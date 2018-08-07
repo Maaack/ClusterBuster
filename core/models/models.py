@@ -39,9 +39,13 @@ class Team(TimeStamped):
     players = models.ManyToManyField(Player, blank=True)
 
     def join(self, player):
-        if type(player) is Player:
-            if not self.has_max_players():
-                self.players.add(player)
+        if type(player) is Player and not self.has_max_players():
+            self.players.add(player)
+            return True
+        return False
+
+    def has_player(self, player):
+        return self.players.filter(pk=player.pk).exists()
 
     def has_max_players(self):
         return self.players.count() >= TEAM_PLAYER_LIMIT
@@ -68,10 +72,10 @@ class Game(TimeStamped, SessionRequired):
             self.teams.create()
 
     def join(self, player):
-        if type(player) is Player:
-            if not self.has_player(player):
-                self.players.add(player)
-                self.get_team_with_fewest_players().join(player)
+        if type(player) is Player and not self.has_player(player):
+            self.players.add(player)
+            return self.get_team_with_fewest_players().join(player)
+        return False
 
     def get_team_with_fewest_players(self):
         return self.get_teams_with_player_counts()[0]
@@ -80,7 +84,12 @@ class Game(TimeStamped, SessionRequired):
         return self.teams.annotate(num_players=Count('players')).order_by('num_players')
 
     def has_player(self, player):
-        return self.players.filter(pk=player.pk).count() == 1
+        return self.players.filter(pk=player.pk).exists()
+
+    def get_player_team(self, player):
+        if type(player) is Player and self.has_player(player):
+            return self.teams.filter(players=player).first()
+        return None
 
     def next_round(self):
         if not self.is_last_round():
@@ -98,6 +107,7 @@ class Game(TimeStamped, SessionRequired):
 
     def is_last_round(self):
         return self.get_current_round_number() >= GAME_ROUND_LIMIT
+
 
 class Round(TimeStamped):
     class Meta:
