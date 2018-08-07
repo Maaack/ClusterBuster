@@ -4,8 +4,11 @@ from clusterbuster.mixins.models import TimeStamped
 from django.utils.translation import ugettext_lazy as _
 from core.models.mixins import SessionOptional, SessionRequired
 
-GAME_TEAM_COUNT = 2
-TEAM_PLAYER_COUNT = 4
+GAME_TEAM_LIMIT = 2
+GAME_ROUND_LIMIT = 8
+TEAM_PLAYER_LIMIT = 4
+TEAM_WORD_LIMIT = 4
+POSITION_COUNT = 3
 
 
 # Create your models here.
@@ -24,7 +27,7 @@ class Word(TimeStamped):
         verbose_name_plural = _("Words")
         ordering = ["-created"]
 
-    text = models.CharField(_("Text"), max_length=16)
+    text = models.CharField(_("Text"), max_length=16, db_index=True)
 
 
 class Team(TimeStamped):
@@ -41,7 +44,7 @@ class Team(TimeStamped):
                 self.players.add(player)
 
     def has_max_players(self):
-        return self.players.count() >= TEAM_PLAYER_COUNT
+        return self.players.count() >= TEAM_PLAYER_LIMIT
 
 
 class Game(TimeStamped, SessionRequired):
@@ -56,8 +59,8 @@ class Game(TimeStamped, SessionRequired):
     def save(self, *args, **kwargs):
         super(Game, self).save(*args, **kwargs)
         current_team_count = self.teams.count()
-        if current_team_count < GAME_TEAM_COUNT:
-            diff = GAME_TEAM_COUNT - current_team_count
+        if current_team_count < GAME_TEAM_LIMIT:
+            diff = GAME_TEAM_LIMIT - current_team_count
             self.create_teams(diff)
 
     def create_teams(self, team_count):
@@ -79,13 +82,22 @@ class Game(TimeStamped, SessionRequired):
     def has_player(self, player):
         return self.players.filter(pk=player.pk).count() == 1
 
+    def next_round(self):
+        if not self.is_last_round():
+            self.rounds.create(number=self.get_current_round_number()+1)
 
-class TeamGameWord(TimeStamped):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    game = models.ForeignKey(Game, on_delete=models.CASCADE)
-    word = models.ForeignKey(Word, on_delete=models.CASCADE)
-    order = models.PositiveSmallIntegerField(_("Order"))
+    def get_current_round(self):
+        return self.rounds.order_by('-number').first()
 
+    def get_current_round_number(self):
+        current_round = self.get_current_round()
+        if current_round:
+            return current_round.number
+        else:
+            return 0
+
+    def is_last_round(self):
+        return self.get_current_round_number() >= GAME_ROUND_LIMIT
 
 class Round(TimeStamped):
     class Meta:
@@ -93,8 +105,15 @@ class Round(TimeStamped):
         verbose_name_plural = _("Rounds")
         ordering = ["-created"]
 
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='rounds')
+    number = models.PositiveSmallIntegerField(_("Round Number"), db_index=True)
+
+
+class TeamWord(TimeStamped):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    word = models.ForeignKey(Word, on_delete=models.CASCADE)
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
-    number = models.PositiveSmallIntegerField(_("Round Number"))
+    position = models.PositiveSmallIntegerField(_("Position"), db_index=True)
 
 
 class RoundLeader(TimeStamped):
@@ -102,11 +121,11 @@ class RoundLeader(TimeStamped):
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
 
 
-class TeamRoundWordOrder(TimeStamped):
+class TeamRoundWordPosition(TimeStamped):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     round = models.ForeignKey(Round, on_delete=models.CASCADE)
-    word = models.ForeignKey(TeamGameWord, on_delete=models.CASCADE)
-    order = models.PositiveSmallIntegerField(_("Order"))
+    word = models.ForeignKey(TeamWord, on_delete=models.CASCADE)
+    position = models.PositiveSmallIntegerField(_("Position"), db_index=True)
 
 
 class Hint(TimeStamped):
@@ -115,26 +134,26 @@ class Hint(TimeStamped):
         verbose_name_plural = _("Hints")
         ordering = ["-created"]
 
-    text = models.CharField(_("Text"), max_length=64)
+    text = models.CharField(_("Text"), max_length=64, db_index=True)
 
 
 class RoundHint(TimeStamped):
     round = models.ForeignKey(Round, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     hint = models.ForeignKey(Hint, on_delete=models.CASCADE)
-    order = models.PositiveSmallIntegerField(_("Order"))
+    position = models.PositiveSmallIntegerField(_("Position"), db_index=True)
 
 
 class PlayerGuess(TimeStamped):
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     hint = models.ForeignKey(RoundHint, on_delete=models.CASCADE)
-    guess = models.ForeignKey(TeamGameWord, on_delete=models.CASCADE)
+    guess = models.ForeignKey(TeamWord, on_delete=models.CASCADE)
 
 
 class TeamGuess(TimeStamped):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     hint = models.ForeignKey(RoundHint, on_delete=models.CASCADE)
-    guess = models.ForeignKey(TeamGameWord, on_delete=models.CASCADE)
+    guess = models.ForeignKey(TeamWord, on_delete=models.CASCADE)
 
 
 class TeamGamePoints(TimeStamped):

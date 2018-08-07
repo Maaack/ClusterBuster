@@ -50,6 +50,14 @@ def player_join_game(request, pk):
     return HttpResponseRedirect(reverse('game_detail', kwargs={'pk': pk}))
 
 
+def game_next_round(request, pk):
+    if pk:
+        game = get_object_or_404(Game, pk=pk)
+        game.next_round()
+
+    return HttpResponseRedirect(reverse('game_detail', kwargs={'pk': pk}))
+
+
 class PlayerCreate(generic.CreateView):
     model = Player
     fields = ['name']

@@ -10,16 +10,28 @@
     <input type="submit" value="Join" />
 </form>
 <h2>Players</h2>
-{% for player in game.players.all %}
-    <h3>{{ player.name }}</h3>
-{% endfor %}
+<ul>
+    {% for player in game.players.all %}
+        <li>{{ player.name }}</li>
+    {% endfor %}
+</ul>
+<h2>Teams</h2>
 {% for team in game.teams.all %}
-    <h2>Team {{ forloop.counter }}</h2>
+    {{ forloop.counter }}
     <ul>
         {% for player in team.players.all %}
             <li>{{ player.name }}</li>
         {% endfor %}
     </ul>
 {% endfor %}
+<h2>Rounds</h2>
+<ul>
+    {% for round in game.rounds.all %}
+        <li>{{ round.number }}</li>
+    {% endfor %}
+</ul>
+<form method="post" action="{% url 'game_next_round' game.pk %}">{% csrf_token %}
+    <input type="submit" value="Next Round" />
+</form>
 </body>
 </html>
