@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.core.exceptions import MultipleObjectsReturned
 
 from core.models import Game, Player
-from .mixins import CheckPlayerViewMixin, AssignPlayerViewMixin
+from .mixins import CheckPlayerViewMixin, AssignPlayerViewMixin, PlayerInGameMixin
 
 
 # Create your views here.
@@ -44,7 +44,7 @@ class GameNextRound(generic.RedirectView):
         return super().get_redirect_url(*args, **kwargs)
 
 
-class GameDetail(generic.DetailView):
+class GameDetail(generic.DetailView, PlayerInGameMixin):
     model = Game
 
 

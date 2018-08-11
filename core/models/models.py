@@ -63,19 +63,20 @@ class Game(TimeStamped, SessionRequired):
         verbose_name_plural = _("Games")
         ordering = ["-created"]
 
-    teams = models.ManyToManyField(Team)
+    teams = models.ManyToManyField(Team, blank=True)
     players = models.ManyToManyField(Player, blank=True)
 
     def save(self, *args, **kwargs):
         super(Game, self).save(*args, **kwargs)
-        current_team_count = self.teams.count()
-        if current_team_count < GAME_TEAM_LIMIT:
-            diff = GAME_TEAM_LIMIT - current_team_count
-            self.create_teams(diff)
+        self.create_teams()
 
-    def create_teams(self, team_count):
-        for team_number in range(team_count):
-            self.teams.create()
+    def create_teams(self, team_count=GAME_TEAM_LIMIT):
+        current_team_count = self.teams.count()
+        team_slots = GAME_TEAM_LIMIT - current_team_count
+        if team_slots > 0:
+            new_teams = min(team_slots, team_count)
+            for team_number in range(new_teams):
+                self.teams.create()
 
     def join(self, player):
         if type(player) is Player and not self.has_player(player):
@@ -87,6 +88,7 @@ class Game(TimeStamped, SessionRequired):
         return self.get_teams_with_player_counts()[0]
 
     def get_teams_with_player_counts(self):
+        self.create_teams()
         return self.teams.annotate(num_players=Count('players')).order_by('num_players')
 
     def has_player(self, player):
