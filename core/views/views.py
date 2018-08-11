@@ -5,29 +5,8 @@ from django.views import generic
 from django.urls import reverse
 from django.core.exceptions import MultipleObjectsReturned
 
-from .models import Game, Player
-
-
-class CheckPlayerViewMixin(generic.detail.SingleObjectMixin, generic.View):
-    class Meta:
-        abstract = True
-
-    def is_current_player(self):
-        player = self.get_object()
-        return self.request.session['player_id'] == player.pk
-
-
-class AssignPlayerViewMixin(generic.detail.SingleObjectMixin, generic.View):
-    class Meta:
-        abstract = True
-
-    def assign_player(self):
-        player = self.get_object()
-        if player:
-            self.request.session['player_id'] = player.pk
-            self.request.session['player_name'] = player.name
-            return True
-        return False
+from core.models import Game, Player
+from .mixins import CheckPlayerViewMixin, AssignPlayerViewMixin
 
 
 # Create your views here.
@@ -56,28 +35,17 @@ class GameList(generic.ListView):
         return Game.objects.order_by('-created')[:5]
 
 
+class GameNextRound(generic.RedirectView):
+    pattern_name = 'game_detail'
+
+    def get_redirect_url(self, *args, **kwargs):
+        game = get_object_or_404(Game, pk=kwargs['pk'])
+        game.next_round()
+        return super().get_redirect_url(*args, **kwargs)
+
+
 class GameDetail(generic.DetailView):
     model = Game
-
-
-def player_join_game(request, pk):
-    if pk and request.session.session_key:
-        game = get_object_or_404(Game, pk=pk)
-        try:
-            player = get_object_or_404(Player, session_id=request.session.session_key)
-        except MultipleObjectsReturned:
-            player = Player.objects.filter(session_id=request.session.session_key).first()
-        game.join(player)
-
-    return HttpResponseRedirect(reverse('game_detail', kwargs={'pk': pk}))
-
-
-def game_next_round(request, pk):
-    if pk:
-        game = get_object_or_404(Game, pk=pk)
-        game.next_round()
-
-    return HttpResponseRedirect(reverse('game_detail', kwargs={'pk': pk}))
 
 
 class PlayerCreate(generic.CreateView, AssignPlayerViewMixin):
@@ -125,4 +93,17 @@ class PlayerDetail(generic.DetailView, CheckPlayerViewMixin):
         data = super(PlayerDetail, self).get_context_data(**kwargs)
         data['current_player'] = self.is_current_player()
         return data
+
+
+class PlayerJoinGame(generic.RedirectView, generic.detail.SingleObjectMixin):
+    pattern_name = 'game_detail'
+
+    def get_redirect_url(self, *args, **kwargs):
+        if self.request.session['player_id'] is not None:
+            game = get_object_or_404(Game, pk=kwargs['pk'])
+            player = get_object_or_404(Player, pk=self.request.session['player_id'])
+            game.join(player)
+
+        return super().get_redirect_url(*args, **kwargs)
+
 
