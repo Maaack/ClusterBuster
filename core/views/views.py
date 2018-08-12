@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.core.exceptions import MultipleObjectsReturned
 
 from core.models import Game, GameRoom, Player
-from .mixins import CheckPlayerViewMixin, AssignPlayerViewMixin
+from .mixins import CheckPlayerView, AssignPlayerView
 
 
 # Create your views here.
@@ -74,7 +74,7 @@ class GameRoomDetail(generic.DetailView):
         data['current_round'] = current_round
         player_id = self.request.session.get('player_id')
 
-        if player_id is not None:
+        if player_id:
             player = get_object_or_404(Player, pk=player_id)
             data['player'] = player
             data['player_in_game'] = game.has_player(player)
@@ -84,50 +84,36 @@ class GameRoomDetail(generic.DetailView):
         return data
 
 
-class PlayerCreate(generic.CreateView, AssignPlayerViewMixin):
+class PlayerCreate(AssignPlayerView, generic.CreateView):
     model = Player
     fields = ['name']
 
     def dispatch(self, request, *args, **kwargs):
-        if request.session['player_id'] is not None:
-            return HttpResponseRedirect(reverse('player_detail', kwargs={'pk':request.session['player_id']}))
+        player_id = self.request.session.get('player_id')
+
+        if player_id:
+            return HttpResponseRedirect(reverse('player_detail', kwargs={'pk':player_id}))
         return super(PlayerCreate, self).dispatch(request, *args, **kwargs)
 
-    def form_valid(self, form):
-        self.request.session.save()
-        form.instance.session_id = self.request.session.session_key
-        return super(PlayerCreate, self).form_valid(form)
 
-    def get_success_url(self):
-        self.assign_player()
-        return reverse('player_detail', kwargs={'pk': self.object.pk})
-
-
-class PlayerUpdate(generic.UpdateView, AssignPlayerViewMixin, CheckPlayerViewMixin):
+class PlayerUpdate(AssignPlayerView, CheckPlayerView, generic.UpdateView):
     model = Player
     fields = ['name']
 
     def dispatch(self, request, *args, **kwargs):
-        if not self.is_current_player():
+        player = self.get_object()
+
+        if not self.is_current_player(player):
             return HttpResponseRedirect(reverse('player_detail', kwargs=kwargs))
         return super(PlayerUpdate, self).dispatch(request, *args, **kwargs)
 
-    def form_valid(self, form):
-        self.request.session.save()
-        form.instance.session_id = self.request.session.session_key
-        return super(PlayerUpdate, self).form_valid(form)
 
-    def get_success_url(self):
-        self.assign_player()
-        return reverse('player_detail', kwargs={'pk': self.object.pk})
-
-
-class PlayerDetail(generic.DetailView, CheckPlayerViewMixin):
+class PlayerDetail(generic.DetailView, CheckPlayerView):
     model = Player
 
     def get_context_data(self, **kwargs):
         data = super(PlayerDetail, self).get_context_data(**kwargs)
-        data['current_player'] = self.is_current_player()
+        data['current_player'] = self.is_current_player(self.object)
         return data
 
 
@@ -139,7 +125,7 @@ class PlayerJoinGame(generic.RedirectView, generic.detail.SingleObjectMixin):
     def get_redirect_url(self, *args, **kwargs):
         player_id = self.request.session.get('player_id')
 
-        if player_id is not None:
+        if player_id:
             player = get_object_or_404(Player, pk=player_id)
             game = get_object_or_404(Game, gameroom__code=kwargs['slug'])
             game.join(player)

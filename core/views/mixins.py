@@ -1,29 +1,43 @@
-from django.views.generic import View
-from django.views.generic.detail import SingleObjectMixin
+from django.views import generic, View
+from django.urls import reverse
 from core.models import Player, Game, Team
 
 
-class CheckPlayerViewMixin(SingleObjectMixin, View):
+class CheckPlayerView(View):
     class Meta:
         abstract = True
 
     model = Player
 
-    def is_current_player(self):
-        player = self.get_object()
-        return self.request.session['player_id'] == player.pk
+    def is_current_player(self, player):
+        return self.get_current_player() == player
+
+    def get_current_player(self):
+        player_id = self.request.session.get('player_id')
+        if player_id:
+            try:
+                return Player.objects.get(pk=player_id)
+            except Player.DoesNotExist:
+                return None
 
 
-class AssignPlayerViewMixin(SingleObjectMixin, View):
+class AssignPlayerView(generic.edit.FormMixin, View):
     class Meta:
         abstract = True
 
-    model = Player
-
-    def assign_player(self):
-        player = self.get_object()
-        if player:
+    def assign_player(self, player):
+        if type(player) is Player:
             self.request.session['player_id'] = player.pk
             self.request.session['player_name'] = player.name
-            return True
-        return False
+
+    def form_valid(self, form):
+        self.request.session.save()
+        form.instance.session_id = self.request.session.session_key
+        return super(AssignPlayerView, self).form_valid(form)
+
+    def get_success_url(self):
+        if type(self.object) is Player:
+            player = self.object
+            self.assign_player(player)
+            return reverse('player_detail', kwargs={'pk': self.object.pk})
+        return reverse('player_list')
