@@ -168,11 +168,11 @@ class Team(TimeStamped):
         return self.players.count() >= TEAM_PLAYER_LIMIT
 
     def set_words(self):
-        word_count = self.teamword_set.count()
+        word_count = self.team_words.count()
         add_words = TEAM_WORD_LIMIT - word_count
         if add_words > 0:
             for i in range(word_count, TEAM_WORD_LIMIT):
-                self.teamword_set.create(word=Word.objects.random(), game=self.game, position=i+1)
+                self.team_words.create(word=Word.objects.random(), game=self.game, position=i+1)
 
 
 class Round(TimeStamped):
@@ -186,9 +186,9 @@ class Round(TimeStamped):
 
 
 class TeamWord(TimeStamped):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    word = models.ForeignKey(Word, on_delete=models.CASCADE)
-    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='team_words')
+    word = models.ForeignKey(Word, on_delete=models.CASCADE, related_name='team_words')
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='team_words')
     position = models.PositiveSmallIntegerField(_("Position"), db_index=True)
 
 
@@ -196,9 +196,9 @@ class RoundTeamLeader(TimeStamped):
     class Meta:
         unique_together = (('round', 'team'),)
 
-    round = models.ForeignKey(Round, on_delete=models.CASCADE)
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name='team_leaders')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='team_leaders')
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='team_leaders')
 
 
 class TeamRoundWordPosition(TimeStamped):

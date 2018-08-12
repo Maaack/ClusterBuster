@@ -12,14 +12,14 @@
     <table>
         <thead>
         <tr>
-            {% for teamword in player_team.teamword_set.all %}
+            {% for teamword in player_team.team_words.all %}
                 <th>{{ teamword.position }}</th>
             {% endfor %}
         </tr>
         </thead>
         <tbody>
         <tr>
-            {% for teamword in player_team.teamword_set.all %}
+            {% for teamword in player_team.team_words.all %}
                 <td>{{ teamword.word }}</td>
             {% endfor %}
         </tr>
