@@ -130,8 +130,11 @@ class GameRoom(TimeStamped):
         self.set_code()
         super(GameRoom, self).save(*args, **kwargs)
 
-    def current_stage_name(self):
+    def get_current_stage_name(self):
         return GameRoomStages.choice(self.stage)
+
+    def get_current_round(self):
+        return self.game.get_current_round()
 
     def set_code(self):
         if not self.code:
@@ -184,12 +187,34 @@ class Round(TimeStamped):
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='rounds')
     number = models.PositiveSmallIntegerField(_("Round Number"), db_index=True)
 
+    def __str__(self):
+        return "Round " + str(self.number)
+
+    def save(self, *args, **kwargs):
+        super(Round, self).save(*args, **kwargs)
+        self.set_team_leaders()
+
+    def set_team_leaders(self):
+        if self.team_leaders.count() == 0:
+            for team in self.game.teams.all():
+                player_count = team.players.count()
+                if player_count == 0:
+                    continue
+                leader = team.players.all()[self.number % player_count]
+                self.team_leaders.create(team=team, player=leader)
+
+    def is_leader(self, player):
+        return self.team_leaders.filter(player=player).exists()
+
 
 class TeamWord(TimeStamped):
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='team_words')
     word = models.ForeignKey(Word, on_delete=models.CASCADE, related_name='team_words')
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='team_words')
     position = models.PositiveSmallIntegerField(_("Position"), db_index=True)
+
+    def __str__(self):
+        return str(self.word)
 
 
 class RoundTeamLeader(TimeStamped):
@@ -199,6 +224,9 @@ class RoundTeamLeader(TimeStamped):
     round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name='team_leaders')
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='team_leaders')
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='team_leaders')
+
+    def __str__(self):
+        return str(self.player)
 
 
 class TeamRoundWordPosition(TimeStamped):

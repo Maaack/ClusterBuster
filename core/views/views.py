@@ -68,12 +68,17 @@ class GameRoomDetail(generic.DetailView):
     def get_context_data(self, **kwargs):
         data = super(GameRoomDetail, self).get_context_data(**kwargs)
         game = self.get_object().game
+        # Round current_round
+        current_round = game.get_current_round()
         data['game'] = game
+        data['current_round'] = current_round
+
         if self.request.session['player_id'] is not None:
             player = get_object_or_404(Player, pk=self.request.session['player_id'])
             data['player'] = get_object_or_404(Player, pk=self.request.session['player_id'])
             data['player_in_game'] = game.has_player(player)
             data['player_team'] = game.get_player_team(player)
+            data['player_is_current_leader'] = current_round.is_leader(player)
 
         return data
 
