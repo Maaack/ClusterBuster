@@ -7,32 +7,31 @@
 <body>
 <h1>Room {{ gameroom.code }}</h1>
 {% if player_in_game %}
-<p>You are in this game!</p>
-<h2>Words</h2>
+    <p>You are in this game!</p>
+    <h2>Words</h2>
     <table>
-    <thead>
-    <tr>
-
-        {% for teamword in player_team.teamword_set.all %}
-            <th>{{ teamword.position }}</th>
-        {% endfor %}
-    </tr>
-    </thead>
-    <tbody>
-    <tr>
-        {% for teamword in player_team.teamword_set.all %}
-        <td>{{ teamword.word }}</td>
-        {% endfor %}
-    </tr>
-    </tbody>
+        <thead>
+        <tr>
+            {% for teamword in player_team.teamword_set.all %}
+                <th>{{ teamword.position }}</th>
+            {% endfor %}
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            {% for teamword in player_team.teamword_set.all %}
+                <td>{{ teamword.word }}</td>
+            {% endfor %}
+        </tr>
+        </tbody>
     </table>
-{% for words in player_team.teamword_set.all %}
+    {% for words in player_team.teamword_set.all %}
 
-{% endfor %}
+    {% endfor %}
 {% else %}
-<form method="post" action="{% url 'player_join_game' gameroom.code %}">{% csrf_token %}
-    <input type="submit" value="Join" />
-</form>
+    <form method="post" action="{% url 'player_join_game' gameroom.code %}">{% csrf_token %}
+        <input type="submit" value="Join"/>
+    </form>
 {% endif %}
 <h2>Players</h2>
 <ul>
@@ -43,11 +42,11 @@
 <h2>Teams</h2>
 {% for team in game.teams.all %}
     <h3>
-    {% if team.pk == player_team.pk %}
-        Your Team
-    {% else %}
-        Opposing Team
-    {% endif %}
+        {% if team.pk == player_team.pk %}
+            Your Team
+        {% else %}
+            Opposing Team
+        {% endif %}
     </h3>
     <ul>
         {% for player in team.players.all %}
@@ -59,7 +58,7 @@
 {% endfor %}
 <h2>Rounds</h2>
 <form method="post" action="{% url 'game_next_round' gameroom.code %}">{% csrf_token %}
-    <input type="submit" value="Next Round" />
+    <input type="submit" value="Next Round"/>
 </form>
 <ul>
     {% for round in game.rounds.all %}
