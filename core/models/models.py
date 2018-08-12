@@ -4,7 +4,7 @@ from django.db.models import Count
 from clusterbuster.mixins.models import TimeStamped
 from django.utils.translation import ugettext_lazy as _
 from .mixins import SessionOptional, SessionRequired, GameRoomStages
-from .managers import ActiveGameRoomManager
+from .managers import ActiveGameRoomManager, RandomWordManager
 
 GAME_TEAM_LIMIT = 2
 GAME_ROUND_LIMIT = 8
@@ -34,6 +34,7 @@ class Word(TimeStamped):
         ordering = ["text", "-created"]
 
     text = models.CharField(_("Text"), max_length=16, db_index=True)
+    objects = RandomWordManager()
 
     def __str__(self):
         return str(self.text)
@@ -150,6 +151,10 @@ class Team(TimeStamped):
     players = models.ManyToManyField(Player, blank=True)
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='teams')
 
+    def save(self, *args, **kwargs):
+        super(Team, self).save(*args, **kwargs)
+        self.set_words()
+
     def join(self, player):
         if type(player) is Player and not self.has_max_players():
             self.players.add(player)
@@ -161,6 +166,13 @@ class Team(TimeStamped):
 
     def has_max_players(self):
         return self.players.count() >= TEAM_PLAYER_LIMIT
+
+    def set_words(self):
+        word_count = self.teamword_set.count()
+        add_words = TEAM_WORD_LIMIT - word_count
+        if add_words > 0:
+            for i in range(word_count, TEAM_WORD_LIMIT):
+                self.teamword_set.create(word=Word.objects.random(), game=self.game, position=i+1)
 
 
 class Round(TimeStamped):
@@ -174,9 +186,6 @@ class Round(TimeStamped):
 
 
 class TeamWord(TimeStamped):
-    class Meta:
-        default_related_name = 'team_words'
-
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     word = models.ForeignKey(Word, on_delete=models.CASCADE)
     game = models.ForeignKey(Game, on_delete=models.CASCADE)

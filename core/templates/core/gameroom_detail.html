@@ -8,6 +8,27 @@
 <h1>Room {{ gameroom.code }}</h1>
 {% if player_in_game %}
 <p>You are in this game!</p>
+<h2>Words</h2>
+    <table>
+    <thead>
+    <tr>
+
+        {% for teamword in player_team.teamword_set.all %}
+            <th>{{ teamword.position }}</th>
+        {% endfor %}
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        {% for teamword in player_team.teamword_set.all %}
+        <td>{{ teamword.word }}</td>
+        {% endfor %}
+    </tr>
+    </tbody>
+    </table>
+{% for words in player_team.teamword_set.all %}
+
+{% endfor %}
 {% else %}
 <form method="post" action="{% url 'player_join_game' gameroom.code %}">{% csrf_token %}
     <input type="submit" value="Join" />
