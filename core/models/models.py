@@ -192,8 +192,12 @@ class TeamWord(TimeStamped):
     position = models.PositiveSmallIntegerField(_("Position"), db_index=True)
 
 
-class RoundLeader(TimeStamped):
+class RoundTeamLeader(TimeStamped):
+    class Meta:
+        unique_together = (('round', 'team'),)
+
     round = models.ForeignKey(Round, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
 
 
