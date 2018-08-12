@@ -230,10 +230,13 @@ class RoundTeamLeader(TimeStamped):
 
 
 class RoundTeamWord(TimeStamped):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='round_team_words')
+    class Meta:
+        unique_together = (('round', 'team_word'), ('round', 'team', 'order'),)
+
     round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name='round_team_words')
-    word = models.ForeignKey(TeamWord, on_delete=models.CASCADE, related_name='round_team_words')
-    position = models.PositiveSmallIntegerField(_("Position"), db_index=True)
+    team_word = models.ForeignKey(TeamWord, on_delete=models.CASCADE, related_name='round_team_words')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='round_team_words')
+    order = models.PositiveSmallIntegerField(_("Order"), db_index=True)
 
 
 class Hint(TimeStamped):
