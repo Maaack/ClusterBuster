@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Room {{ gameroom.code }} | ClusterBuster</title>
+</head>
+<body>
+<h1>Room {{ gameroom.code }}</h1>
+{% if player_in_game %}
+<p>You are in this game!</p>
+{% else %}
+<form method="post" action="{% url 'player_join_game' gameroom.code %}">{% csrf_token %}
+    <input type="submit" value="Join" />
+</form>
+{% endif %}
+<h2>Players</h2>
+<ul>
+    {% for player in game.players.all %}
+        <li>{{ player.name }}</li>
+    {% endfor %}
+</ul>
+<h2>Teams</h2>
+{% for team in game.teams.all %}
+    <h3>
+    {% if team.pk == player_team.pk %}
+        Your Team
+    {% else %}
+        Opposing Team
+    {% endif %}
+    </h3>
+    <ul>
+        {% for player in team.players.all %}
+            <li>{{ player.name }}</li>
+        {% empty %}
+            <p>No players yet...</p>
+        {% endfor %}
+    </ul>
+{% endfor %}
+<h2>Rounds</h2>
+<form method="post" action="{% url 'game_next_round' gameroom.code %}">{% csrf_token %}
+    <input type="submit" value="Next Round" />
+</form>
+<ul>
+    {% for round in game.rounds.all %}
+        <li>{{ round.number }}</li>
+    {% endfor %}
+</ul>
+</body>
+</html>

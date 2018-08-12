@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Room | ClusterBuster</title>
+</head>
+<body>
+<h1>Open Rooms</h1>
+    <ul>
+    {% for game_room in game_room_list %}
+        <li><a href="{% url 'gameroom_detail' game_room.code %}">{{ game_room.code }} - {{ game_room.current_stage_name}}</a></li>
+    {% empty %}
+        <p>No games are available.</p>
+    {% endfor %}
+    </ul>
+</body>
+</html>

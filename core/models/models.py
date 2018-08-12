@@ -1,14 +1,17 @@
+import random, string
 from django.db import models
 from django.db.models import Count
 from clusterbuster.mixins.models import TimeStamped
 from django.utils.translation import ugettext_lazy as _
-from core.models.mixins import SessionOptional, SessionRequired
+from .mixins import SessionOptional, SessionRequired, GameRoomStages
+from .managers import ActiveGameRoomManager
 
 GAME_TEAM_LIMIT = 2
 GAME_ROUND_LIMIT = 8
 TEAM_PLAYER_LIMIT = 4
 TEAM_WORD_LIMIT = 4
 POSITION_COUNT = 3
+GAME_ROOM_CODE_LENGTH = 4
 
 
 # Create your models here.
@@ -69,6 +72,7 @@ class Game(TimeStamped, SessionRequired):
     def save(self, *args, **kwargs):
         super(Game, self).save(*args, **kwargs)
         self.create_teams()
+        self.create_room()
 
     def create_teams(self, team_count=GAME_TEAM_LIMIT):
         current_team_count = self.teams.count()
@@ -77,6 +81,15 @@ class Game(TimeStamped, SessionRequired):
             new_teams = min(team_slots, team_count)
             for team_number in range(new_teams):
                 self.teams.create()
+
+    def create_room(self):
+        has_room = False
+        try:
+            has_room = self.gameroom is not None
+        except GameRoom.DoesNotExist:
+            GameRoom(game=self).save()
+            has_room = True
+        return has_room
 
     def join(self, player):
         if type(player) is Player and not self.has_player(player):
@@ -115,6 +128,39 @@ class Game(TimeStamped, SessionRequired):
 
     def is_last_round(self):
         return self.get_current_round_number() >= GAME_ROUND_LIMIT
+
+
+class GameRoom(TimeStamped):
+    class Meta:
+        verbose_name = _("Game Room")
+        verbose_name_plural = _("Game Rooms")
+        ordering = ["-created"]
+
+    code = models.SlugField(_("Code"), max_length=16)
+    stage = models.PositiveSmallIntegerField(_("Stage"), default=GameRoomStages.OPEN.value,
+                                             choices=GameRoomStages.choices())
+    game = models.OneToOneField(Game, on_delete=models.CASCADE)
+
+    objects = models.Manager()
+    active = ActiveGameRoomManager()
+
+    def __str__(self):
+        return self.code
+
+    def save(self, *args, **kwargs):
+        self.set_code()
+        super(GameRoom, self).save(*args, **kwargs)
+
+    def current_stage_name(self):
+        return GameRoomStages.choice(self.stage)
+
+    def set_code(self):
+        if not self.code:
+            self.code = GameRoom.create_code()
+
+    @staticmethod
+    def create_code(length=GAME_ROOM_CODE_LENGTH):
+        return ''.join(random.choice(string.ascii_uppercase) for _ in range(length))
 
 
 class Round(TimeStamped):

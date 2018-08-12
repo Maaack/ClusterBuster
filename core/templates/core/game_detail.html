@@ -6,40 +6,26 @@
 </head>
 <body>
 <h1>Game {{ game.pk }}</h1>
-{% if player_in_game %}
-<p>You are in this game!</p>
-{% else %}
-<form method="post" action="{% url 'player_join_game' game.pk %}">{% csrf_token %}
-    <input type="submit" value="Join" />
-</form>
-{% endif %}
-<h2>Players</h2>
+<a href="{% url 'gameroom_detail' game.gameroom.code %}">Room {{ game.gameroom.code }}</a>
+
+<h3>Players</h3>
 <ul>
     {% for player in game.players.all %}
         <li>{{ player.name }}</li>
     {% endfor %}
 </ul>
-<h2>Teams</h2>
+<h3>Teams</h3>
 {% for team in game.teams.all %}
-    <h3>
-    {% if team.pk == player_team_id %}
-        Your Team
-    {% else %}
-        Opposing Team
-    {% endif %}
-    </h3>
+    Team {{ forloop.counter }}
     <ul>
         {% for player in team.players.all %}
             <li>{{ player.name }}</li>
         {% empty %}
-            <p>No players yet...</p>
+            <p>No players!</p>
         {% endfor %}
     </ul>
 {% endfor %}
-<h2>Rounds</h2>
-<form method="post" action="{% url 'game_next_round' game.pk %}">{% csrf_token %}
-    <input type="submit" value="Next Round" />
-</form>
+<h3>Rounds</h3>
 <ul>
     {% for round in game.rounds.all %}
         <li>{{ round.number }}</li>
