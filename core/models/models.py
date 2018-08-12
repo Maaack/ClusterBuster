@@ -229,10 +229,10 @@ class RoundTeamLeader(TimeStamped):
         return str(self.player)
 
 
-class TeamRoundWordPosition(TimeStamped):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    round = models.ForeignKey(Round, on_delete=models.CASCADE)
-    word = models.ForeignKey(TeamWord, on_delete=models.CASCADE)
+class RoundTeamWord(TimeStamped):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='round_team_words')
+    round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name='round_team_words')
+    word = models.ForeignKey(TeamWord, on_delete=models.CASCADE, related_name='round_team_words')
     position = models.PositiveSmallIntegerField(_("Position"), db_index=True)
 
 
