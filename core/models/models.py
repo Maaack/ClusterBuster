@@ -39,34 +39,12 @@ class Word(TimeStamped):
         return str(self.text)
 
 
-class Team(TimeStamped):
-    class Meta:
-        verbose_name = _("Team")
-        verbose_name_plural = _("Teams")
-        ordering = ["-created"]
-
-    players = models.ManyToManyField(Player, blank=True)
-
-    def join(self, player):
-        if type(player) is Player and not self.has_max_players():
-            self.players.add(player)
-            return True
-        return False
-
-    def has_player(self, player):
-        return self.players.filter(pk=player.pk).exists()
-
-    def has_max_players(self):
-        return self.players.count() >= TEAM_PLAYER_LIMIT
-
-
 class Game(TimeStamped, SessionRequired):
     class Meta:
         verbose_name = _("Game")
         verbose_name_plural = _("Games")
         ordering = ["-created"]
 
-    teams = models.ManyToManyField(Team, blank=True)
     players = models.ManyToManyField(Player, blank=True)
 
     def save(self, *args, **kwargs):
@@ -161,6 +139,28 @@ class GameRoom(TimeStamped):
     @staticmethod
     def create_code(length=GAME_ROOM_CODE_LENGTH):
         return ''.join(random.choice(string.ascii_uppercase) for _ in range(length))
+
+
+class Team(TimeStamped):
+    class Meta:
+        verbose_name = _("Team")
+        verbose_name_plural = _("Teams")
+        ordering = ["-created"]
+
+    players = models.ManyToManyField(Player, blank=True)
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='teams')
+
+    def join(self, player):
+        if type(player) is Player and not self.has_max_players():
+            self.players.add(player)
+            return True
+        return False
+
+    def has_player(self, player):
+        return self.players.filter(pk=player.pk).exists()
+
+    def has_max_players(self):
+        return self.players.count() >= TEAM_PLAYER_LIMIT
 
 
 class Round(TimeStamped):
