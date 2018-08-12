@@ -1,8 +1,11 @@
 class Card(object):
-    values = []
+    def __init__(self, value):
+        self.value = value
 
-    def __init__(self, values):
-        self.values = values
+    def __eq__(self, other):
+        if type(other) is not Card:
+            return False
+        return self.value == other.value
 
 
 def create_card_list(options, open_spots, card_values):
