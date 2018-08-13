@@ -15,7 +15,7 @@ class SessionOptional(models.Model):
     class Meta:
         abstract = True
 
-    session = models.ForeignKey(Session, on_delete=models.CASCADE, verbose_name=_("Session"), null=True, blank=True)
+    session = models.ForeignKey(Session, on_delete=models.SET_NULL, verbose_name=_("Session"), null=True, blank=True)
 
 
 class GameRoomStages(ChoiceEnum):
