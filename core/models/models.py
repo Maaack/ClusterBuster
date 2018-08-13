@@ -5,6 +5,7 @@ from clusterbuster.mixins.models import TimeStamped
 from django.utils.translation import ugettext_lazy as _
 from .mixins import SessionOptional, SessionRequired, GameRoomStages
 from .managers import ActiveGameRoomManager, RandomWordManager
+from .mixins import SessionOptional, GameRoomStages
 
 GAME_TEAM_LIMIT = 2
 GAME_ROUND_LIMIT = 8
@@ -15,7 +16,7 @@ GAME_ROOM_CODE_LENGTH = 4
 
 
 # Create your models here.
-class Player(TimeStamped, SessionRequired):
+class Player(TimeStamped, SessionOptional):
     class Meta:
         verbose_name = _("Player")
         verbose_name_plural = _("Players")
@@ -40,7 +41,7 @@ class Word(TimeStamped):
         return str(self.text)
 
 
-class Game(TimeStamped, SessionRequired):
+class Game(TimeStamped, SessionOptional):
     class Meta:
         verbose_name = _("Game")
         verbose_name_plural = _("Games")
