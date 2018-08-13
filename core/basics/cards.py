@@ -106,7 +106,6 @@ class PatternDeckBuilder(AbstractDeckBuilder):
                     remaining_options.remove(option)
                 except ValueError:
                     continue
-                print(remaining_options, remaining_spots)
                 deck.extend(PatternDeckBuilder.__build_pattern_deck(remaining_options, remaining_spots, new_card_values))
         else:
             card = Card(card_values)
