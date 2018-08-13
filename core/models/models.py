@@ -1,9 +1,12 @@
-import random, string
+import random
+import string
+
 from django.db import models
 from django.db.models import Count
-from clusterbuster.mixins.models import TimeStamped
 from django.utils.translation import ugettext_lazy as _
-from .mixins import SessionOptional, SessionRequired, GameRoomStages
+
+from clusterbuster.mixins.models import TimeStamped
+from core.basics import PatternDeckBuilder, CardStack, Card
 from .managers import ActiveGameRoomManager, RandomWordManager
 from .mixins import SessionOptional, GameRoomStages
 
@@ -63,7 +66,6 @@ class Game(TimeStamped, SessionOptional):
                 self.teams.create()
 
     def create_room(self):
-        has_room = False
         try:
             has_room = self.gameroom is not None
         except GameRoom.DoesNotExist:
@@ -116,10 +118,10 @@ class GameRoom(TimeStamped):
         verbose_name_plural = _("Game Rooms")
         ordering = ["-created"]
 
+    game = models.OneToOneField(Game, on_delete=models.CASCADE)
     code = models.SlugField(_("Code"), max_length=16)
     stage = models.PositiveSmallIntegerField(_("Stage"), default=GameRoomStages.OPEN.value,
                                              choices=GameRoomStages.choices())
-    game = models.OneToOneField(Game, on_delete=models.CASCADE)
 
     objects = models.Manager()
     active = ActiveGameRoomManager()
@@ -154,6 +156,8 @@ class Team(TimeStamped):
 
     players = models.ManyToManyField(Player, blank=True)
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='teams')
+    current_team_round = models.ForeignKey('TeamRound', on_delete=models.CASCADE, related_name="+", null=True,
+                                           blank=True)
 
     def save(self, *args, **kwargs):
         super(Team, self).save(*args, **kwargs)
@@ -178,6 +182,21 @@ class Team(TimeStamped):
             for i in range(word_count, TEAM_WORD_LIMIT):
                 self.team_words.create(word=Word.objects.random(), game=self.game, position=i+1)
 
+    def draw_card(self):
+        deck = PatternDeckBuilder.build_deck()
+        drawn_cards = self.get_drawn_cards()
+        deck.reduce(drawn_cards)
+        return deck.draw()
+
+    def get_drawn_cards(self):
+        cards = CardStack()
+        for team_round in self.team_rounds.order_by('round__number').all():
+            team_round_words = team_round.team_round_words.order_by('order').all()
+            card_values = [team_round_word.team_word.position for team_round_word in team_round_words]
+            if len(card_values) > 0:
+                cards.append(Card(card_values))
+        return cards
+
 
 class Round(TimeStamped):
     class Meta:
@@ -193,19 +212,11 @@ class Round(TimeStamped):
 
     def save(self, *args, **kwargs):
         super(Round, self).save(*args, **kwargs)
-        self.set_team_leaders()
+        self.set_team_rounds()
 
-    def set_team_leaders(self):
-        if self.team_leaders.count() == 0:
-            for team in self.game.teams.all():
-                player_count = team.players.count()
-                if player_count == 0:
-                    continue
-                leader = team.players.all()[self.number % player_count]
-                self.team_leaders.create(team=team, player=leader)
-
-    def is_leader(self, player):
-        return self.team_leaders.filter(player=player).exists()
+    def set_team_rounds(self):
+        for team in self.game.teams.all():
+            self.team_rounds.create(team=team)
 
 
 class TeamWord(TimeStamped):
@@ -218,25 +229,51 @@ class TeamWord(TimeStamped):
         return str(self.word)
 
 
-class RoundTeamLeader(TimeStamped):
+class TeamRound(TimeStamped):
     class Meta:
         unique_together = (('round', 'team'),)
 
-    round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name='team_leaders')
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='team_leaders')
-    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='team_leaders')
+    round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name='team_rounds')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='team_rounds')
+    leader = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='team_rounds', null=True, blank=True)
 
-    def __str__(self):
-        return str(self.player)
+    def save(self, *args, **kwargs):
+        if self.leader is None:
+            self.set_leader()
+        super(TeamRound, self).save(*args, **kwargs)
+        self.set_team_round_words()
+        self.set_as_current_round()
+
+    def set_as_current_round(self):
+        self.team.current_team_round = self
+        self.team.save()
+
+    def is_leader(self, player):
+        return self.leader == player
+
+    def set_leader(self):
+        player_count = self.team.players.count()
+        if player_count == 0:
+            return
+        offset = self.round.number % player_count
+        print(self.team.players.all())
+        print(self.round.number, offset, self.leader)
+        self.leader = self.team.players.all()[offset]
+
+    def set_team_round_words(self):
+        if self.team_round_words.count() == 0:
+            card = self.team.draw_card()
+            for order, position in enumerate(card.value):
+                team_word = self.team.team_words.get(position=position)
+                self.team_round_words.create(team_word=team_word, order=order)
 
 
-class RoundTeamWord(TimeStamped):
+class TeamRoundWord(TimeStamped):
     class Meta:
-        unique_together = (('round', 'team_word'), ('round', 'team', 'order'),)
+        unique_together = (('team_round', 'team_word'), ('team_round', 'order'),)
 
-    round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name='round_team_words')
-    team_word = models.ForeignKey(TeamWord, on_delete=models.CASCADE, related_name='round_team_words')
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='round_team_words')
+    team_round = models.ForeignKey(TeamRound, on_delete=models.CASCADE, related_name='team_round_words')
+    team_word = models.ForeignKey(TeamWord, on_delete=models.CASCADE, related_name='team_round_words')
     order = models.PositiveSmallIntegerField(_("Order"), db_index=True)
 
 

@@ -29,7 +29,7 @@ class GameCreate(generic.CreateView):
 
 
 class GameList(generic.ListView):
-    context_object_name = 'latest_game_list'
+    context_object_name = 'latest_games'
 
     def get_queryset(self):
         return Game.objects.order_by('-created')[:5]
@@ -68,20 +68,43 @@ class GameRoomDetail(generic.DetailView):
     def get_context_data(self, **kwargs):
         data = super(GameRoomDetail, self).get_context_data(**kwargs)
         game = self.get_object().game
-        # Round current_round
-        current_round = game.get_current_round()
-        data['game'] = game
-        data['current_round'] = current_round
+        data.update(self.__get_game_data(game))
         player_id = self.request.session.get('player_id')
-
         if player_id:
             player = get_object_or_404(Player, pk=player_id)
-            data['player'] = player
-            data['player_in_game'] = game.has_player(player)
-            data['player_team'] = game.get_player_team(player)
-            if current_round:
-                data['player_is_current_leader'] = current_round.is_leader(player)
+            data.update(self.__get_player_data(player, game))
+        return data
 
+    @staticmethod
+    def __get_game_data(game):
+        """
+        :param game: Game
+        :return: dict
+        """
+        data = dict()
+        data['game'] = game
+        data['current_round'] = game.get_current_round()
+        return data
+
+    @staticmethod
+    def __get_player_data(player, game):
+        """
+        :param player: Player
+        :param game: Game
+        :return: dict
+        """
+        data = dict()
+        data['player'] = player
+        has_player = game.has_player(player)
+        team = game.get_player_team(player)
+        data['player_in_game'] = has_player
+        data['player_team'] = team
+        data['player_team_round'] = None
+        data['player_is_current_leader'] = None
+        if has_player and team:
+            data['player_team_round'] = team.current_team_round
+        if team and team.current_team_round:
+            data['player_is_current_leader'] = team.current_team_round.leader == player
         return data
 
 
