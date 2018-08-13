@@ -79,7 +79,8 @@ class GameRoomDetail(generic.DetailView):
             data['player'] = player
             data['player_in_game'] = game.has_player(player)
             data['player_team'] = game.get_player_team(player)
-            data['player_is_current_leader'] = current_round.is_leader(player)
+            if current_round:
+                data['player_is_current_leader'] = current_round.is_leader(player)
 
         return data
 
