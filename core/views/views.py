@@ -100,11 +100,19 @@ class GameRoomDetail(generic.DetailView):
         data['player_in_game'] = has_player
         data['player_team'] = team
         data['player_team_round'] = None
+        data['player_team_round_leader'] = None
         data['player_is_current_leader'] = None
         if has_player and team:
             data['player_team_round'] = team.current_team_round
         if team and team.current_team_round:
-            data['player_is_current_leader'] = team.current_team_round.leader == player
+            round_leader = team.current_team_round.leader
+            data['player_team_round_leader'] = round_leader
+            is_leader = round_leader == player
+            data['player_is_current_leader'] = is_leader
+            if is_leader:
+                words = team.current_team_round.team_round_words.all()
+                hints = [word.team_word.position for word in words]
+                data['hints'] = hints
         return data
 
 

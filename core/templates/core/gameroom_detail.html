@@ -27,7 +27,25 @@
     </table>
     {% if player_is_current_leader %}
         <p>You are the current leader!</p>
-        Your sequence of words is the following... TODO TODO TODO
+        Your sequence of words is the following...
+    <table>
+        <thead>
+        <tr>
+            {% for hint in hints %}
+                <th>{{ forloop.counter }}</th>
+            {% endfor %}
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            {% for hint in hints %}
+                <td>{{ hint }}</td>
+            {% endfor %}
+        </tr>
+        </tbody>
+    </table>
+
+
     {% endif %}
 {% else %}
     <form method="post" action="{% url 'player_join_game' gameroom.code %}">{% csrf_token %}
