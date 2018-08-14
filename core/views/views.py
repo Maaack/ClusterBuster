@@ -3,7 +3,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.views import generic
 from django.urls import reverse
-from core.models import Game, GameRoom, Player
+from core.models import Game, GameRoom, Player, Hint
+from extra_views import ModelFormSetView
 from .mixins import CheckPlayerView, AssignPlayerView
 
 
@@ -162,4 +163,11 @@ class PlayerJoinGame(generic.RedirectView, generic.detail.SingleObjectMixin):
 
         return super().get_redirect_url(*args, **kwargs)
 
+
+class HintFormSetView(ModelFormSetView):
+    model = Hint
+    fields = ['text']
+    factory_kwargs = {
+        'extra': 3,
+    }
 
