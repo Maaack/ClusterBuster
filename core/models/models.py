@@ -186,6 +186,7 @@ class Team(TimeStamped):
         deck = PatternDeckBuilder.build_deck()
         drawn_cards = self.get_drawn_cards()
         deck.reduce(drawn_cards)
+        deck.shuffle()
         return deck.draw()
 
     def get_drawn_cards(self):
