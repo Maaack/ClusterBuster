@@ -287,22 +287,20 @@ class Hint(TimeStamped):
     text = models.CharField(_("Text"), max_length=64, db_index=True)
 
 
-class RoundHint(TimeStamped):
-    round = models.ForeignKey(Round, on_delete=models.CASCADE)
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+class TeamRoundWordHint(TimeStamped):
+    team_round_word = models.ForeignKey(TeamRoundWord, on_delete=models.CASCADE)
     hint = models.ForeignKey(Hint, on_delete=models.CASCADE)
-    position = models.PositiveSmallIntegerField(_("Position"), db_index=True)
 
 
 class PlayerGuess(TimeStamped):
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    hint = models.ForeignKey(RoundHint, on_delete=models.CASCADE)
+    hint = models.ForeignKey(TeamRoundWordHint, on_delete=models.CASCADE)
     guess = models.ForeignKey(TeamWord, on_delete=models.CASCADE)
 
 
 class TeamGuess(TimeStamped):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    hint = models.ForeignKey(RoundHint, on_delete=models.CASCADE)
+    hint = models.ForeignKey(TeamRoundWordHint, on_delete=models.CASCADE)
     guess = models.ForeignKey(TeamWord, on_delete=models.CASCADE)
 
 
