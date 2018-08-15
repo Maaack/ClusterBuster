@@ -1,10 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Room | ClusterBuster</title>
-</head>
-<body>
+{% extends "core/base/html_base.html" %}
+
+{% block head_title %}Open Rooms{% endblock %}
+{% block content %}
 <h1>Open Rooms</h1>
 <ul>
     {% for game_room in game_room_list %}
@@ -14,5 +11,4 @@
         <p>No games are available.</p>
     {% endfor %}
 </ul>
-</body>
-</html>
+{% endblock %}

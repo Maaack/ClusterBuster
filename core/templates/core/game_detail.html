@@ -1,10 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Games</title>
-</head>
-<body>
+{% extends "core/base/html_base.html" %}
+
+{% block head_title %}Game {{ game.pk }}{% endblock %}
+{% block content %}
 <h1>Game {{ game.pk }}</h1>
 <a href="{% url 'gameroom_detail' game.gameroom.code %}">Room {{ game.gameroom.code }}</a>
 
@@ -31,5 +28,6 @@
         <li>{{ round.number }}</li>
     {% endfor %}
 </ul>
+{% endblock %}
 </body>
 </html>

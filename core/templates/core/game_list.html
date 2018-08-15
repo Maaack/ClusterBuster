@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Games</title>
-</head>
-<body>
+{% extends "core/base/html_base.html" %}
+
+{% block head_title %}Games{% endblock %}
+{% block content %}
+<h1>Games</h1>
 <ul>
     {% for game in latest_games %}
         <li><a href="{% url 'game_detail' game.pk %}">{{ game.pk }} - {{ game.created }}</a></li>
@@ -12,5 +10,4 @@
         <p>No games are available.</p>
     {% endfor %}
 </ul>
-</body>
-</html>
+{% endblock %}

@@ -1,10 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Room {{ gameroom.code }} | ClusterBuster</title>
-</head>
-<body>
+{% extends "core/base/html_base.html" %}
+
+{% block head_title %}Room {{ gameroom.code }}{% endblock %}
+{% block content %}
 <h1>Room {{ gameroom.code }}</h1>
 {% if player_in_game %}
     <p>You are in this game!</p>
@@ -44,7 +41,7 @@
         </tr>
         </tbody>
     </table>
-
+    {% block hint_submit_form %}{% endblock %}
 
     {% endif %}
 {% else %}
@@ -84,5 +81,4 @@
         <li>{{ round.number }}</li>
     {% endfor %}
 </ul>
-</body>
-</html>
+{% endblock %}

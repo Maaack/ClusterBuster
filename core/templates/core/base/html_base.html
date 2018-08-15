@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block head_title %}Home{% endblock %} | ClusterBuster</title>
+</head>
+<body>
+<header>{% block header %}{% endblock %}</header>
+<div id="navigation">
+    {% block navigation %}
+        <ul>
+            <li><a href="{% url 'index' %}">Home</a></li>
+            <li><a href="{% url 'player_create' %}">Your Player</a></li>
+            <li><a href="{% url 'gameroom_list' %}">View Open Rooms</a></li>
+            <li><a href="{% url 'game_create' %}">Start Game</a></li>
+        </ul>
+    {% endblock %}
+</div>
+
+<div id="content">
+    {% block content %}{% endblock %}
+</div>
+
+<footer>{% block footer %}{% endblock %}</footer>
+</body>
+</html>
