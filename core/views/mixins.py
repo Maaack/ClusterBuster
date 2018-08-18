@@ -21,7 +21,7 @@ class CheckPlayerView(View):
                 return None
 
 
-class AssignPlayerView(generic.edit.FormMixin, View):
+class AssignPlayerView(generic.edit.FormMixin, generic.detail.BaseDetailView):
     class Meta:
         abstract = True
 
@@ -41,3 +41,46 @@ class AssignPlayerView(generic.edit.FormMixin, View):
             self.assign_player(player)
             return reverse('player_detail', kwargs={'pk': self.object.pk})
         return reverse('player_list')
+
+
+class ContextData(object):
+    @staticmethod
+    def get_game_data(game):
+        """
+        :param game: Game
+        :return: dict
+        """
+        data = dict()
+        data['game'] = game
+        data['current_round'] = game.get_current_round()
+        return data
+
+    @staticmethod
+    def get_player_data(player, game):
+        """
+        :param player: Player
+        :param game: Game
+        :return: dict
+        """
+        data = dict()
+        data['player'] = player
+        has_player = game.has_player(player)
+        team = game.get_player_team(player)
+        data['player_in_game'] = has_player
+        data['player_team'] = team
+        data['player_team_round'] = None
+        data['player_team_round_leader'] = None
+        data['player_is_current_leader'] = None
+        if has_player and team:
+            data['player_team_round'] = team.current_team_round
+        if team and team.current_team_round:
+            round_leader = team.current_team_round.leader
+            data['player_team_round_leader'] = round_leader
+            is_leader = round_leader == player
+            data['player_is_current_leader'] = is_leader
+            if is_leader:
+                team_round_words = team.current_team_round.team_round_words.all()
+                data['words'] = [
+                    {'text': team_round_word.team_word.word.text, 'position': team_round_word.team_word.position} for
+                    team_round_word in team_round_words]
+        return data

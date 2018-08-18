@@ -30,6 +30,9 @@ class Player(TimeStamped, SessionOptional):
     def __str__(self):
         return str(self.name)
 
+    def get_team_for_game(self, game):
+        return Team.objects.get(game=game, players=self)
+
 
 class Word(TimeStamped):
     class Meta:
@@ -276,31 +279,18 @@ class TeamRoundWord(TimeStamped):
     team_round = models.ForeignKey(TeamRound, on_delete=models.CASCADE, related_name='team_round_words')
     team_word = models.ForeignKey(TeamWord, on_delete=models.CASCADE, related_name='team_round_words')
     order = models.PositiveSmallIntegerField(_("Order"), db_index=True)
-
-
-class Hint(TimeStamped):
-    class Meta:
-        verbose_name = _("Hint")
-        verbose_name_plural = _("Hints")
-        ordering = ["-created"]
-
-    text = models.CharField(_("Text"), max_length=64, db_index=True)
-
-
-class TeamRoundWordHint(TimeStamped):
-    team_round_word = models.ForeignKey(TeamRoundWord, on_delete=models.CASCADE)
-    hint = models.ForeignKey(Hint, on_delete=models.CASCADE)
+    hint = models.CharField(_("Hint"), max_length=64, db_index=True, default="")
 
 
 class PlayerGuess(TimeStamped):
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    hint = models.ForeignKey(TeamRoundWordHint, on_delete=models.CASCADE)
+    team_round_word = models.ForeignKey(TeamRoundWord, on_delete=models.CASCADE)
     guess = models.ForeignKey(TeamWord, on_delete=models.CASCADE)
 
 
 class TeamGuess(TimeStamped):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    hint = models.ForeignKey(TeamRoundWordHint, on_delete=models.CASCADE)
+    team_round_word = models.ForeignKey(TeamRoundWord, on_delete=models.CASCADE)
     guess = models.ForeignKey(TeamWord, on_delete=models.CASCADE)
 
 

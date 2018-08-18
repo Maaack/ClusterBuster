@@ -2,83 +2,65 @@
 
 {% block head_title %}Room {{ gameroom.code }}{% endblock %}
 {% block content %}
-<h1>Room {{ gameroom.code }}</h1>
-{% if player_in_game %}
-    <p>You are in this game!</p>
-    <h2>Words</h2>
-    <table>
-        <thead>
-        <tr>
-            {% for teamword in player_team.team_words.all %}
-                <th>{{ teamword.position }}</th>
-            {% endfor %}
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-            {% for teamword in player_team.team_words.all %}
-                <td>{{ teamword.word }}</td>
-            {% endfor %}
-        </tr>
-        </tbody>
-    </table>
-    {% if player_is_current_leader %}
-        <p>You are the current leader!</p>
-        Your sequence of words is the following...
-    <table>
-        <thead>
-        <tr>
-            {% for hint in hints %}
-                <th>{{ forloop.counter }}</th>
-            {% endfor %}
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-            {% for hint in hints %}
-                <td>{{ hint }}</td>
-            {% endfor %}
-        </tr>
-        </tbody>
-    </table>
-    {% block hint_submit_form %}{% endblock %}
-
-    {% endif %}
-{% else %}
-    <form method="post" action="{% url 'player_join_game' gameroom.code %}">{% csrf_token %}
-        <input type="submit" value="Join"/>
-    </form>
-{% endif %}
-<h2>Players</h2>
-<ul>
-    {% for player in game.players.all %}
-        <li>{{ player.name }}</li>
-    {% endfor %}
-</ul>
-<h2>Teams</h2>
-{% for team in game.teams.all %}
-    <h3>
-        {% if team.pk == player_team.pk %}
-            Your Team
-        {% else %}
-            Opposing Team
+    <h1>Room {{ gameroom.code }}</h1>
+    {% if player_in_game %}
+        <p>You are in this game!</p>
+        <h2>Words</h2>
+        <table>
+            <thead>
+            <tr>
+                {% for teamword in player_team.team_words.all %}
+                    <th>{{ teamword.position }}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                {% for teamword in player_team.team_words.all %}
+                    <td>{{ teamword.word }}</td>
+                {% endfor %}
+            </tr>
+            </tbody>
+        </table>
+        {% if player_is_current_leader %}
+            <p>You are the current leader!</p>
+            <a href="{% url 'round_hints' gameroom.code %}">Submit your hints!</a>
         {% endif %}
-    </h3>
+    {% else %}
+        <form method="post" action="{% url 'player_join_game' gameroom.code %}">{% csrf_token %}
+            <input type="submit" value="Join"/>
+        </form>
+    {% endif %}
+    <h2>Players</h2>
     <ul>
-        {% for player in team.players.all %}
+        {% for player in game.players.all %}
             <li>{{ player.name }}</li>
-        {% empty %}
-            <p>No players yet...</p>
         {% endfor %}
     </ul>
-{% endfor %}
-<h2>Rounds</h2>
-<form method="post" action="{% url 'game_next_round' gameroom.code %}">{% csrf_token %}
-    <input type="submit" value="Next Round"/>
-</form>
-<ul>
-    {% for round in game.rounds.all %}
-        <li>{{ round.number }}</li>
+    <h2>Teams</h2>
+    {% for team in game.teams.all %}
+        <h3>
+            {% if team.pk == player_team.pk %}
+                Your Team
+            {% else %}
+                Opposing Team
+            {% endif %}
+        </h3>
+        <ul>
+            {% for player in team.players.all %}
+                <li>{{ player.name }}</li>
+            {% empty %}
+                <p>No players yet...</p>
+            {% endfor %}
+        </ul>
     {% endfor %}
-</ul>
+    <h2>Rounds</h2>
+    <form method="post" action="{% url 'game_next_round' gameroom.code %}">{% csrf_token %}
+        <input type="submit" value="Next Round"/>
+    </form>
+    <ul>
+        {% for round in game.rounds.all %}
+            <li>{{ round.number }}</li>
+        {% endfor %}
+    </ul>
 {% endblock %}

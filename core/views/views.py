@@ -3,9 +3,9 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.views import generic
 from django.urls import reverse
-from core.models import Game, GameRoom, Player, Hint
+from core.models import Game, GameRoom, Player, TeamRoundWord
 from extra_views import ModelFormSetView
-from .mixins import CheckPlayerView, AssignPlayerView
+from .mixins import CheckPlayerView, AssignPlayerView, ContextData
 
 
 # Create your views here.
@@ -61,57 +61,24 @@ class GameRoomDetail(generic.DetailView):
     model = GameRoom
     slug_field = 'code'
 
+    def __init__(self):
+        super(GameRoomDetail, self).__init__()
+        self.game = None
+
     def get_queryset(self):
         return GameRoom.active.all()
 
+    def dispatch(self, request, *args, **kwargs):
+        self.game = self.get_object().game
+        return super(GameRoomDetail, self).dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         data = super(GameRoomDetail, self).get_context_data(**kwargs)
-        game = self.get_object().game
-        data.update(self.__get_game_data(game))
+        data.update(ContextData.get_game_data(self.game))
         player_id = self.request.session.get('player_id')
         if player_id:
             player = get_object_or_404(Player, pk=player_id)
-            data.update(self.__get_player_data(player, game))
-        return data
-
-    @staticmethod
-    def __get_game_data(game):
-        """
-        :param game: Game
-        :return: dict
-        """
-        data = dict()
-        data['game'] = game
-        data['current_round'] = game.get_current_round()
-        return data
-
-    @staticmethod
-    def __get_player_data(player, game):
-        """
-        :param player: Player
-        :param game: Game
-        :return: dict
-        """
-        data = dict()
-        data['player'] = player
-        has_player = game.has_player(player)
-        team = game.get_player_team(player)
-        data['player_in_game'] = has_player
-        data['player_team'] = team
-        data['player_team_round'] = None
-        data['player_team_round_leader'] = None
-        data['player_is_current_leader'] = None
-        if has_player and team:
-            data['player_team_round'] = team.current_team_round
-        if team and team.current_team_round:
-            round_leader = team.current_team_round.leader
-            data['player_team_round_leader'] = round_leader
-            is_leader = round_leader == player
-            data['player_is_current_leader'] = is_leader
-            if is_leader:
-                words = team.current_team_round.team_round_words.all()
-                hints = [word.team_word.position for word in words]
-                data['hints'] = hints
+            data.update(ContextData.get_player_data(player, self.game))
         return data
 
 
@@ -164,10 +131,39 @@ class PlayerJoinGame(generic.RedirectView, generic.detail.SingleObjectMixin):
         return super().get_redirect_url(*args, **kwargs)
 
 
-class HintFormSetView(ModelFormSetView):
-    model = Hint
-    fields = ['text']
+class TeamRoundWordFormSetView(ModelFormSetView):
+    model = TeamRoundWord
+    fields = ['hint']
     factory_kwargs = {
-        'extra': 3,
+        'extra': 0,
     }
+
+    def __init__(self):
+        super(TeamRoundWordFormSetView, self).__init__()
+        self.game_room = None
+        self.game = None
+        self.player = None
+        self.team_round = None
+
+    def get_queryset(self):
+        return TeamRoundWord.objects.filter(team_round=self.team_round)
+
+    def dispatch(self, request, *args, **kwargs):
+        game_room_code = kwargs['slug']
+        self.game_room = get_object_or_404(GameRoom, code=game_room_code)
+        self.game = self.game_room.game
+        player_id = self.request.session.get('player_id')
+        self.player = get_object_or_404(Player, pk=player_id)
+        self.team_round = self.player.get_team_for_game(self.game).current_team_round
+        return super(TeamRoundWordFormSetView, self).dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        data = super(TeamRoundWordFormSetView, self).get_context_data(**kwargs)
+        data.update(ContextData.get_game_data(self.game))
+        player_id = self.request.session.get('player_id')
+        if player_id:
+            player = get_object_or_404(Player, pk=player_id)
+            data.update(ContextData.get_player_data(player, self.game))
+        return data
+        pass
 
