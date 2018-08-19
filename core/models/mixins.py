@@ -36,6 +36,6 @@ class RoundStages(ChoiceEnum):
 
 class TeamRoundStages(ChoiceEnum):
     ACTIVE = 0
-    WAITING = 1
-    INACTIVE = 2
+    INACTIVE = 1
+    WAITING = 2
     DONE = 3

@@ -99,7 +99,7 @@ class Game(TimeStamped, SessionOptional):
 
     def next_round(self):
         if not self.is_last_round():
-            self.rounds.create(number=self.get_current_round_number()+1)
+            self.rounds.create(number=self.get_current_round_number() + 1)
 
     def get_current_round(self):
         return self.rounds.order_by('-number').first()
@@ -183,7 +183,7 @@ class Team(TimeStamped):
         add_words = TEAM_WORD_LIMIT - word_count
         if add_words > 0:
             for i in range(word_count, TEAM_WORD_LIMIT):
-                self.team_words.create(word=Word.objects.random(), game=self.game, position=i+1)
+                self.team_words.create(word=Word.objects.random(), game=self.game, position=i + 1)
 
     def draw_card(self):
         deck = PatternDeckBuilder.build_deck()
@@ -228,6 +228,25 @@ class Round(TimeStamped):
             for team in self.game.teams.all():
                 self.team_rounds.create(team=team)
 
+    def update_all_team_stages(self):
+        game_teams = self.game.teams
+        all_teams_count = game_teams.count()
+        waiting_teams_count = game_teams.filter(current_team_round__stage=TeamRoundStages.WAITING.value).count()
+        if all_teams_count == waiting_teams_count:
+            self.team_rounds.update(stage=TeamRoundStages.DONE.value)
+
+    def advance_stage(self):
+        game_teams = self.game.teams
+        all_teams_count = game_teams.count()
+        done_teams_count = game_teams.filter(current_team_round__stage=TeamRoundStages.DONE.value).count()
+        if all_teams_count == done_teams_count:
+            self.__advance_stage()
+
+    def __advance_stage(self):
+        if self.stage != TeamRoundStages.DONE.value:
+            self.stage += 1
+            self.save()
+
 
 class TeamWord(TimeStamped):
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='team_words')
@@ -258,6 +277,25 @@ class TeamRound(TimeStamped):
 
     def get_current_stage_name(self):
         return TeamRoundStages.choice(self.stage)
+
+    def advance_stage(self):
+        if self.stage in (TeamRoundStages.ACTIVE.value, TeamRoundStages.INACTIVE.value):
+            self.stage = TeamRoundStages.WAITING.value
+            self.save()
+        self.round.update_all_team_stages()
+
+    def reset_stage(self):
+        self.stage = TeamRoundStages.ACTIVE.value
+        self.save()
+
+    def is_waiting(self):
+        return self.stage == TeamRoundStages.WAITING.value
+
+    def is_active(self):
+        return self.stage == TeamRoundStages.ACTIVE.value
+
+    def is_done(self):
+        return self.stage == TeamRoundStages.DONE.value
 
     def set_as_current_round(self):
         self.team.current_team_round = self

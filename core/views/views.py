@@ -165,6 +165,12 @@ class TeamRoundWordFormSetView(ModelFormSetView):
             data.update(ContextData.get_hint_data(self.team_round))
         return data
 
+    def formset_valid(self, formset):
+        response = super(TeamRoundWordFormSetView, self).formset_valid(formset)
+        self.team_round.advance_stage()
+        self.team_round.round.advance_stage()
+        return response
+
     def get_success_url(self):
         return reverse('gameroom_detail', kwargs={'slug': self.game_room.code})
 
