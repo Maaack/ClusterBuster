@@ -30,7 +30,7 @@ class Player(TimeStamped, SessionOptional):
     def __str__(self):
         return str(self.name)
 
-    def get_team_for_game(self, game):
+    def get_game_team(self, game):
         return Team.objects.get(game=game, players=self)
 
 

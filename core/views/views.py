@@ -154,16 +154,17 @@ class TeamRoundWordFormSetView(ModelFormSetView):
         self.game = self.game_room.game
         player_id = self.request.session.get('player_id')
         self.player = get_object_or_404(Player, pk=player_id)
-        self.team_round = self.player.get_team_for_game(self.game).current_team_round
+        self.team_round = self.player.get_game_team(self.game).current_team_round
         return super(TeamRoundWordFormSetView, self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         data = super(TeamRoundWordFormSetView, self).get_context_data(**kwargs)
         data.update(ContextData.get_game_data(self.game))
-        player_id = self.request.session.get('player_id')
-        if player_id:
-            player = get_object_or_404(Player, pk=player_id)
-            data.update(ContextData.get_player_data(player, self.game))
+        data.update(ContextData.get_player_data(self.player, self.game))
+        if data['player_is_current_leader']:
+            data.update(ContextData.get_hint_data(self.team_round))
         return data
-        pass
+
+    def get_success_url(self):
+        return reverse('gameroom_detail', kwargs={'slug': self.game_room.code})
 

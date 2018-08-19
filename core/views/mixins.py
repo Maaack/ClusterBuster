@@ -1,6 +1,6 @@
 from django.views import generic, View
 from django.urls import reverse
-from core.models import Player, Game, Team
+from core.models import Player, Game, TeamRound
 
 
 class CheckPlayerView(View):
@@ -76,11 +76,18 @@ class ContextData(object):
         if team and team.current_team_round:
             round_leader = team.current_team_round.leader
             data['player_team_round_leader'] = round_leader
-            is_leader = round_leader == player
-            data['player_is_current_leader'] = is_leader
-            if is_leader:
-                team_round_words = team.current_team_round.team_round_words.all()
-                data['words'] = [
-                    {'text': team_round_word.team_word.word.text, 'position': team_round_word.team_word.position} for
-                    team_round_word in team_round_words]
+            data['player_is_current_leader'] = round_leader == player
+        return data
+
+    @staticmethod
+    def get_hint_data(team_round):
+        """
+        :param team_round: TeamRound
+        :return: dict
+        """
+        data = dict()
+        team_round_words = team_round.team_round_words.all()
+        data['words'] = [
+            {'text': team_round_word.team_word.word.text, 'position': team_round_word.team_word.position} for
+            team_round_word in team_round_words]
         return data
