@@ -52,7 +52,7 @@ class ContextData(object):
         """
         data = dict()
         data['game'] = game
-        data['round'] = game.get_current_round()
+        data['round'] = game.current_round
         return data
 
     @staticmethod
@@ -70,25 +70,29 @@ class ContextData(object):
         data['player_team'] = team
         data['player_team_round'] = None
         data['player_team_round_leader'] = None
-        data['player_is_current_leader'] = None
-        if has_player and team:
-            data['player_team_round'] = team.current_team_round
-        if team and team.current_team_round:
+        data['is_leader'] = None
+        if has_player and team and team.current_team_round:
+            team_round = team.current_team_round
             round_leader = team.current_team_round.leader
+            is_leader = round_leader == player
+            data['player_team_round'] = team_round
             data['player_team_round_leader'] = round_leader
-            data['player_is_current_leader'] = round_leader == player
+            data['is_leader'] = is_leader
+            data.update(ContextData.get_round_hints_data(team_round))
+            if is_leader:
+                data.update(ContextData.get_round_leader_word_data(team_round))
         return data
 
     @staticmethod
-    def get_round_player_word_data(team_round):
+    def get_round_hints_data(team_round):
         """
         :param team_round: TeamRound
         :return: dict
         """
         data = dict()
-        team_round_words = team_round.team_round_words.all()
-        data['words'] = [
-            {'hint': team_round_word.team_word.hint, 'position': team_round_word.team_word.position} for
+        team_round_words = team_round.team_round_words.order_by('order').all()
+        data['hint_orders'] = [
+            {'hint': team_round_word.hint, 'order': team_round_word.order + 1} for
             team_round_word in team_round_words]
         return data
 

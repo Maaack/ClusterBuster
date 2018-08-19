@@ -54,6 +54,7 @@ class Game(TimeStamped, SessionOptional):
         ordering = ["-created"]
 
     players = models.ManyToManyField(Player, blank=True)
+    current_round = models.ForeignKey('Round', on_delete=models.SET_NULL, related_name="+", null=True, blank=True)
 
     def save(self, *args, **kwargs):
         super(Game, self).save(*args, **kwargs)
@@ -101,13 +102,9 @@ class Game(TimeStamped, SessionOptional):
         if not self.is_last_round():
             self.rounds.create(number=self.get_current_round_number() + 1)
 
-    def get_current_round(self):
-        return self.rounds.order_by('-number').first()
-
     def get_current_round_number(self):
-        current_round = self.get_current_round()
-        if current_round:
-            return current_round.number
+        if self.current_round:
+            return self.current_round.number
         else:
             return 0
 
@@ -140,7 +137,7 @@ class GameRoom(TimeStamped):
         return GameRoomStages.choice(self.stage)
 
     def get_current_round(self):
-        return self.game.get_current_round()
+        return self.game.current_round
 
     def set_code(self):
         if not self.code:
@@ -159,7 +156,7 @@ class Team(TimeStamped):
 
     players = models.ManyToManyField(Player, blank=True)
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='teams')
-    current_team_round = models.ForeignKey('TeamRound', on_delete=models.CASCADE, related_name="+", null=True,
+    current_team_round = models.ForeignKey('TeamRound', on_delete=models.SET_NULL, related_name="+", null=True,
                                            blank=True)
 
     def save(self, *args, **kwargs):
@@ -219,6 +216,7 @@ class Round(TimeStamped):
     def save(self, *args, **kwargs):
         super(Round, self).save(*args, **kwargs)
         self.set_team_rounds()
+        self.set_as_current_round()
 
     def get_current_stage_name(self):
         return RoundStages.choice(self.stage)
@@ -227,6 +225,10 @@ class Round(TimeStamped):
         if self.team_rounds.count() == 0:
             for team in self.game.teams.all():
                 self.team_rounds.create(team=team)
+
+    def set_as_current_round(self):
+        self.game.current_round = self
+        self.game.save()
 
     def update_all_team_stages(self):
         game_teams = self.game.teams

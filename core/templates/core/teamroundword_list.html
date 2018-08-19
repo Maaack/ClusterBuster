@@ -1,8 +1,8 @@
 {% extends "core/base/html_base.html" %}
 
-{% block head_title %}Welcome{% endblock %}
+{% block head_title %}Submit hints{% endblock %}
 {% block content %}
-    {% if player_is_current_leader %}
+    {% if is_leader %}
         <table>
             <thead>
             <tr>

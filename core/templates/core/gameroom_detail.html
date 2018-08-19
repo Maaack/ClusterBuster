@@ -6,13 +6,13 @@
     {% if player_in_game %}
         <div id="active-player-content">{% block active_player_content %}
             <div id="player-game-status">You are playing!</div>
-            {% if player_is_current_leader %}
+            {% if is_leader %}
                 <div id="round-leader-status">You are the round leader!</div>
             {% endif %}
             <div id="round-status">Currently in the <span id="round-stage">{{ round.get_current_stage_name }}</span> stage.</div>
             <div id="round-instructions">
                 {% if round.is_composing %}
-                    {% if player_is_current_leader %}
+                    {% if is_leader %}
                         <a href="{% url 'round_hints' gameroom.code %}">View and submit your hints!</a>
                     {% elif player_team_round.is_waiting %}
                         <p>You are waiting on opponent leaders to come up with hints...</p>
@@ -21,6 +21,9 @@
                     {% endif %}
                 {% elif round.is_guessing %}
                         <p>Hints are in!</p>
+                    {% for pair in hint_orders %}
+                        {{ pair.order }} - {{ pair.hint }}
+                    {% endfor %}
                 {% endif %}
             </div>
             <h2>Words</h2>
