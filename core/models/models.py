@@ -309,8 +309,6 @@ class TeamRound(TimeStamped):
         if player_count == 0:
             return
         offset = self.round.number % player_count
-        print(self.team.players.all())
-        print(self.round.number, offset, self.leader)
         self.leader = self.team.players.all()[offset]
 
     def set_team_round_words(self):
