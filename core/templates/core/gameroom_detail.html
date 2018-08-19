@@ -4,29 +4,45 @@
 {% block content %}
     <h1>Room {{ gameroom.code }}</h1>
     {% if player_in_game %}
-        <p>You are in this game!</p>
-        <h2>Words</h2>
-        <table>
-            <thead>
-            <tr>
-                {% for teamword in player_team.team_words.all %}
-                    <th>{{ teamword.position }}</th>
-                {% endfor %}
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                {% for teamword in player_team.team_words.all %}
-                    <td>{{ teamword.word }}</td>
-                {% endfor %}
-            </tr>
-            </tbody>
-        </table>
-        {% if player_is_current_leader %}
-            <p>You are the current leader!</p>
-            <a href="{% url 'round_hints' gameroom.code %}">Submit your hints!</a>
-        {% endif %}
+        <div id="active-player-content">{% block active_player_content %}
+            <div id="player-game-status">You are playing!</div>
+            {% if player_is_current_leader %}
+                <div id="round-leader-status">You are the round leader!</div>
+            {% endif %}
+            <div id="round-status">Currently in the <span id="round-stage">{{ round.get_current_stage_name }}</span> stage.</div>
+            <div id="round-instructions">
+                {% if round.is_composing %}
+                    {% if player_is_current_leader %}
+                        <a href="{% url 'round_hints' gameroom.code %}">View and submit your hints!</a>
+                    {% elif player_team_round.is_waiting %}
+                        <p>You are waiting on opponent leaders to come up with hints...</p>
+                    {% else %}
+                        <p>The leader is coming up with hints...</p>
+                    {% endif %}
+                {% elif round.is_guessing %}
+                        <p>Hints are in!</p>
+                {% endif %}
+            </div>
+            <h2>Words</h2>
+            <table>
+                <thead>
+                <tr>
+                    {% for teamword in player_team.team_words.all %}
+                        <th>{{ teamword.position }}</th>
+                    {% endfor %}
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    {% for teamword in player_team.team_words.all %}
+                        <td>{{ teamword.word }}</td>
+                    {% endfor %}
+                </tr>
+                </tbody>
+            </table>
+        {% endblock %}</div>
     {% else %}
+        <div id="player-game-status">You are spectating...</div>
         <form method="post" action="{% url 'player_join_game' gameroom.code %}">{% csrf_token %}
             <input type="submit" value="Join"/>
         </form>

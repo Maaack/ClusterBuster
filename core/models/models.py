@@ -243,9 +243,18 @@ class Round(TimeStamped):
             self.__advance_stage()
 
     def __advance_stage(self):
-        if self.stage != TeamRoundStages.DONE.value:
+        if not self.is_done():
             self.stage += 1
             self.save()
+
+    def is_composing(self):
+        return self.stage == RoundStages.COMPOSING.value
+
+    def is_guessing(self):
+        return self.stage == RoundStages.GUESSING.value
+
+    def is_done(self):
+        return self.stage == RoundStages.DONE.value
 
 
 class TeamWord(TimeStamped):

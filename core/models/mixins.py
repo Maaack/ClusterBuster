@@ -28,10 +28,9 @@ class GameRoomStages(ChoiceEnum):
 
 class RoundStages(ChoiceEnum):
     COMPOSING = 0
-    REVEALING = 1
-    GUESSING = 2
-    SCORING = 3
-    DONE = 4
+    GUESSING = 1
+    SCORING = 2
+    DONE = 3
 
 
 class TeamRoundStages(ChoiceEnum):

@@ -52,7 +52,7 @@ class ContextData(object):
         """
         data = dict()
         data['game'] = game
-        data['current_round'] = game.get_current_round()
+        data['round'] = game.get_current_round()
         return data
 
     @staticmethod
@@ -80,7 +80,20 @@ class ContextData(object):
         return data
 
     @staticmethod
-    def get_hint_data(team_round):
+    def get_round_player_word_data(team_round):
+        """
+        :param team_round: TeamRound
+        :return: dict
+        """
+        data = dict()
+        team_round_words = team_round.team_round_words.all()
+        data['words'] = [
+            {'hint': team_round_word.team_word.hint, 'position': team_round_word.team_word.position} for
+            team_round_word in team_round_words]
+        return data
+
+    @staticmethod
+    def get_round_leader_word_data(team_round):
         """
         :param team_round: TeamRound
         :return: dict

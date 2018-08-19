@@ -162,7 +162,7 @@ class TeamRoundWordFormSetView(ModelFormSetView):
         data.update(ContextData.get_game_data(self.game))
         data.update(ContextData.get_player_data(self.player, self.game))
         if data['player_is_current_leader']:
-            data.update(ContextData.get_hint_data(self.team_round))
+            data.update(ContextData.get_round_leader_word_data(self.team_round))
         return data
 
     def formset_valid(self, formset):
