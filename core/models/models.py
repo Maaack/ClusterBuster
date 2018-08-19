@@ -8,7 +8,7 @@ from django.utils.translation import ugettext_lazy as _
 from clusterbuster.mixins.models import TimeStamped
 from core.basics import PatternDeckBuilder, CardStack, Card
 from .managers import ActiveGameRoomManager, RandomWordManager
-from .mixins import SessionOptional, GameRoomStages
+from .mixins import SessionOptional, GameRoomStages, RoundStages, TeamRoundStages
 
 GAME_TEAM_LIMIT = 2
 GAME_ROUND_LIMIT = 8
@@ -210,6 +210,8 @@ class Round(TimeStamped):
 
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='rounds')
     number = models.PositiveSmallIntegerField(_("Round Number"), db_index=True)
+    stage = models.PositiveSmallIntegerField(_("Stage"), default=RoundStages.COMPOSING.value,
+                                             choices=RoundStages.choices())
 
     def __str__(self):
         return "Round " + str(self.number)
@@ -218,9 +220,13 @@ class Round(TimeStamped):
         super(Round, self).save(*args, **kwargs)
         self.set_team_rounds()
 
+    def get_current_stage_name(self):
+        return RoundStages.choice(self.stage)
+
     def set_team_rounds(self):
-        for team in self.game.teams.all():
-            self.team_rounds.create(team=team)
+        if self.team_rounds.count() == 0:
+            for team in self.game.teams.all():
+                self.team_rounds.create(team=team)
 
 
 class TeamWord(TimeStamped):
@@ -240,6 +246,8 @@ class TeamRound(TimeStamped):
     round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name='team_rounds')
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='team_rounds')
     leader = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='team_rounds', null=True, blank=True)
+    stage = models.PositiveSmallIntegerField(_("Stage"), default=TeamRoundStages.ACTIVE.value,
+                                             choices=TeamRoundStages.choices())
 
     def save(self, *args, **kwargs):
         if self.leader is None:
@@ -247,6 +255,9 @@ class TeamRound(TimeStamped):
         super(TeamRound, self).save(*args, **kwargs)
         self.set_team_round_words()
         self.set_as_current_round()
+
+    def get_current_stage_name(self):
+        return TeamRoundStages.choice(self.stage)
 
     def set_as_current_round(self):
         self.team.current_team_round = self

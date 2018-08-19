@@ -24,3 +24,18 @@ class GameRoomStages(ChoiceEnum):
     PLAYING = 2
     PAUSED = 3
     DONE = 4
+
+
+class RoundStages(ChoiceEnum):
+    COMPOSING = 0
+    REVEALING = 1
+    GUESSING = 2
+    SCORING = 3
+    DONE = 4
+
+
+class TeamRoundStages(ChoiceEnum):
+    ACTIVE = 0
+    WAITING = 1
+    INACTIVE = 2
+    DONE = 3
