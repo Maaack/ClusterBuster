@@ -21,7 +21,7 @@ class CheckPlayerView(View):
                 return None
 
 
-class AssignPlayerView(generic.edit.FormMixin, generic.detail.BaseDetailView):
+class AssignPlayerView(generic.edit.FormMixin, View):
     class Meta:
         abstract = True
 
