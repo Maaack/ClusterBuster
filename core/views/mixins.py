@@ -43,7 +43,7 @@ class AssignPlayerView(generic.edit.FormMixin, View):
         return reverse('player_list')
 
 
-class ContextData(object):
+class ContextDataLoader(object):
     @staticmethod
     def get_game_data(game):
         """
@@ -78,9 +78,9 @@ class ContextData(object):
             data['player_team_round'] = team_round
             data['player_team_round_leader'] = round_leader
             data['is_leader'] = is_leader
-            data.update(ContextData.get_round_hints_data(team_round))
+            data.update(ContextDataLoader.get_round_hints_data(team_round))
             if is_leader:
-                data.update(ContextData.get_round_leader_word_data(team_round))
+                data.update(ContextDataLoader.get_round_leader_word_data(team_round))
         return data
 
     @staticmethod

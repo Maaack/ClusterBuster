@@ -3,9 +3,9 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.views import generic
 from django.urls import reverse
-from core.models import Game, GameRoom, Player, TeamRoundWord
+from core.models import Game, GameRoom, Player, TeamRoundWord, PlayerGuess
 from extra_views import ModelFormSetView
-from .mixins import CheckPlayerView, AssignPlayerView, ContextData
+from .mixins import CheckPlayerView, AssignPlayerView, ContextDataLoader
 
 
 # Create your views here.
@@ -74,11 +74,11 @@ class GameRoomDetail(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         data = super(GameRoomDetail, self).get_context_data(**kwargs)
-        data.update(ContextData.get_game_data(self.game))
+        data.update(ContextDataLoader.get_game_data(self.game))
         player_id = self.request.session.get('player_id')
         if player_id:
             player = get_object_or_404(Player, pk=player_id)
-            data.update(ContextData.get_player_data(player, self.game))
+            data.update(ContextDataLoader.get_player_data(player, self.game))
         return data
 
 
@@ -131,37 +131,47 @@ class PlayerJoinGame(generic.RedirectView, generic.detail.SingleObjectMixin):
         return super().get_redirect_url(*args, **kwargs)
 
 
-class TeamRoundWordFormSetView(ModelFormSetView):
+class GenericTeamRoundFormSetView(ModelFormSetView):
+    class Meta:
+        abstract = True
+
+    def __init__(self):
+        super(GenericTeamRoundFormSetView, self).__init__()
+        self.game_room = None
+        self.game = None
+        self.player = None
+        self.current_round = None
+        self.team_round = None
+
+    def dispatch(self, request, *args, **kwargs):
+        game_room_code = kwargs['slug']
+        self.game_room = get_object_or_404(GameRoom, code=game_room_code)
+        self.game = self.game_room.game
+        self.current_round = self.game.current_round
+        player_id = self.request.session.get('player_id')
+        self.player = get_object_or_404(Player, pk=player_id)
+        self.team_round = self.player.get_game_team(self.game).current_team_round
+        return super(GenericTeamRoundFormSetView, self).dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        data = super(GenericTeamRoundFormSetView, self).get_context_data(**kwargs)
+        data.update(ContextDataLoader.get_game_data(self.game))
+        data.update(ContextDataLoader.get_player_data(self.player, self.game))
+        return data
+
+    def get_success_url(self):
+        return reverse('gameroom_detail', kwargs={'slug': self.game_room.code})
+
+
+class TeamRoundWordFormSetView(GenericTeamRoundFormSetView):
     model = TeamRoundWord
     fields = ['hint']
     factory_kwargs = {
         'extra': 0,
     }
 
-    def __init__(self):
-        super(TeamRoundWordFormSetView, self).__init__()
-        self.game_room = None
-        self.game = None
-        self.player = None
-        self.team_round = None
-
     def get_queryset(self):
         return TeamRoundWord.objects.filter(team_round=self.team_round)
-
-    def dispatch(self, request, *args, **kwargs):
-        game_room_code = kwargs['slug']
-        self.game_room = get_object_or_404(GameRoom, code=game_room_code)
-        self.game = self.game_room.game
-        player_id = self.request.session.get('player_id')
-        self.player = get_object_or_404(Player, pk=player_id)
-        self.team_round = self.player.get_game_team(self.game).current_team_round
-        return super(TeamRoundWordFormSetView, self).dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        data = super(TeamRoundWordFormSetView, self).get_context_data(**kwargs)
-        data.update(ContextData.get_game_data(self.game))
-        data.update(ContextData.get_player_data(self.player, self.game))
-        return data
 
     def formset_valid(self, formset):
         response = super(TeamRoundWordFormSetView, self).formset_valid(formset)
@@ -169,6 +179,33 @@ class TeamRoundWordFormSetView(ModelFormSetView):
         self.team_round.round.advance_stage()
         return response
 
-    def get_success_url(self):
-        return reverse('gameroom_detail', kwargs={'slug': self.game_room.code})
+
+class PlayerGuessFormSetView(GenericTeamRoundFormSetView):
+    model = PlayerGuess
+    fields = ['guess']
+    factory_kwargs = {
+        'extra': 0,
+    }
+
+    def __init__(self):
+        super(PlayerGuessFormSetView, self).__init__()
+        self.all_team_round_words = None
+
+    def dispatch(self, request, *args, **kwargs):
+        result = super(PlayerGuessFormSetView, self).dispatch(request, *args, **kwargs)
+        self.all_team_round_words = TeamRoundWord.objects.filter(team_round__round=self.current_round).all()
+        for word in self.all_team_round_words:
+            PlayerGuess.objects.update_or_create(player=self.player, team_round_word=word)
+        return result
+
+    def get_queryset(self):
+        return PlayerGuess.objects.filter(player=self.player)
+
+    def formset_valid(self, formset):
+        response = super(PlayerGuessFormSetView, self).formset_valid(formset)
+        # if all teammates have submitted guesses and they agree
+        # create a team guess
+        # self.team_round.advance_stage()
+        # self.team_round.round.advance_stage()
+        return response
 

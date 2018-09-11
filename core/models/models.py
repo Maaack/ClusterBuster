@@ -341,9 +341,11 @@ class TeamRoundWord(TimeStamped):
 
 
 class PlayerGuess(TimeStamped):
+    class Meta:
+        unique_together = (('player', 'team_round_word'),)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     team_round_word = models.ForeignKey(TeamRoundWord, on_delete=models.CASCADE)
-    guess = models.ForeignKey(TeamWord, on_delete=models.CASCADE)
+    guess = models.ForeignKey(TeamWord, on_delete=models.CASCADE, null=True)
 
 
 class TeamGuess(TimeStamped):
