@@ -19,12 +19,13 @@
             </tr>
             </tbody>
         </table>
-        <form class="" method="post">
+        <form class="hints" method="post">
             {% csrf_token %}
             {{ formset.management_form }}
             {% for form in formset %}
-                <div class="">
-                    {% for field in form %}
+              <label>{{ form.instance.team_word.word }}</label>
+                <div class="hint">
+                  {% for field in form %}
                         {{ field }}
                     {% endfor %}
                 </div>

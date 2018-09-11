@@ -2,36 +2,54 @@
 
 {% block head_title %}Submit guesses{% endblock %}
 {% block content %}
+    <form class="player_guesses" method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        {% for form in formset %}
+            <div class="player_guess">
+            <label>{{ form.instance.team_round_word.hint }}</label>
+                {% for field in form %}
+                    {{ field }}
+                {% endfor %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
     {% if not is_leader %}
+        <h2>Your Team's Hints</h2>
         <table>
             <thead>
             <tr>
-                {% for hint_orders in hint_orders %}
-                    <th>{{ hint_orders.order }}</th>
+                {% for hint_order in hint_orders %}
+                    <th>{{ hint_order.order }}</th>
                 {% endfor %}
             </tr>
             </thead>
             <tbody>
             <tr>
-                {% for hint_orders in hint_orders %}
-                    <td>{{ hint_orders.hint }}</td>
+                {% for hint_order in hint_orders %}
+                    <td>{{ hint_order.hint }}</td>
                 {% endfor %}
             </tr>
             </tbody>
         </table>
-        <form class="" method="post">
-            {% csrf_token %}
-            {{ formset.management_form }}
-            {% for form in formset %}
-                <div class="">
-                    {% for field in form %}
-                        {{ field }}
-                    {% endfor %}
-                </div>
-            {% endfor %}
-            <button type="submit" class="btn btn-primary">Save</button>
-        </form>
-    {% else %}
-        <p>There is nothing here for you right now.</p>
+        <h2>Your Team's Words</h2>
+        <table>
+            <thead>
+            <tr>
+                {% for team_word in player_team.team_words.all %}
+                    <th>{{ team_word.position }}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                {% for team_word in player_team.team_words.all %}
+                    <td>{{ team_word.word.text }}</td>
+                {% endfor %}
+            </tr>
+            </tbody>
+        </table>
     {% endif %}
+    <h2>Your Opponent Team's Hints</h2>
 {% endblock %}

@@ -1,10 +1,11 @@
+from django import forms
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.views import generic
 from django.urls import reverse
-from core.models import Game, GameRoom, Player, TeamRoundWord, PlayerGuess
-from extra_views import ModelFormSetView
+from core.models import Game, GameRoom, Player, TeamRoundWord, PlayerGuess, TeamWord
+from extra_views import ModelFormSetView, InlineFormSetView
 from .mixins import CheckPlayerView, AssignPlayerView, ContextDataLoader
 
 
@@ -141,7 +142,7 @@ class GenericTeamRoundFormSetView(ModelFormSetView):
         self.game = None
         self.player = None
         self.current_round = None
-        self.team_round = None
+        self.current_team_round = None
 
     def dispatch(self, request, *args, **kwargs):
         game_room_code = kwargs['slug']
@@ -150,7 +151,7 @@ class GenericTeamRoundFormSetView(ModelFormSetView):
         self.current_round = self.game.current_round
         player_id = self.request.session.get('player_id')
         self.player = get_object_or_404(Player, pk=player_id)
-        self.team_round = self.player.get_game_team(self.game).current_team_round
+        self.current_team_round = self.player.get_game_team(self.game).current_team_round
         return super(GenericTeamRoundFormSetView, self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -171,12 +172,12 @@ class TeamRoundWordFormSetView(GenericTeamRoundFormSetView):
     }
 
     def get_queryset(self):
-        return TeamRoundWord.objects.filter(team_round=self.team_round)
+        return TeamRoundWord.objects.filter(team_round=self.current_team_round)
 
     def formset_valid(self, formset):
         response = super(TeamRoundWordFormSetView, self).formset_valid(formset)
-        self.team_round.advance_stage()
-        self.team_round.round.advance_stage()
+        self.current_team_round.advance_stage()
+        self.current_team_round.round.advance_stage()
         return response
 
 
@@ -200,6 +201,10 @@ class PlayerGuessFormSetView(GenericTeamRoundFormSetView):
 
     def get_queryset(self):
         return PlayerGuess.objects.filter(player=self.player)
+
+    def get_context_data(self, **kwargs):
+        data = super(PlayerGuessFormSetView, self).get_context_data(**kwargs)
+        return data
 
     def formset_valid(self, formset):
         response = super(PlayerGuessFormSetView, self).formset_valid(formset)
