@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.views import generic
 from django.urls import reverse
-from core.models import Game, GameRoom, Player, TeamRoundWord, PlayerGuess, TeamWord
+from core.models import Game, GameRoom, Player, TargetWord, PlayerGuess, TeamWord
 from extra_views import ModelFormSetView, InlineFormSetView
 from .mixins import CheckPlayerView, AssignPlayerView, ContextDataLoader
 
@@ -165,14 +165,14 @@ class GenericTeamRoundFormView(generic.FormView):
 
 
 class TeamRoundWordFormSetView(ModelFormSetView, GenericTeamRoundFormView):
-    model = TeamRoundWord
+    model = TargetWord
     fields = ['hint']
     factory_kwargs = {
         'extra': 0,
     }
 
     def get_queryset(self):
-        return TeamRoundWord.objects.filter(team_round=self.current_team_round)
+        return TargetWord.objects.filter(team_round=self.current_team_round)
 
     def formset_valid(self, formset):
         response = super(TeamRoundWordFormSetView, self).formset_valid(formset)
@@ -189,7 +189,7 @@ class PlayerGuessFormSetView(GenericTeamRoundFormView):
 
     def dispatch(self, request, *args, **kwargs):
         result = super(PlayerGuessFormSetView, self).dispatch(request, *args, **kwargs)
-        self.all_team_round_words = TeamRoundWord.objects.filter(team_round__round=self.current_round).all()
+        self.all_team_round_words = TargetWord.objects.filter(team_round__round=self.current_round).all()
         for word in self.all_team_round_words:
             PlayerGuess.objects.update_or_create(player=self.player, team_round_word=word)
         return result

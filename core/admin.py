@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 
-from .models import Game, GameRoom, Team, Player, Word, TeamWord, Round, TeamRound, TeamRoundWord, PlayerGuess
+from .models import Game, GameRoom, Team, Player, Word, TeamWord, Round, TeamRound, TargetWord, PlayerGuess
 
 
 class PlayerGuessAdmin(admin.ModelAdmin):
@@ -18,4 +18,4 @@ admin.site.register(Word)
 admin.site.register(TeamWord)
 admin.site.register(Round)
 admin.site.register(TeamRound)
-admin.site.register(TeamRoundWord)
+admin.site.register(TargetWord)

@@ -324,7 +324,7 @@ class TeamRound(TimeStamped):
                 self.team_round_words.create(team_word=team_word, order=order)
 
 
-class TeamRoundWord(TimeStamped):
+class TargetWord(TimeStamped):
     """Target word per round"""
     class Meta:
         unique_together = (('team_round', 'team_word'), ('team_round', 'order'),)
@@ -339,7 +339,7 @@ class LeaderHint(TimeStamped):
         unique_together = (('player', 'team_round_word'),)
 
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    team_round_word = models.ForeignKey(TeamRoundWord, on_delete=models.CASCADE)
+    team_round_word = models.ForeignKey(TargetWord, on_delete=models.CASCADE)
     hint = models.CharField(_("Hint"), max_length=64, db_index=True, default="")
 
 
@@ -348,13 +348,13 @@ class PlayerGuess(TimeStamped):
     class Meta:
         unique_together = (('player', 'team_round_word'),)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    team_round_word = models.ForeignKey(TeamRoundWord, on_delete=models.CASCADE)
+    team_round_word = models.ForeignKey(TargetWord, on_delete=models.CASCADE)
     guess = models.ForeignKey(TeamWord, on_delete=models.CASCADE, null=True)
 
 
 class TeamGuess(TimeStamped):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    team_round_word = models.ForeignKey(TeamRoundWord, on_delete=models.CASCADE)
+    team_round_word = models.ForeignKey(TargetWord, on_delete=models.CASCADE)
     guess = models.ForeignKey(TeamWord, on_delete=models.CASCADE)
 
 
