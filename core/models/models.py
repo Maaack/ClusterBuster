@@ -7,15 +7,9 @@ from django.utils.translation import ugettext_lazy as _
 
 from clusterbuster.mixins.models import TimeStamped
 from core.basics import PatternDeckBuilder, CardStack, Card
+from core.constants import GAME_TEAM_LIMIT, GAME_ROUND_LIMIT, TEAM_PLAYER_LIMIT, TEAM_WORD_LIMIT, GAME_ROOM_CODE_LENGTH
 from .managers import ActiveGameRoomManager, RandomWordManager
 from .mixins import SessionOptional, GameRoomStages, RoundStages, TeamRoundStages
-
-GAME_TEAM_LIMIT = 2
-GAME_ROUND_LIMIT = 8
-TEAM_PLAYER_LIMIT = 4
-TEAM_WORD_LIMIT = 4
-POSITION_COUNT = 3
-GAME_ROOM_CODE_LENGTH = 4
 
 
 # Create your models here.
@@ -331,6 +325,7 @@ class TeamRound(TimeStamped):
 
 
 class TeamRoundWord(TimeStamped):
+    """Target word per round"""
     class Meta:
         unique_together = (('team_round', 'team_word'), ('team_round', 'order'),)
 
@@ -341,6 +336,7 @@ class TeamRoundWord(TimeStamped):
 
 
 class PlayerGuess(TimeStamped):
+    """Relates the target word with the player's guess"""
     class Meta:
         unique_together = (('player', 'team_round_word'),)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)

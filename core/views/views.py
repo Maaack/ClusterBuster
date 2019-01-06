@@ -132,12 +132,12 @@ class PlayerJoinGame(generic.RedirectView, generic.detail.SingleObjectMixin):
         return super().get_redirect_url(*args, **kwargs)
 
 
-class GenericTeamRoundFormSetView(ModelFormSetView):
+class GenericTeamRoundFormView(generic.FormView):
     class Meta:
         abstract = True
 
     def __init__(self):
-        super(GenericTeamRoundFormSetView, self).__init__()
+        super(GenericTeamRoundFormView, self).__init__()
         self.game_room = None
         self.game = None
         self.player = None
@@ -152,10 +152,10 @@ class GenericTeamRoundFormSetView(ModelFormSetView):
         player_id = self.request.session.get('player_id')
         self.player = get_object_or_404(Player, pk=player_id)
         self.current_team_round = self.player.get_game_team(self.game).current_team_round
-        return super(GenericTeamRoundFormSetView, self).dispatch(request, *args, **kwargs)
+        return super(GenericTeamRoundFormView, self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        data = super(GenericTeamRoundFormSetView, self).get_context_data(**kwargs)
+        data = super(GenericTeamRoundFormView, self).get_context_data(**kwargs)
         data.update(ContextDataLoader.get_game_data(self.game))
         data.update(ContextDataLoader.get_player_data(self.player, self.game))
         return data
@@ -164,7 +164,7 @@ class GenericTeamRoundFormSetView(ModelFormSetView):
         return reverse('gameroom_detail', kwargs={'slug': self.game_room.code})
 
 
-class TeamRoundWordFormSetView(GenericTeamRoundFormSetView):
+class TeamRoundWordFormSetView(ModelFormSetView, GenericTeamRoundFormView):
     model = TeamRoundWord
     fields = ['hint']
     factory_kwargs = {
@@ -181,12 +181,7 @@ class TeamRoundWordFormSetView(GenericTeamRoundFormSetView):
         return response
 
 
-class PlayerGuessFormSetView(GenericTeamRoundFormSetView):
-    model = PlayerGuess
-    fields = ['guess']
-    factory_kwargs = {
-        'extra': 0,
-    }
+class PlayerGuessFormSetView(GenericTeamRoundFormView):
 
     def __init__(self):
         super(PlayerGuessFormSetView, self).__init__()
@@ -202,15 +197,19 @@ class PlayerGuessFormSetView(GenericTeamRoundFormSetView):
     def get_queryset(self):
         return PlayerGuess.objects.filter(player=self.player)
 
+    def get_guess(self):
+        return PlayerGuess.objects.filter(player=self.player)
+
     def get_context_data(self, **kwargs):
         data = super(PlayerGuessFormSetView, self).get_context_data(**kwargs)
         return data
 
     def formset_valid(self, formset):
-        response = super(PlayerGuessFormSetView, self).formset_valid(formset)
+        pass
+        # response = super(PlayerGuessFormSetView, self).formset_valid(formset)
         # if all teammates have submitted guesses and they agree
         # create a team guess
         # self.team_round.advance_stage()
         # self.team_round.round.advance_stage()
-        return response
+        # return response
 
