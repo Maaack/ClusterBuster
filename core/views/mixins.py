@@ -90,10 +90,10 @@ class ContextDataLoader(object):
         :return: dict
         """
         data = dict()
-        team_round_words = team_round.team_round_words.order_by('order').all()
+        target_words = team_round.target_words.order_by('order').all()
         data['hint_orders'] = [
-            {'hint': team_round_word.hint, 'order': team_round_word.order + 1} for
-            team_round_word in team_round_words]
+            {'hint': target_word.leader_hint.hint, 'order': target_word.order + 1} for
+            target_word in target_words]
         return data
 
     @staticmethod
@@ -103,8 +103,8 @@ class ContextDataLoader(object):
         :return: dict
         """
         data = dict()
-        team_round_words = team_round.team_round_words.all()
+        target_words = team_round.target_words.all()
         data['words'] = [
-            {'text': team_round_word.team_word.word.text, 'position': team_round_word.team_word.position} for
-            team_round_word in team_round_words]
+            {'text': target_word.team_word.word.text, 'position': target_word.team_word.position} for
+            target_word in target_words]
         return data

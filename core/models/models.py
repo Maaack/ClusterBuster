@@ -186,8 +186,8 @@ class Team(TimeStamped):
     def get_drawn_cards(self):
         cards = CardStack()
         for team_round in self.team_rounds.order_by('round__number').all():
-            team_round_words = team_round.team_round_words.order_by('order').all()
-            card_values = [team_round_word.team_word.position for team_round_word in team_round_words]
+            target_words = team_round.target_words.order_by('order').all()
+            card_values = [target_word.team_word.position for target_word in target_words]
             if len(card_values) > 0:
                 cards.append(Card(card_values))
         return cards
@@ -277,7 +277,7 @@ class TeamRound(TimeStamped):
         if self.leader is None:
             self.set_leader()
         super(TeamRound, self).save(*args, **kwargs)
-        self.set_team_round_words()
+        self.set_target_words()
         self.set_as_current_round()
 
     def get_current_stage_name(self):
@@ -316,12 +316,12 @@ class TeamRound(TimeStamped):
         offset = self.round.number % player_count
         self.leader = self.team.players.all()[offset]
 
-    def set_team_round_words(self):
-        if self.team_round_words.count() == 0:
+    def set_target_words(self):
+        if self.target_words.count() == 0:
             card = self.team.draw_card()
             for order, position in enumerate(card.value):
                 team_word = self.team.team_words.get(position=position)
-                self.team_round_words.create(team_word=team_word, order=order)
+                self.target_words.create(team_word=team_word, order=order)
 
 
 class TargetWord(TimeStamped):
@@ -329,32 +329,32 @@ class TargetWord(TimeStamped):
     class Meta:
         unique_together = (('team_round', 'team_word'), ('team_round', 'order'),)
 
-    team_round = models.ForeignKey(TeamRound, on_delete=models.CASCADE, related_name='team_round_words')
-    team_word = models.ForeignKey(TeamWord, on_delete=models.CASCADE, related_name='team_round_words')
+    team_round = models.ForeignKey(TeamRound, on_delete=models.CASCADE, related_name='target_words')
+    team_word = models.ForeignKey(TeamWord, on_delete=models.CASCADE, related_name='target_words')
     order = models.PositiveSmallIntegerField(_("Order"), db_index=True)
 
 
 class LeaderHint(TimeStamped):
     class Meta:
-        unique_together = (('player', 'team_round_word'),)
+        unique_together = (('player', 'target_word'),)
 
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    team_round_word = models.ForeignKey(TargetWord, on_delete=models.CASCADE)
+    target_word = models.OneToOneField(TargetWord, on_delete=models.CASCADE, related_name='leader_hint')
     hint = models.CharField(_("Hint"), max_length=64, db_index=True, default="")
 
 
 class PlayerGuess(TimeStamped):
     """Relates the target word with the player's guess"""
     class Meta:
-        unique_together = (('player', 'team_round_word'),)
+        unique_together = (('player', 'target_word'),)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    team_round_word = models.ForeignKey(TargetWord, on_delete=models.CASCADE)
+    target_word = models.ForeignKey(TargetWord, on_delete=models.CASCADE)
     guess = models.ForeignKey(TeamWord, on_delete=models.CASCADE, null=True)
 
 
 class TeamGuess(TimeStamped):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    team_round_word = models.ForeignKey(TargetWord, on_delete=models.CASCADE)
+    target_word = models.ForeignKey(TargetWord, on_delete=models.CASCADE)
     guess = models.ForeignKey(TeamWord, on_delete=models.CASCADE)
 
 

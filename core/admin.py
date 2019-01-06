@@ -6,7 +6,7 @@ from .models import Game, GameRoom, Team, Player, Word, TeamWord, Round, TeamRou
 
 
 class PlayerGuessAdmin(admin.ModelAdmin):
-    list_display = ('player', 'team_round_word', 'guess')
+    list_display = ('player', 'target_word', 'guess')
 
 
 admin.site.register(Game)

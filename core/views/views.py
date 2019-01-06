@@ -185,13 +185,13 @@ class PlayerGuessFormSetView(GenericTeamRoundFormView):
 
     def __init__(self):
         super(PlayerGuessFormSetView, self).__init__()
-        self.all_team_round_words = None
+        self.all_target_words = None
 
     def dispatch(self, request, *args, **kwargs):
         result = super(PlayerGuessFormSetView, self).dispatch(request, *args, **kwargs)
-        self.all_team_round_words = TargetWord.objects.filter(team_round__round=self.current_round).all()
-        for word in self.all_team_round_words:
-            PlayerGuess.objects.update_or_create(player=self.player, team_round_word=word)
+        self.all_target_words = TargetWord.objects.filter(team_round__round=self.current_round).all()
+        for word in self.all_target_words:
+            PlayerGuess.objects.update_or_create(player=self.player, target_word=word)
         return result
 
     def get_queryset(self):
