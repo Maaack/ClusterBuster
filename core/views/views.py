@@ -1,11 +1,11 @@
-from django import forms
-from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.template import loader
-from django.views import generic
 from django.urls import reverse
-from core.models import Game, GameRoom, Player, TargetWord, PlayerGuess, TeamWord
-from extra_views import ModelFormSetView, InlineFormSetView
+from django.views import generic
+from extra_views import ModelFormSetView
+
+from core.models import Game, GameRoom, Player, TargetWord, LeaderHint, PlayerGuess
 from .mixins import CheckPlayerView, AssignPlayerView, ContextDataLoader
 
 
@@ -164,18 +164,18 @@ class GenericTeamRoundFormView(generic.FormView):
         return reverse('gameroom_detail', kwargs={'slug': self.game_room.code})
 
 
-class TeamRoundWordFormSetView(ModelFormSetView, GenericTeamRoundFormView):
-    model = TargetWord
+class LeaderHintFormSetView(ModelFormSetView, GenericTeamRoundFormView):
+    model = LeaderHint
     fields = ['hint']
     factory_kwargs = {
         'extra': 0,
     }
 
     def get_queryset(self):
-        return TargetWord.objects.filter(team_round=self.current_team_round)
+        return LeaderHint.objects.filter(target_word__team_round=self.current_team_round)
 
     def formset_valid(self, formset):
-        response = super(TeamRoundWordFormSetView, self).formset_valid(formset)
+        response = super(LeaderHintFormSetView, self).formset_valid(formset)
         self.current_team_round.advance_stage()
         self.current_team_round.round.advance_stage()
         return response

@@ -2,20 +2,21 @@ from django.contrib import admin
 
 # Register your models here.
 
-from .models import Game, GameRoom, Team, Player, Word, TeamWord, Round, TeamRound, TargetWord, PlayerGuess
+from . import models
 
 
 class PlayerGuessAdmin(admin.ModelAdmin):
     list_display = ('player', 'target_word', 'guess')
 
 
-admin.site.register(Game)
-admin.site.register(GameRoom)
-admin.site.register(Team)
-admin.site.register(Player)
-admin.site.register(PlayerGuess, PlayerGuessAdmin)
-admin.site.register(Word)
-admin.site.register(TeamWord)
-admin.site.register(Round)
-admin.site.register(TeamRound)
-admin.site.register(TargetWord)
+admin.site.register(models.Game)
+admin.site.register(models.GameRoom)
+admin.site.register(models.Team)
+admin.site.register(models.Player)
+admin.site.register(models.PlayerGuess, PlayerGuessAdmin)
+admin.site.register(models.Word)
+admin.site.register(models.TeamWord)
+admin.site.register(models.Round)
+admin.site.register(models.TeamRound)
+admin.site.register(models.TargetWord)
+admin.site.register(models.LeaderHint)

@@ -91,8 +91,9 @@ class ContextDataLoader(object):
         """
         data = dict()
         target_words = team_round.target_words.order_by('order').all()
+
         data['hint_orders'] = [
-            {'hint': target_word.leader_hint.hint, 'order': target_word.order + 1} for
+            {'hint': target_word.get_hint_text(), 'order': target_word.order + 1} for
             target_word in target_words]
         return data
 

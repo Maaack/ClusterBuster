@@ -333,12 +333,27 @@ class TargetWord(TimeStamped):
     team_word = models.ForeignKey(TeamWord, on_delete=models.CASCADE, related_name='target_words')
     order = models.PositiveSmallIntegerField(_("Order"), db_index=True)
 
+    def save(self, *args, **kwargs):
+        super(TargetWord, self).save(*args, **kwargs)
+        self.get_leader_hint()
+
+    def get_leader_hint(self):
+        try:
+            return self.leader_hint
+        except LeaderHint.DoesNotExist:
+            self.leader_hint = LeaderHint(target_word=self, leader=self.team_round.leader)
+            self.leader_hint.save()
+            return self.leader_hint
+
+    def get_hint_text(self):
+        return self.get_leader_hint().hint
+
 
 class LeaderHint(TimeStamped):
     class Meta:
-        unique_together = (('player', 'target_word'),)
+        unique_together = (('leader', 'target_word'),)
 
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    leader = models.ForeignKey(Player, on_delete=models.CASCADE)
     target_word = models.OneToOneField(TargetWord, on_delete=models.CASCADE, related_name='leader_hint')
     hint = models.CharField(_("Hint"), max_length=64, db_index=True, default="")
 
