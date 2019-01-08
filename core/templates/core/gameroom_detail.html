@@ -3,15 +3,14 @@
 {% block head_title %}Room {{ gameroom.code }}{% endblock %}
 {% block content %}
     <h1>Room {{ gameroom.code }}</h1>
+    <div id="round-status">
+        <div>Round: <span id="round-number">{{ round.number }}</span></div>
+        <div>Stage: <span id="round-stage">{{ round.get_current_stage_name }}</span></div>
+    </div>
     {% if player_in_game %}
         <div id="active-player-content">{% block active_player_content %}
             <div id="player-game-status">You are playing!</div>
-            {% if is_leader %}
-                <div id="round-leader-status">You are the round leader!</div>
-            {% else %}
-                <div id="round-leader-status">{{ player_team_round_leader.name }} is the round leader!</div>
-            {% endif %}
-            <div id="round-status">Currently in the <span id="round-stage">{{ round.get_current_stage_name }}</span> stage.</div>
+            <div id="round-leader-status">{% if is_leader %}You are{% else %}{{ player_team_round_leader.name }} is{% endif %} the round leader!</div>
             <div id="round-instructions">
                 {% if round.is_composing %}
                     <h2>Hints</h2>
