@@ -2,6 +2,7 @@
 
 {% block head_title %}Submit guesses{% endblock %}
 {% block content %}
+    {% if not is_leader %}
     <form class="player_guesses" method="post">
         {% csrf_token %}
         {{ formset.management_form }}
@@ -15,7 +16,7 @@
         {% endfor %}
         <button type="submit" class="btn btn-primary">Save</button>
     </form>
-    {% if not is_leader %}
+        {% if is_player_team %}
         <h2>Your Team's Words</h2>
         <table>
             <thead>
@@ -33,6 +34,6 @@
             </tr>
             </tbody>
         </table>
+        {% endif %}
     {% endif %}
-    <h2>Your Opponent Team's Hints</h2>
 {% endblock %}

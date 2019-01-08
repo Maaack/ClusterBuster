@@ -200,6 +200,11 @@ class PlayerGuessFormSetView(ModelFormSetView, GenericTeamRoundFormView):
         super(PlayerGuessFormSetView, self).__init__()
         self.target_words = None
 
+    def get_context_data(self, **kwargs):
+        data = super(PlayerGuessFormSetView, self).get_context_data(**kwargs)
+        data['is_player_team'] = self.current_team_round.get_non_target_words()
+        return data
+
     def dispatch(self, request, *args, **kwargs):
         result = super(PlayerGuessFormSetView, self).dispatch(request, *args, **kwargs)
         self.target_words = TargetWord.objects.filter(team_round=self.current_team_round).all()
