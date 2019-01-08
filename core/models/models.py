@@ -325,6 +325,9 @@ class TeamRound(TimeStamped):
     def is_leader(self, player):
         return self.leader == player
 
+    def get_guessing_players(self):
+        return self.team.players.exclude(id=self.leader.id)
+
     def set_leader(self):
         player_count = self.team.players.count()
         if player_count == 0:
@@ -372,6 +375,9 @@ class TargetWord(TimeStamped):
     def get_hint_text(self):
         return self.get_leader_hint().hint
 
+    def get_valid_guesses(self):
+        return self.player_guesses.exclude(guess=None)
+
 
 class LeaderHint(TimeStamped):
     class Meta:
@@ -389,8 +395,8 @@ class PlayerGuess(TimeStamped):
     """Relates the target word with the player's guess"""
     class Meta:
         unique_together = (('player', 'target_word'),)
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    target_word = models.ForeignKey(TargetWord, on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player_guesses')
+    target_word = models.ForeignKey(TargetWord, on_delete=models.CASCADE, related_name='player_guesses')
     guess = models.ForeignKey(TeamWord, on_delete=models.CASCADE, null=True)
 
 
