@@ -13,6 +13,7 @@ urlpatterns = [
     path('room/<slug:slug>/next_round', views.GameNextRound.as_view(), name='game_next_round'),
     path('room/<slug:slug>/hints', views.LeaderHintFormSetView.as_view(), name='round_hints'),
     path('room/<slug:slug>/guesses', views.PlayerGuessFormSetView.as_view(), name='round_guesses'),
+    path('room/<slug:slug>/opponent_guesses', views.OpponentGuessFormSetView.as_view(), name='round_opponent_guesses'),
     path('player/create', views.PlayerCreate.as_view(), name='player_create'),
     path('player/<int:pk>', views.PlayerDetail.as_view(), name='player_detail'),
     path('player/<int:pk>/update', views.PlayerUpdate.as_view(), name='player_update'),

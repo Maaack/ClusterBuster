@@ -78,23 +78,27 @@ class ContextDataLoader(object):
             data['player_team_round'] = team_round
             data['player_team_round_leader'] = round_leader
             data['is_leader'] = is_leader
-            data.update(ContextDataLoader.get_round_hints_data(team_round))
+            data.update(ContextDataLoader.get_round_hints_data(game.teams.all(), team))
             if is_leader:
                 data.update(ContextDataLoader.get_round_leader_word_data(team_round))
         return data
 
     @staticmethod
-    def get_round_hints_data(team_round):
+    def get_round_hints_data(teams, player_team):
         """
         :param team_round: TeamRound
         :return: dict
         """
         data = dict()
-        target_words = team_round.target_words.order_by('order').all()
-
-        data['hint_orders'] = [
-            {'hint': target_word.get_hint_text(), 'order': target_word.order + 1} for
-            target_word in target_words]
+        for team in teams:
+            target_words = team.current_team_round.target_words.order_by('order').all()
+            target_words_dict = [
+                {'hint': target_word.get_hint_text(), 'order': target_word.order + 1} for
+                target_word in target_words]
+            if team == player_team:
+                data['team_hints'] = target_words_dict
+            else:
+                data['opponent_team_hints'] = target_words_dict
         return data
 
     @staticmethod

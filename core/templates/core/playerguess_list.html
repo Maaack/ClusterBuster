@@ -6,9 +6,9 @@
         {% csrf_token %}
         {{ formset.management_form }}
         {% for form in formset %}
-            <div class="player_guess">
-            <label>{{ form.instance.target_word.leader_hint.hint }}</label>
-                {% for field in form %}
+          <label for="id_form-{{ forloop.counter0 }}-guess">{{ form.instance }}</label>
+            <div class="hint">
+              {% for field in form %}
                     {{ field }}
                 {% endfor %}
             </div>
@@ -16,23 +16,6 @@
         <button type="submit" class="btn btn-primary">Save</button>
     </form>
     {% if not is_leader %}
-        <h2>Your Team's Hints</h2>
-        <table>
-            <thead>
-            <tr>
-                {% for hint_order in hint_orders %}
-                    <th>{{ hint_order.order }}</th>
-                {% endfor %}
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                {% for hint_order in hint_orders %}
-                    <td>{{ hint_order.hint }}</td>
-                {% endfor %}
-            </tr>
-            </tbody>
-        </table>
         <h2>Your Team's Words</h2>
         <table>
             <thead>

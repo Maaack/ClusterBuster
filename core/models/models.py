@@ -19,13 +19,19 @@ class Player(TimeStamped, SessionOptional):
         verbose_name_plural = _("Players")
         ordering = ["name", "-created"]
 
-    name = models.CharField(_("Name"), max_length=24)
+    name = models.CharField(_("Name"), max_length=32)
 
     def __str__(self):
         return str(self.name)
 
-    def get_game_team(self, game):
+    def get_team(self, game):
         return Team.objects.get(game=game, players=self)
+
+    def get_opponent_teams(self, game):
+        return Team.objects.exclude(players=self).filter(game=game).all()
+
+    def get_opponent_team(self, game):
+        return self.get_opponent_teams(game)[0]
 
 
 class Word(TimeStamped):
@@ -34,7 +40,7 @@ class Word(TimeStamped):
         verbose_name_plural = _("Words")
         ordering = ["text", "-created"]
 
-    text = models.CharField(_("Text"), max_length=16, db_index=True)
+    text = models.CharField(_("Text"), max_length=32, db_index=True)
     objects = RandomWordManager()
 
     def __str__(self):
@@ -148,10 +154,14 @@ class Team(TimeStamped):
         verbose_name_plural = _("Teams")
         ordering = ["-created"]
 
+    name = models.CharField(_('Team Name'), max_length=64, default="")
     players = models.ManyToManyField(Player, blank=True)
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='teams')
     current_team_round = models.ForeignKey('TeamRound', on_delete=models.SET_NULL, related_name="+", null=True,
                                            blank=True)
+
+    def __str__(self):
+        return str(self.name)
 
     def save(self, *args, **kwargs):
         super(Team, self).save(*args, **kwargs)
@@ -205,7 +215,7 @@ class Round(TimeStamped):
                                              choices=RoundStages.choices())
 
     def __str__(self):
-        return "Round " + str(self.number)
+        return str(self.number)
 
     def save(self, *args, **kwargs):
         super(Round, self).save(*args, **kwargs)
@@ -260,7 +270,10 @@ class TeamWord(TimeStamped):
     position = models.PositiveSmallIntegerField(_("Position"), db_index=True)
 
     def __str__(self):
-        return str(self.word)
+        return str(self.position)
+
+    def get_text(self):
+        return self.word.text
 
 
 class TeamRound(TimeStamped):
@@ -272,6 +285,9 @@ class TeamRound(TimeStamped):
     leader = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='team_rounds', null=True, blank=True)
     stage = models.PositiveSmallIntegerField(_("Stage"), default=TeamRoundStages.ACTIVE.value,
                                              choices=TeamRoundStages.choices())
+
+    def __str__(self):
+        return '(Team:'+str(self.team) + ' ; Round:'+str(self.round)+')'
 
     def save(self, *args, **kwargs):
         if self.leader is None:
@@ -323,6 +339,11 @@ class TeamRound(TimeStamped):
                 team_word = self.team.team_words.get(position=position)
                 self.target_words.create(team_word=team_word, order=order)
 
+    def get_non_target_words(self):
+        return self.team.team_words.exclude(
+            target_words__in=self.target_words.all()
+        ).all()
+
 
 class TargetWord(TimeStamped):
     """Target word per round"""
@@ -332,6 +353,9 @@ class TargetWord(TimeStamped):
     team_round = models.ForeignKey(TeamRound, on_delete=models.CASCADE, related_name='target_words')
     team_word = models.ForeignKey(TeamWord, on_delete=models.CASCADE, related_name='target_words')
     order = models.PositiveSmallIntegerField(_("Order"), db_index=True)
+
+    def __str__(self):
+        return '(TeamRound:'+str(self.team_round) + ' ; TeamWord:'+str(self.team_word)+' ; Order:'+str(self.order)+')'
 
     def save(self, *args, **kwargs):
         super(TargetWord, self).save(*args, **kwargs)
@@ -356,6 +380,9 @@ class LeaderHint(TimeStamped):
     leader = models.ForeignKey(Player, on_delete=models.CASCADE)
     target_word = models.OneToOneField(TargetWord, on_delete=models.CASCADE, related_name='leader_hint')
     hint = models.CharField(_("Hint"), max_length=64, db_index=True, default="")
+
+    def __str__(self):
+        return '(TargetWord:'+str(self.target_word) + ' ; Hint:'+str(self.hint)+')'
 
 
 class PlayerGuess(TimeStamped):

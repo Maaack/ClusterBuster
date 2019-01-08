@@ -20,10 +20,27 @@
                         <p>The leader is coming up with hints...</p>
                     {% endif %}
                 {% elif round.is_guessing %}
-                        <p>Hints are in!</p>
-                    {% for pair in hint_orders %}
-                        {{ pair.order }} - {{ pair.hint }}
+                    <h2>Your Team's Hints</h2>
+                    <ol>
+                    {% for team_hint in team_hints %}
+                        <li>{{ team_hint.hint }}
+                        </li>
                     {% endfor %}
+                    </ol>
+                    {% if not is_leader %}
+                        <a href="{% url 'round_guesses' gameroom.code %}">Guess on your team's hints!</a>
+                    {% endif %}
+                    <h2>Your Opponent Team's Hints</h2>
+                    <ol>
+                    {% for team_hint in opponent_team_hints %}
+                        <li>{{ team_hint.hint }}
+                        </li>
+                    {% endfor %}
+
+                    </ol>
+                    {% if not is_leader %}
+                        <a href="{% url 'round_opponent_guesses' gameroom.code %}">Guess on your opponent team's hints!</a>
+                    {% endif %}
                 {% endif %}
             </div>
             <h2>Words</h2>
