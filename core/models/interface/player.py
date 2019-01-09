@@ -4,6 +4,13 @@ from core.models import Game, Player, Team
 from core.constants import GAME_TEAM_LIMIT, GAME_ROUND_LIMIT, TEAM_PLAYER_LIMIT, TEAM_WORD_LIMIT, GAME_ROOM_CODE_LENGTH
 
 
+class PlayerInterface(object):
+    def __init__(self, player: Player):
+        if not isinstance(player, Player):
+            raise ValueError('`player` is not of type Player')
+        self.player = player
+
+
 class PlayerGameInterface(object):
     def __init__(self, player: Player, game: Game):
         if not isinstance(player, Player):
@@ -17,7 +24,7 @@ class PlayerGameInterface(object):
         return self.game.teams.annotate(num_players=Count('players')).order_by('num_players')
 
     def __get_team_with_fewest_players(self):
-        return self.__get_teams_with_player_counts()[0]
+        return self.__get_teams_with_player_counts().first()
 
     def has_player(self):
         return self.game.players.filter(pk=self.player.pk).exists()
@@ -45,7 +52,7 @@ class PlayerGameInterface(object):
         if self.can_join():
             self.game.players.add(self.player)
 
-            if team is not None:
+            if team is None:
                 team = self.get_default_team()
             return self.join_team(team)
         return False

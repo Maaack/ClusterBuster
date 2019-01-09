@@ -6,6 +6,7 @@ from django.views import generic
 from extra_views import ModelFormSetView
 
 from core.models import Game, GameRoom, Player, TargetWord, LeaderHint, PlayerGuess
+from core.models.interface import PlayerGameInterface
 from .mixins import CheckPlayerView, AssignPlayerView, ContextDataLoader
 from .forms import HintForm, GuessForm, OpponentGuessForm
 
@@ -128,7 +129,8 @@ class PlayerJoinGame(generic.RedirectView, generic.detail.SingleObjectMixin):
         if player_id:
             player = get_object_or_404(Player, pk=player_id)
             game = get_object_or_404(Game, gameroom__code=kwargs['slug'])
-            game.join(player)
+            player_game_interface = PlayerGameInterface(player, game)
+            player_game_interface.join()
 
         return super().get_redirect_url(*args, **kwargs)
 

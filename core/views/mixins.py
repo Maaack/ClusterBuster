@@ -1,6 +1,7 @@
 from django.views import generic, View
 from django.urls import reverse
 from core.models import Player, Game, TeamRound
+from core.models.interface import PlayerGameInterface
 
 
 class CheckPlayerView(View):
@@ -62,10 +63,11 @@ class ContextDataLoader(object):
         :param game: Game
         :return: dict
         """
+        player_game_interface = PlayerGameInterface(player, game)
         data = dict()
         data['player'] = player
-        has_player = game.has_player(player)
-        team = game.get_player_team(player)
+        has_player = player_game_interface.has_player()
+        team = player_game_interface.get_team()
         data['player_in_game'] = has_player
         data['player_team'] = team
         data['player_team_round'] = None

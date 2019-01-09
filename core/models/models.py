@@ -77,27 +77,6 @@ class Game(TimeStamped, SessionOptional):
             has_room = True
         return has_room
 
-    def join(self, player):
-        if type(player) is Player and not self.has_player(player):
-            self.players.add(player)
-            return self.get_team_with_fewest_players().join(player)
-        return False
-
-    def get_team_with_fewest_players(self):
-        return self.get_teams_with_player_counts()[0]
-
-    def get_teams_with_player_counts(self):
-        self.create_teams()
-        return self.teams.annotate(num_players=Count('players')).order_by('num_players')
-
-    def has_player(self, player):
-        return self.players.filter(pk=player.pk).exists()
-
-    def get_player_team(self, player):
-        if type(player) is Player and self.has_player(player):
-            return self.teams.filter(players=player).first()
-        return None
-
     def next_round(self):
         if not self.is_last_round():
             self.rounds.create(number=self.get_current_round_number() + 1)
@@ -161,23 +140,14 @@ class Team(TimeStamped):
                                            blank=True)
 
     def __str__(self):
-        return str(self.name)
+        if len(self.name) > 0:
+            return str(self.name)
+        else:
+            return '(Game:'+str(self.game)+' ; Players:'+str(self.players)+')'
 
     def save(self, *args, **kwargs):
         super(Team, self).save(*args, **kwargs)
         self.set_words()
-
-    def join(self, player):
-        if type(player) is Player and not self.has_max_players():
-            self.players.add(player)
-            return True
-        return False
-
-    def has_player(self, player):
-        return self.players.filter(pk=player.pk).exists()
-
-    def has_max_players(self):
-        return self.players.count() >= TEAM_PLAYER_LIMIT
 
     def set_words(self):
         word_count = self.team_words.count()
