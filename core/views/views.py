@@ -6,7 +6,7 @@ from django.views import generic
 from extra_views import ModelFormSetView
 
 from core.models import Game, GameRoom, Player, TargetWord, LeaderHint, PlayerGuess
-from core.models.interface import PlayerGameInterface
+from core.models.interface import PlayerInterface, GameInterface
 from .mixins import CheckPlayerView, AssignPlayerView, ContextDataLoader
 from .forms import HintForm, GuessForm, OpponentGuessForm
 
@@ -24,7 +24,9 @@ class GameCreate(generic.CreateView):
     def form_valid(self, form):
         self.request.session.save()
         form.instance.session_id = self.request.session.session_key
-        return super(GameCreate, self).form_valid(form)
+        response = super(GameCreate, self).form_valid(form)
+        GameInterface(self.object).setup()
+        return response
 
     def get_success_url(self):
         return reverse('game_detail', kwargs={'pk': self.object.pk})
@@ -43,9 +45,8 @@ class GameNextRound(generic.RedirectView, generic.detail.SingleObjectMixin):
     slug_field = 'code'
 
     def get_redirect_url(self, *args, **kwargs):
-        game = get_object_or_404(Game, gameroom__code=kwargs['slug'])
-        game.next_round()
-
+        game = get_object_or_404(Game, room__code=kwargs['slug'])
+        GameInterface(game).next_round()
         return super().get_redirect_url(*args, **kwargs)
 
 
@@ -128,9 +129,9 @@ class PlayerJoinGame(generic.RedirectView, generic.detail.SingleObjectMixin):
 
         if player_id:
             player = get_object_or_404(Player, pk=player_id)
-            game = get_object_or_404(Game, gameroom__code=kwargs['slug'])
-            player_game_interface = PlayerGameInterface(player, game)
-            player_game_interface.join()
+            game = get_object_or_404(Game, room__code=kwargs['slug'])
+            player_interface = PlayerInterface(player)
+            player_interface.join_game(game)
 
         return super().get_redirect_url(*args, **kwargs)
 
@@ -143,6 +144,7 @@ class GenericTeamRoundFormView(generic.FormView):
         super(GenericTeamRoundFormView, self).__init__()
         self.game_room = None
         self.game = None
+        self.team = None
         self.player = None
         self.current_round = None
         self.current_team_round = None
@@ -155,8 +157,11 @@ class GenericTeamRoundFormView(generic.FormView):
         self.current_round = self.game.current_round
         player_id = self.request.session.get('player_id')
         self.player = get_object_or_404(Player, pk=player_id)
-        self.current_team_round = self.player.get_team(self.game).current_team_round
-        self.current_opponent_team_round = self.player.get_opponent_team(self.game).current_team_round
+        player_interface = PlayerInterface(self.player)
+        self.team = player_interface.get_team_by_game(self.game)
+        opponent_team = player_interface.get_opponent_team_by_game(self.game)
+        self.current_team_round = self.team.current_team_round
+        self.current_opponent_team_round = opponent_team.current_team_round
         return super(GenericTeamRoundFormView, self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

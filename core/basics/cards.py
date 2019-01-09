@@ -19,6 +19,9 @@ class Card(object):
     def __str__(self):
         return "Card " + str(self.id)
 
+    def __repr__(self):
+        return 'Card({!r})'.format(self.value)
+
 
 class CardStack(ObjectList):
     def __init__(self):

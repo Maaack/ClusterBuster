@@ -3,7 +3,7 @@
 {% block head_title %}Game {{ game.pk }}{% endblock %}
 {% block content %}
 <h1>Game {{ game.pk }}</h1>
-<a href="{% url 'gameroom_detail' game.gameroom.code %}">Room {{ game.gameroom.code }}</a>
+<a href="{% url 'gameroom_detail' game.room.code %}">Room {{ game.room.code }}</a>
 
 <h3>Players</h3>
 <ul>

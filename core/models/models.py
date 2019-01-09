@@ -24,15 +24,6 @@ class Player(TimeStamped, SessionOptional):
     def __str__(self):
         return str(self.name)
 
-    def get_team(self, game):
-        return Team.objects.get(game=game, players=self)
-
-    def get_opponent_teams(self, game):
-        return Team.objects.exclude(players=self).filter(game=game).all()
-
-    def get_opponent_team(self, game):
-        return self.get_opponent_teams(game)[0]
-
 
 class Word(TimeStamped):
     class Meta:
@@ -56,40 +47,6 @@ class Game(TimeStamped, SessionOptional):
     players = models.ManyToManyField(Player, blank=True)
     current_round = models.ForeignKey('Round', on_delete=models.SET_NULL, related_name="+", null=True, blank=True)
 
-    def save(self, *args, **kwargs):
-        super(Game, self).save(*args, **kwargs)
-        self.create_teams()
-        self.create_room()
-
-    def create_teams(self, team_count=GAME_TEAM_LIMIT):
-        current_team_count = self.teams.count()
-        team_slots = GAME_TEAM_LIMIT - current_team_count
-        if team_slots > 0:
-            new_teams = min(team_slots, team_count)
-            for team_number in range(new_teams):
-                self.teams.create()
-
-    def create_room(self):
-        try:
-            has_room = self.gameroom is not None
-        except GameRoom.DoesNotExist:
-            GameRoom(game=self).save()
-            has_room = True
-        return has_room
-
-    def next_round(self):
-        if not self.is_last_round():
-            self.rounds.create(number=self.get_current_round_number() + 1)
-
-    def get_current_round_number(self):
-        if self.current_round:
-            return self.current_round.number
-        else:
-            return 0
-
-    def is_last_round(self):
-        return self.get_current_round_number() >= GAME_ROUND_LIMIT
-
 
 class GameRoom(TimeStamped):
     class Meta:
@@ -97,7 +54,7 @@ class GameRoom(TimeStamped):
         verbose_name_plural = _("Game Rooms")
         ordering = ["-created"]
 
-    game = models.OneToOneField(Game, on_delete=models.CASCADE)
+    game = models.OneToOneField(Game, on_delete=models.CASCADE, related_name='room')
     code = models.SlugField(_("Code"), max_length=16)
     stage = models.PositiveSmallIntegerField(_("Stage"), default=GameRoomStages.OPEN.value,
                                              choices=GameRoomStages.choices())
