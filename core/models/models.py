@@ -217,6 +217,11 @@ class Round(TimeStamped):
     def __str__(self):
         return str(self.number)
 
+    def __advance_stage(self):
+        if not self.is_done():
+            self.stage += 1
+            self.save()
+
     def save(self, *args, **kwargs):
         super(Round, self).save(*args, **kwargs)
         self.set_team_rounds()
@@ -247,11 +252,6 @@ class Round(TimeStamped):
         done_teams_count = game_teams.filter(current_team_round__stage=TeamRoundStages.DONE.value).count()
         if all_teams_count == done_teams_count:
             self.__advance_stage()
-
-    def __advance_stage(self):
-        if not self.is_done():
-            self.stage += 1
-            self.save()
 
     def is_composing(self):
         return self.stage == RoundStages.COMPOSING.value
