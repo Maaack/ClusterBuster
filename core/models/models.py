@@ -2,13 +2,14 @@ import random
 import string
 
 from django.db import models
-from django.db.models import Count
 from django.utils.translation import ugettext_lazy as _
 
 from clusterbuster.mixins.models import TimeStamped
 from core.basics import PatternDeckBuilder, CardStack, Card
-from core.constants import GAME_TEAM_LIMIT, GAME_ROUND_LIMIT, TEAM_PLAYER_LIMIT, TEAM_WORD_LIMIT, GAME_ROOM_CODE_LENGTH
-from .managers import ActiveGameRoomManager, RandomWordManager
+from core.basics.utils import CodeGenerator
+from core.constants import TEAM_WORD_LIMIT, GAME_ROOM_CODE_LENGTH
+
+from .managers import ActiveRoomManager, ActiveGameRoomManager, RandomWordManager
 from .mixins import SessionOptional, GameRoomStages, RoundStages, TeamRoundStages
 
 
