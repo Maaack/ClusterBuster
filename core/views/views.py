@@ -99,31 +99,6 @@ class RoomDetail(generic.DetailView):
         return data
 
 
-class CreatePlayerAndJoinRoom(AssignPlayerView, generic.CreateView):
-    model = Player
-    fields = ['name']
-
-    def __init__(self):
-        super(CreatePlayerAndJoinRoom, self).__init__()
-        self.code = None
-
-    def dispatch(self, request, *args, **kwargs):
-        self.code = kwargs['slug']
-        player_id = self.request.session.get('player_id')
-
-        if player_id:
-            return HttpResponseRedirect(reverse('room_detail', kwargs))
-        return super(CreatePlayerAndJoinRoom, self).dispatch(request, *args, **kwargs)
-
-    def get_success_url(self):
-        if type(self.object) is Player:
-            player = self.object
-            self.assign_player(player)
-            return reverse('join_room', kwargs={'slug': self.code})
-        return reverse('room_detail', kwargs={'slug': self.code})
-
-
-
 class JoinRoom(generic.RedirectView, generic.detail.SingleObjectMixin):
     model = Room
     pattern_name = 'room_detail'
