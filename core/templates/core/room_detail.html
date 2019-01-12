@@ -3,27 +3,40 @@
 {% block head_title %}Room {{ room.code }}{% endblock %}
 {% block content %}
     <h1>Room {{ room.code }}</h1>
-    <div class="player-room-options">
-        {% if can_join %}
-            <form method="post" action="{% url 'join_room' room.code %}">
-                {% csrf_token %}
-                <input type="submit" value="Join Room"/>
-            </form>
-        {% endif %}
-        {% if not player_logged_in %}
-            <p>Create a new player and join the game.</p>
-            <form method="post" action="{% url 'player_create_and_join_room' room.code %}">
-                {% csrf_token %}
-                <label>Name
-                    <input type="text" name="name" value=""/>
-                </label>
-                <input type="submit" value="Join Room"/>
-            </form>
-        {% endif %}
-        {% if has_player %}
-            <p>You are in this room.</p>
-        {% endif %}
-    </div>
+    {% if is_leader %}
+        <p>Your lead.</p>
+        <div class="leader-room-options">
+            {% if can_start_game %}
+                <form method="post" action="{% url 'start_game' room.code %}">
+                    {% csrf_token %}
+                    <input type="submit" value="Start Game"/>
+                </form>
+            {% endif %}
+        </div>
+    {% endif %}
+    {% if is_player %}
+        <div class="player-room-options">
+            {% if can_join %}
+                <form method="post" action="{% url 'join_room' room.code %}">
+                    {% csrf_token %}
+                    <input type="submit" value="Join Room"/>
+                </form>
+            {% endif %}
+            {% if not is_player %}
+                <p>Create a new player and join the game.</p>
+                <form method="post" action="{% url 'player_create_and_join_room' room.code %}">
+                    {% csrf_token %}
+                    <label>Name
+                        <input type="text" name="name" value=""/>
+                    </label>
+                    <input type="submit" value="Join Room"/>
+                </form>
+            {% endif %}
+            {% if has_player %}
+                <p>You are playing in this room.</p>
+            {% endif %}
+        </div>
+    {% endif %}
     <h2>Players</h2>
     <ul>
         {% for player in room.players.all %}

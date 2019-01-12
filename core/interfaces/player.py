@@ -4,26 +4,6 @@ from core.models import Room, Player, Game, Team , GameTeam
 from core.constants import GAME_TEAM_LIMIT, GAME_ROUND_LIMIT, TEAM_PLAYER_LIMIT, TEAM_WORD_LIMIT
 
 
-class PlayerJoinRoomException(Exception):
-    pass
-
-
-class PlayerCanNotJoinRoomException(Exception):
-    pass
-
-
-class PlayerJoinTeamException(Exception):
-    pass
-
-
-class PlayerCanNotJoinTeamException(Exception):
-    pass
-
-
-class RoomTeamDoesNotExistException(Exception):
-    pass
-
-
 class PlayerInterface(object):
     def __init__(self, player: Player):
         if not isinstance(player, Player):
@@ -57,13 +37,16 @@ class PlayerTeamInterface(object):
 
     def join(self):
         if not self.can_join():
-            raise PlayerCanNotJoinTeamException()
+            raise Exception('Player can not join Team')
         self.team.players.add(self.player)
         self.team.save()
 
 
 class RoomInterface(object):
     TEAM_NAMES = ['RED', 'BLUE', 'GREEN', 'CYAN', 'MAGENTA', 'YELLOW']
+    MIN_PLAYERS_TO_START_GAME = 4
+    MIN_TEAMS_TO_START_GAME = 2
+    MIN_PLAYERS_PER_TEAM_TO_START_GAME = 2
 
     def __init__(self, room: Room):
         if not isinstance(room, Room):
@@ -73,7 +56,10 @@ class RoomInterface(object):
     def __get_teams_with_player_counts(self):
         return self.room.teams.annotate(num_players=Count('players')).order_by('num_players')
 
-    def get_teams_count(self):
+    def get_player_count(self):
+        return self.room.players.count()
+
+    def get_team_count(self):
         return self.room.teams.count()
 
     def get_team_with_fewest_players(self):
@@ -88,10 +74,10 @@ class RoomInterface(object):
             self.room.teams.create()
 
     def fill_teams(self):
-        teams_count = self.get_teams_count()
-        teams_left = GAME_TEAM_LIMIT - teams_count
+        team_count = self.get_team_count()
+        teams_left = GAME_TEAM_LIMIT - team_count
         for i in range(teams_left):
-            team_i = teams_count + i
+            team_i = team_count + i
             team = Team(name=RoomInterface.TEAM_NAMES[team_i])
             team.save()
             self.room.teams.add(team)
@@ -100,7 +86,22 @@ class RoomInterface(object):
     def setup(self):
         self.fill_teams()
 
+    def can_start_game(self):
+        team_count = self.get_team_count()
+        player_count = self.get_player_count()
+        teams_with_player_counts = self.__get_teams_with_player_counts()
+        if team_count < RoomInterface.MIN_TEAMS_TO_START_GAME:
+            return False
+        if player_count < RoomInterface.MIN_PLAYERS_TO_START_GAME:
+            return False
+        for team in teams_with_player_counts:
+            if team.num_players < RoomInterface.MIN_PLAYERS_PER_TEAM_TO_START_GAME:
+                return False
+        return True
+
     def start_game(self):
+        if not self.can_start_game():
+            raise Exception('Can not start game.')
         game = Game(room=self.room)
         game.save()
         RoomGameInterface(self.room, game).setup()
@@ -125,6 +126,13 @@ class PlayerRoomInterface(object):
         :return: bool
         """
         return bool(self.room.players.filter(pk=self.player.pk).exists())
+
+    def is_leader(self) -> bool:
+        """
+        Returns `True` if the player is the room leader.
+        :return: bool
+        """
+        return bool(self.room.session == self.player.session)
 
     def get_team(self) -> Optional[Team]:
         """
@@ -158,7 +166,7 @@ class PlayerRoomInterface(object):
         :return: Team
         """
         room_interface = RoomInterface(self.room)
-        if room_interface.get_teams_count() <= 0:
+        if room_interface.get_team_count() <= 0:
             room_interface.fill_teams()
         return room_interface.get_team_with_fewest_players()
 
@@ -169,7 +177,7 @@ class PlayerRoomInterface(object):
         :return: bool
         """
         if not self.room.teams.filter(pk=team.pk).exists():
-            raise RoomTeamDoesNotExistException
+            raise Exception('Team does not exist in room.')
         PlayerTeamInterface(self.player, team).join()
 
     def join(self, team=None) -> bool:
@@ -179,7 +187,7 @@ class PlayerRoomInterface(object):
         :return: None
         """
         if not self.can_join():
-            raise PlayerCanNotJoinRoomException()
+            raise Exception('Player can not join room.')
 
         self.room.players.add(self.player)
 
@@ -200,7 +208,7 @@ class RoomGameInterface(object):
         self.game = game
 
     def setup(self):
-        team_count = RoomInterface(self.room).get_teams_count()
+        team_count = RoomInterface(self.room).get_team_count()
         if team_count >= 2:
             two_teams = self.room.teams[0:2]
             self.game.teams.add(*two_teams)

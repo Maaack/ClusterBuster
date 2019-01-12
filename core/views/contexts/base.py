@@ -7,7 +7,8 @@ class RoomContext():
     def load(room):
         data = dict()
         data['player'] = None
-        data['player_logged_in'] = False
+        data['is_player'] = False
+        data['is_leader'] = False
         data['has_player'] = False
         return data
 
@@ -20,14 +21,18 @@ class PlayerRoomContext:
         :param room: Room
         :return: dict
         """
-        player_room_interface = PlayerRoomInterface(player, room)
         data = dict()
+        player_room_interface = PlayerRoomInterface(player, room)
         data['player'] = player
-        data['player_logged_in'] = True
+        data['is_player'] = True
+        data['is_leader'] = player_room_interface.is_leader()
         data['has_player'] = player_room_interface.has_player()
         data['can_join'] = player_room_interface.can_join()
         data['player_team'] = player_room_interface.get_team()
         data['opponent_team'] = player_room_interface.get_opponent_team()
+        if data['is_leader']:
+            room_interface = RoomInterface(room)
+            data['can_start_game'] = room_interface.can_start_game()
         return data
 
 
