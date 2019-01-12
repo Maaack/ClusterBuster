@@ -5,12 +5,20 @@
     <h1>Room {{ room.code }}</h1>
     <div class="player-room-options">
         {% if can_join %}
-            <form method="post" action="{% url 'player_join_room' room.code %}">{% csrf_token %}
+            <form method="post" action="{% url 'join_room' room.code %}">
+                {% csrf_token %}
                 <input type="submit" value="Join Room"/>
             </form>
         {% endif %}
         {% if not player_logged_in %}
-            <p>Create a player to join the game.</p>
+            <p>Create a new player and join the game.</p>
+            <form method="post" action="{% url 'player_create_and_join_room' room.code %}">
+                {% csrf_token %}
+                <label>Name
+                    <input type="text" name="name" value=""/>
+                </label>
+                <input type="submit" value="Join Room"/>
+            </form>
         {% endif %}
         {% if has_player %}
             <p>You are in this room.</p>
