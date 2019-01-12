@@ -1,0 +1,15 @@
+{% extends "core/base/html_base.html" %}
+
+{% block head_title %}Rooms{% endblock %}
+{% block content %}
+<h1>Rooms</h1>
+<ul>
+    {% for room in active_rooms %}
+        <li><a href="{% url 'room_detail' room.code %}">{{ room.code }}
+            - {{ room.players.count }} Player(s) </a></li>
+    {% empty %}
+        <p>No rooms are open.</p>
+        <a a href="{% url 'room_create' %}">Start a Room!</a>
+    {% endfor %}
+</ul>
+{% endblock %}

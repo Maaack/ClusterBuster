@@ -1,47 +1,34 @@
-from django.views import generic, View
-from django.urls import reverse
-from core.models import Player, Game, TeamRound
-from core.models.interface import PlayerGameInterface
+from core.interfaces import PlayerGameInterface, RoomInterface, PlayerRoomInterface
+from core.models import Player, Room
 
 
-class CheckPlayerView(View):
-    class Meta:
-        abstract = True
-
-    model = Player
-
-    def is_current_player(self, player):
-        return self.get_current_player() == player
-
-    def get_current_player(self):
-        player_id = self.request.session.get('player_id')
-        if player_id:
-            try:
-                return Player.objects.get(pk=player_id)
-            except Player.DoesNotExist:
-                return None
+class RoomContext():
+    @staticmethod
+    def load(room):
+        data = dict()
+        data['player'] = None
+        data['player_logged_in'] = False
+        data['has_player'] = False
+        return data
 
 
-class AssignPlayerView(generic.edit.FormMixin, View):
-    class Meta:
-        abstract = True
-
-    def assign_player(self, player):
-        if type(player) is Player:
-            self.request.session['player_id'] = player.pk
-            self.request.session['player_name'] = player.name
-
-    def form_valid(self, form):
-        self.request.session.save()
-        form.instance.session_id = self.request.session.session_key
-        return super(AssignPlayerView, self).form_valid(form)
-
-    def get_success_url(self):
-        if type(self.object) is Player:
-            player = self.object
-            self.assign_player(player)
-            return reverse('player_detail', kwargs={'pk': self.object.pk})
-        return reverse('player_list')
+class PlayerRoomContext:
+    @staticmethod
+    def load(player, room):
+        """
+        :param player: Player
+        :param room: Room
+        :return: dict
+        """
+        player_room_interface = PlayerRoomInterface(player, room)
+        data = dict()
+        data['player'] = player
+        data['player_logged_in'] = True
+        data['has_player'] = player_room_interface.has_player()
+        data['can_join'] = player_room_interface.can_join()
+        data['player_team'] = player_room_interface.get_team()
+        data['opponent_team'] = player_room_interface.get_opponent_team()
+        return data
 
 
 class ContextDataLoader(object):

@@ -5,9 +5,10 @@ from django.urls import reverse
 from django.views import generic
 from extra_views import ModelFormSetView
 
-from core.models import Game, GameRoom, Player, TargetWord, LeaderHint, PlayerGuess
-from core.models.interface import PlayerInterface, GameInterface
-from .mixins import CheckPlayerView, AssignPlayerView, ContextDataLoader
+from core.models import Room, Game, Player, TargetWord, LeaderHint, PlayerGuess
+from core.interfaces import PlayerInterface, RoomInterface, GameInterface
+from .contexts import RoomContext, PlayerRoomContext, ContextDataLoader
+from .mixins import CheckPlayerView, AssignPlayerView
 from .forms import HintForm, GuessForm, OpponentGuessForm
 
 
@@ -15,75 +16,6 @@ from .forms import HintForm, GuessForm, OpponentGuessForm
 def index(request):
     template = loader.get_template('core/index.html')
     return HttpResponse(template.render({}, request))
-
-
-class GameCreate(generic.CreateView):
-    model = Game
-    fields = []
-
-    def form_valid(self, form):
-        self.request.session.save()
-        form.instance.session_id = self.request.session.session_key
-        response = super(GameCreate, self).form_valid(form)
-        GameInterface(self.object).setup()
-        return response
-
-    def get_success_url(self):
-        return reverse('game_detail', kwargs={'pk': self.object.pk})
-
-
-class GameList(generic.ListView):
-    context_object_name = 'latest_games'
-
-    def get_queryset(self):
-        return Game.objects.order_by('-created')[:5]
-
-
-class GameNextRound(generic.RedirectView, generic.detail.SingleObjectMixin):
-    model = GameRoom
-    pattern_name = 'gameroom_detail'
-    slug_field = 'code'
-
-    def get_redirect_url(self, *args, **kwargs):
-        game = get_object_or_404(Game, room__code=kwargs['slug'])
-        GameInterface(game).next_round()
-        return super().get_redirect_url(*args, **kwargs)
-
-
-class GameDetail(generic.DetailView):
-    model = Game
-
-
-class GameRoomList(generic.ListView):
-    context_object_name = 'game_room_list'
-
-    def get_queryset(self):
-        return GameRoom.active.all()
-
-
-class GameRoomDetail(generic.DetailView):
-    model = GameRoom
-    slug_field = 'code'
-
-    def __init__(self):
-        super(GameRoomDetail, self).__init__()
-        self.game = None
-
-    def get_queryset(self):
-        return GameRoom.active.all()
-
-    def dispatch(self, request, *args, **kwargs):
-        self.game = self.get_object().game
-        return super(GameRoomDetail, self).dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        data = super(GameRoomDetail, self).get_context_data(**kwargs)
-        data.update(ContextDataLoader.get_game_data(self.game))
-        player_id = self.request.session.get('player_id')
-        if player_id:
-            player = get_object_or_404(Player, pk=player_id)
-            data.update(ContextDataLoader.get_player_data(player, self.game))
-        return data
 
 
 class PlayerCreate(AssignPlayerView, generic.CreateView):
@@ -119,21 +51,128 @@ class PlayerDetail(generic.DetailView, CheckPlayerView):
         return data
 
 
-class PlayerJoinGame(generic.RedirectView, generic.detail.SingleObjectMixin):
-    model = GameRoom
-    pattern_name = 'gameroom_detail'
+class RoomCreate(generic.CreateView):
+    model = Room
+    fields = []
+
+    def form_valid(self, form):
+        self.request.session.save()
+        form.instance.session_id = self.request.session.session_key
+        response = super(RoomCreate, self).form_valid(form)
+        return response
+
+    def get_success_url(self):
+        return reverse('room_detail', kwargs={'slug': self.object.code})
+
+
+class RoomList(generic.ListView):
+    context_object_name = 'active_rooms'
+
+    def get_queryset(self):
+        return Room.active_rooms.all()
+
+
+class RoomDetail(generic.DetailView):
+    model = Room
+    slug_field = 'code'
+
+    def __init__(self):
+        super(RoomDetail, self).__init__()
+        self.game = None
+
+    def get_queryset(self):
+        return Room.active_rooms.all()
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(RoomDetail, self).dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        data = super(RoomDetail, self).get_context_data(**kwargs)
+        room = self.get_object()
+        room_data = RoomContext.load(room)
+        data.update(room_data)
+        player_id = self.request.session.get('player_id')
+        if player_id:
+            player = get_object_or_404(Player, pk=player_id)
+            player_room_data = PlayerRoomContext.load(player, room)
+            data.update(player_room_data)
+        return data
+
+
+class PlayerJoinRoom(generic.RedirectView, generic.detail.SingleObjectMixin):
+    model = Room
+    pattern_name = 'room_detail'
+    slug_field = 'code'
+
+    def get_redirect_url(self, *args, **kwargs):
+        player_id = self.request.session.get('player_id')
+        if not player_id:
+            raise Exception('Player must be logged in.')
+        player = get_object_or_404(Player, pk=player_id)
+        room = get_object_or_404(Room, code=kwargs['slug'])
+        PlayerInterface(player).join_room(room)
+        return super().get_redirect_url(*args, **kwargs)
+
+
+class RoomStartTeam(generic.RedirectView, generic.detail.SingleObjectMixin):
+    model = Room
+    pattern_name = 'room_detail'
+    slug_field = 'code'
+
+    def get_redirect_url(self, *args, **kwargs):
+        return super().get_redirect_url(*args, **kwargs)
+
+
+class RoomStartGame(generic.RedirectView, generic.detail.SingleObjectMixin):
+    model = Room
+    pattern_name = 'room_detail'
     slug_field = 'code'
 
     def get_redirect_url(self, *args, **kwargs):
         player_id = self.request.session.get('player_id')
 
         if player_id:
-            player = get_object_or_404(Player, pk=player_id)
-            game = get_object_or_404(Game, room__code=kwargs['slug'])
-            player_interface = PlayerInterface(player)
-            player_interface.join_game(game)
+            room = get_object_or_404(Room, code=kwargs['slug'])
+            RoomInterface(room).start_game()
 
         return super().get_redirect_url(*args, **kwargs)
+
+
+class GameNextRound(generic.RedirectView, generic.detail.SingleObjectMixin):
+    model = Room
+    pattern_name = 'room_detail'
+    slug_field = 'code'
+
+    def get_redirect_url(self, *args, **kwargs):
+        game = get_object_or_404(Game, room__code=kwargs['slug'])
+        GameInterface(game).next_round()
+        return super().get_redirect_url(*args, **kwargs)
+
+
+class GameCreate(generic.CreateView):
+    model = Game
+    fields = []
+
+    def form_valid(self, form):
+        self.request.session.save()
+        form.instance.session_id = self.request.session.session_key
+        response = super(GameCreate, self).form_valid(form)
+        GameInterface(self.object).setup()
+        return response
+
+    def get_success_url(self):
+        return reverse('game_detail', kwargs={'pk': self.object.pk})
+
+
+class GameList(generic.ListView):
+    context_object_name = 'latest_games'
+
+    def get_queryset(self):
+        return Game.objects.order_by('-created')[:5]
+
+
+class GameDetail(generic.DetailView):
+    model = Game
 
 
 class GenericTeamRoundFormView(generic.FormView):
@@ -152,7 +191,7 @@ class GenericTeamRoundFormView(generic.FormView):
 
     def dispatch(self, request, *args, **kwargs):
         game_room_code = kwargs['slug']
-        self.game_room = get_object_or_404(GameRoom, code=game_room_code)
+        self.game_room = get_object_or_404(Room, code=game_room_code)
         self.game = self.game_room.game
         self.current_round = self.game.current_round
         player_id = self.request.session.get('player_id')
@@ -249,5 +288,4 @@ class OpponentGuessFormSetView(ModelFormSetView, GenericTeamRoundFormView):
             player=self.player,
             target_word__team_round=self.current_opponent_team_round
         )
-
 

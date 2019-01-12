@@ -1,0 +1,40 @@
+{% extends "core/base/html_base.html" %}
+
+{% block head_title %}Room {{ room.code }}{% endblock %}
+{% block content %}
+    <h1>Room {{ room.code }}</h1>
+    <div class="player-room-options">
+        {% if can_join %}
+            <form method="post" action="{% url 'player_join_room' room.code %}">{% csrf_token %}
+                <input type="submit" value="Join Room"/>
+            </form>
+        {% endif %}
+        {% if not player_logged_in %}
+            <p>Create a player to join the game.</p>
+        {% endif %}
+        {% if has_player %}
+            <p>You are in this room.</p>
+        {% endif %}
+    </div>
+    <h2>Players</h2>
+    <ul>
+        {% for player in room.players.all %}
+            <li>{{ player.name }}</li>
+            {% empty %}
+            <p>No players yet...</p>
+        {% endfor %}
+    </ul>
+    <h2>Teams</h2>
+    {% for team in room.teams.all %}
+        <strong>{{ team.name }}</strong>
+        <ul>
+            {% for player in team.players.all %}
+                <li>{{ player.name }}</li>
+            {% empty %}
+                <p>No players yet...</p>
+            {% endfor %}
+        </ul>
+        {% empty %}
+        <p>No teams yet...</p>
+    {% endfor %}
+{% endblock %}

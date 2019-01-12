@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from clusterbuster.mixins.models import TimeStamped
 from core.basics import PatternDeckBuilder, CardStack, Card
 from core.basics.utils import CodeGenerator
-from core.constants import TEAM_WORD_LIMIT, GAME_ROOM_CODE_LENGTH
+from core.constants import TEAM_WORD_LIMIT
 
 from .managers import ActiveRoomManager, ActiveGameRoomManager, RandomWordManager
 from .mixins import SessionOptional, GameRoomStages, RoundStages, TeamRoundStages
@@ -20,10 +20,45 @@ class Player(TimeStamped, SessionOptional):
         verbose_name_plural = _("Players")
         ordering = ["name", "-created"]
 
-    name = models.CharField(_("Name"), max_length=32)
+    name = models.CharField(_("Name"), max_length=64)
 
     def __str__(self):
         return str(self.name)
+
+
+class Team(TimeStamped, SessionOptional):
+    class Meta:
+        verbose_name = _("Team")
+        verbose_name_plural = _("Teams")
+        ordering = ["name", "-created"]
+
+    name = models.CharField(_('Team Name'), max_length=64, default="")
+    players = models.ManyToManyField(Player, blank=True)
+
+
+class Room(TimeStamped, SessionOptional):
+    class Meta:
+        verbose_name = _("Room")
+        verbose_name_plural = _("Rooms")
+        ordering = ["-created"]
+
+    code = models.SlugField(_("Code"), max_length=16)
+    players = models.ManyToManyField(Player, blank=True)
+    teams = models.ManyToManyField(Team, blank=True)
+
+    objects = models.Manager()
+    active_rooms = ActiveRoomManager()
+
+    def __str__(self):
+        return self.code
+
+    def __setup_code(self):
+        if not self.code:
+            self.code = CodeGenerator.room_code()
+
+    def save(self, *args, **kwargs):
+        self.__setup_code()
+        super(Room, self).save(*args, **kwargs)
 
 
 class Word(TimeStamped):
@@ -39,53 +74,18 @@ class Word(TimeStamped):
         return str(self.text)
 
 
-class Game(TimeStamped, SessionOptional):
+class Game(TimeStamped):
     class Meta:
         verbose_name = _("Game")
         verbose_name_plural = _("Games")
         ordering = ["-created"]
 
-    players = models.ManyToManyField(Player, blank=True)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='games')
+    teams = models.ManyToManyField(Team, blank=True)
     current_round = models.ForeignKey('Round', on_delete=models.SET_NULL, related_name="+", null=True, blank=True)
 
 
-class GameRoom(TimeStamped):
-    class Meta:
-        verbose_name = _("Game Room")
-        verbose_name_plural = _("Game Rooms")
-        ordering = ["-created"]
-
-    game = models.OneToOneField(Game, on_delete=models.CASCADE, related_name='room')
-    code = models.SlugField(_("Code"), max_length=16)
-    stage = models.PositiveSmallIntegerField(_("Stage"), default=GameRoomStages.OPEN.value,
-                                             choices=GameRoomStages.choices())
-
-    objects = models.Manager()
-    active = ActiveGameRoomManager()
-
-    def __str__(self):
-        return self.code
-
-    def save(self, *args, **kwargs):
-        self.set_code()
-        super(GameRoom, self).save(*args, **kwargs)
-
-    def get_current_stage_name(self):
-        return GameRoomStages.choice(self.stage)
-
-    def get_current_round(self):
-        return self.game.current_round
-
-    def set_code(self):
-        if not self.code:
-            self.code = GameRoom.create_code()
-
-    @staticmethod
-    def create_code(length=GAME_ROOM_CODE_LENGTH):
-        return ''.join(random.choice(string.ascii_uppercase) for _ in range(length))
-
-
-class Team(TimeStamped):
+class GameTeam(TimeStamped):
     class Meta:
         verbose_name = _("Team")
         verbose_name_plural = _("Teams")
@@ -93,7 +93,6 @@ class Team(TimeStamped):
 
     name = models.CharField(_('Team Name'), max_length=64, default="")
     players = models.ManyToManyField(Player, blank=True)
-    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='teams')
     current_team_round = models.ForeignKey('TeamRound', on_delete=models.SET_NULL, related_name="+", null=True,
                                            blank=True)
 
@@ -104,7 +103,7 @@ class Team(TimeStamped):
             return '(Game:'+str(self.game)+' ; Players:'+str(self.players)+')'
 
     def save(self, *args, **kwargs):
-        super(Team, self).save(*args, **kwargs)
+        super(GameTeam, self).save(*args, **kwargs)
         self.set_words()
 
     def set_words(self):
@@ -192,7 +191,7 @@ class Round(TimeStamped):
 
 
 class TeamWord(TimeStamped):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='team_words')
+    team = models.ForeignKey(GameTeam, on_delete=models.CASCADE, related_name='team_words')
     word = models.ForeignKey(Word, on_delete=models.CASCADE, related_name='team_words')
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='team_words')
     position = models.PositiveSmallIntegerField(_("Position"), db_index=True)
@@ -209,7 +208,7 @@ class TeamRound(TimeStamped):
         unique_together = (('round', 'team'),)
 
     round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name='team_rounds')
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='team_rounds')
+    team = models.ForeignKey(GameTeam, on_delete=models.CASCADE, related_name='team_rounds')
     leader = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='team_rounds', null=True, blank=True)
     stage = models.PositiveSmallIntegerField(_("Stage"), default=TeamRoundStages.ACTIVE.value,
                                              choices=TeamRoundStages.choices())
@@ -329,13 +328,13 @@ class PlayerGuess(TimeStamped):
 
 
 class TeamGuess(TimeStamped):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    team = models.ForeignKey(GameTeam, on_delete=models.CASCADE)
     target_word = models.ForeignKey(TargetWord, on_delete=models.CASCADE)
     guess = models.ForeignKey(TeamWord, on_delete=models.CASCADE)
 
 
 class TeamGamePoints(TimeStamped):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    team = models.ForeignKey(GameTeam, on_delete=models.CASCADE)
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     wins = models.PositiveSmallIntegerField(_("Wins"))
     loses = models.PositiveSmallIntegerField(_("Loses"))
