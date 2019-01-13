@@ -5,6 +5,9 @@ from core.constants import GAME_TEAM_LIMIT, GAME_ROUND_LIMIT, TEAM_PLAYER_LIMIT,
 
 
 class PlayerInterface(object):
+    """
+    Interface for players.
+    """
     def __init__(self, player: Player):
         if not isinstance(player, Player):
             raise TypeError('`player` is not of type Player')
@@ -18,6 +21,9 @@ class PlayerInterface(object):
 
 
 class PlayerTeamInterface(object):
+    """
+    Interface between players and teams.
+    """
     def __init__(self, player: Player, team: Team):
         if not isinstance(player, Player):
             raise TypeError('`player` is not instance of Player')
@@ -43,6 +49,9 @@ class PlayerTeamInterface(object):
 
 
 class RoomInterface(object):
+    """
+    Interface for rooms.
+    """
     TEAM_NAMES = ['RED', 'BLUE', 'GREEN', 'CYAN', 'MAGENTA', 'YELLOW']
     MIN_PLAYERS_TO_START_GAME = 4
     MIN_TEAMS_TO_START_GAME = 2
@@ -170,20 +179,22 @@ class PlayerRoomInterface(object):
             room_interface.fill_teams()
         return room_interface.get_team_with_fewest_players()
 
-    def join_team(self, team: Team) -> bool:
+    def join_team(self, team: Team):
         """
         Attempts to join the player to a specific team in the room.
-        Returns `True` if successful.
-        :return: bool
+        Raises an exception if it fails.
+        :raise: Exception
+        :return: None
         """
         if not self.room.teams.filter(pk=team.pk).exists():
             raise Exception('Team does not exist in room.')
         PlayerTeamInterface(self.player, team).join()
 
-    def join(self, team=None) -> bool:
+    def join(self, team=None):
         """
         Attempts to join the player to the room.
-        Raises an exception if it fails
+        Raises an exception if it fails.
+        :raise: Exception
         :return: None
         """
         if not self.can_join():
@@ -195,7 +206,6 @@ class PlayerRoomInterface(object):
             team = self.get_default_team()
             if self.join_team(team):
                 self.room.save()
-
 
 
 class RoomGameInterface(object):
