@@ -1,9 +1,13 @@
 import random
 from django.db import models
 from django.db.models import Count
-from core.models.mixins import GameRoomStages
+from core.models.choices import GameStages
 
-GAME_ROOM_ACTIVE_STAGES = [GameRoomStages.OPEN.value, GameRoomStages.PLAYING.value, GameRoomStages.PAUSED.value]
+GAME_ROOM_ACTIVE_STAGES = [
+    GameStages.OPEN.value,
+    GameStages.PLAYING.value,
+    GameStages.PAUSED.value,
+]
 
 
 class ActiveRoomManager(models.Manager):
@@ -11,7 +15,7 @@ class ActiveRoomManager(models.Manager):
         return super().get_queryset().exclude(session=None)
 
 
-class ActiveGameRoomManager(models.Manager):
+class ActiveGameManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(stage__in=GAME_ROOM_ACTIVE_STAGES)
 

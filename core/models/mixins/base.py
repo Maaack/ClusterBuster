@@ -1,7 +1,6 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.sessions.models import Session
-from clusterbuster.mixins import ChoiceEnum
 
 
 class SessionRequired(models.Model):
@@ -16,25 +15,3 @@ class SessionOptional(models.Model):
         abstract = True
 
     session = models.ForeignKey(Session, on_delete=models.SET_NULL, verbose_name=_("Session"), null=True, blank=True)
-
-
-class GameRoomStages(ChoiceEnum):
-    CLOSED = 0
-    OPEN = 1
-    PLAYING = 2
-    PAUSED = 3
-    DONE = 4
-
-
-class RoundStages(ChoiceEnum):
-    COMPOSING = 0
-    GUESSING = 1
-    SCORING = 2
-    DONE = 3
-
-
-class TeamRoundStages(ChoiceEnum):
-    ACTIVE = 0
-    INACTIVE = 1
-    WAITING = 2
-    DONE = 3
