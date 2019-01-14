@@ -1,19 +1,17 @@
-import random
-import string
-
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from clusterbuster.mixins.models import TimeStamped
-from core.basics import PatternDeckBuilder, CardStack, Card
 from core.basics.utils import CodeGenerator
-from core.constants import TEAM_WORD_LIMIT
 
 from . import mixins, managers, choices
 
 
 # Create your models here.
 class Player(TimeStamped, mixins.SessionOptional):
+    """
+    Players represent individual sessions logging in to play.
+    """
     class Meta:
         verbose_name = _("Player")
         verbose_name_plural = _("Players")
@@ -26,6 +24,9 @@ class Player(TimeStamped, mixins.SessionOptional):
 
 
 class Team(TimeStamped, mixins.SessionOptional):
+    """
+    Teams are a collections of players with a common name.
+    """
     class Meta:
         verbose_name = _("Team")
         verbose_name_plural = _("Teams")
@@ -34,8 +35,14 @@ class Team(TimeStamped, mixins.SessionOptional):
     name = models.CharField(_('Team Name'), max_length=64, default="")
     players = models.ManyToManyField(Player, blank=True)
 
+    def __str__(self):
+        return str(self.name)
+
 
 class Room(TimeStamped, mixins.SessionOptional, mixins.GamesRoom):
+    """
+    Rooms are for players and teams to join together.
+    """
     class Meta:
         verbose_name = _("Room")
         verbose_name_plural = _("Rooms")
@@ -61,6 +68,9 @@ class Room(TimeStamped, mixins.SessionOptional, mixins.GamesRoom):
 
 
 class Word(TimeStamped):
+    """
+    Words that can be used for word based games.
+    """
     class Meta:
         verbose_name = _("Word")
         verbose_name_plural = _("Words")
@@ -80,118 +90,35 @@ class Game(TimeStamped, mixins.RoundsGame):
         ordering = ["-created"]
 
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='games')
-    teams = models.ManyToManyField(Team, blank=True)
-
-    active_games = managers.ActiveGameManager()
-
-
-class GameTeam(TimeStamped):
-    class Meta:
-        verbose_name = _("Team")
-        verbose_name_plural = _("Teams")
-        ordering = ["-created"]
-
-    current_team_round = models.ForeignKey('TeamRound', on_delete=models.SET_NULL, related_name="+", null=True,
-                                           blank=True)
+    teams = models.ManyToManyField(Team, blank=True, through='Party')
 
     def __str__(self):
-        if len(self.name) > 0:
-            return str(self.name)
-        else:
-            return '(Game:'+str(self.game)+' ; Players:'+str(self.players)+')'
-
-    def save(self, *args, **kwargs):
-        super(GameTeam, self).save(*args, **kwargs)
-        self.set_words()
-
-    def set_words(self):
-        word_count = self.team_words.count()
-        add_words = TEAM_WORD_LIMIT - word_count
-        if add_words > 0:
-            for i in range(word_count, TEAM_WORD_LIMIT):
-                self.team_words.create(word=Word.objects.random(), game=self.game, position=i + 1)
-
-    def draw_card(self):
-        deck = PatternDeckBuilder.build_deck()
-        drawn_cards = self.get_drawn_cards()
-        deck.reduce(drawn_cards)
-        deck.shuffle()
-        return deck.draw()
-
-    def get_drawn_cards(self):
-        cards = CardStack()
-        for team_round in self.team_rounds.order_by('round__number').all():
-            target_words = team_round.target_words.order_by('order').all()
-            card_values = [target_word.team_word.position for target_word in target_words]
-            if len(card_values) > 0:
-                cards.append(Card(card_values))
-        return cards
+        return str(self.room)
 
 
-class Round(TimeStamped):
+class Party(TimeStamped, mixins.RoundsParty):
+    """
+    An intermediate between games and teams.
+    """
     class Meta:
-        verbose_name = _("Round")
-        verbose_name_plural = _("Rounds")
+        verbose_name = _("Party")
+        verbose_name_plural = _("Parties")
         ordering = ["-created"]
+        unique_together = (('game', 'team'),)
 
-    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='rounds')
-    number = models.PositiveSmallIntegerField(_("Round Number"), db_index=True)
-    stage = models.PositiveSmallIntegerField(_("Stage"), default=choices.RoundStages.COMPOSING.value,
-                                             choices=choices.RoundStages.choices())
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='parties')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='parties')
 
     def __str__(self):
-        return str(self.number)
-
-    def __advance_stage(self):
-        if not self.is_done():
-            self.stage += 1
-            self.save()
-
-    def save(self, *args, **kwargs):
-        super(Round, self).save(*args, **kwargs)
-        self.set_team_rounds()
-        self.set_as_current_round()
-
-    def get_current_stage_name(self):
-        return choices.RoundStages.choice(self.stage)
-
-    def set_team_rounds(self):
-        if self.team_rounds.count() == 0:
-            for team in self.game.teams.all():
-                self.team_rounds.create(team=team)
-
-    def set_as_current_round(self):
-        self.game.current_round = self
-        self.game.save()
-
-    def update_all_team_stages(self):
-        game_teams = self.game.teams
-        all_teams_count = game_teams.count()
-        waiting_teams_count = game_teams.filter(current_team_round__stage=choices.TeamRoundStages.WAITING.value).count()
-        if all_teams_count == waiting_teams_count:
-            self.team_rounds.update(stage=choices.TeamRoundStages.DONE.value)
-
-    def advance_stage(self):
-        game_teams = self.game.teams
-        all_teams_count = game_teams.count()
-        done_teams_count = game_teams.filter(current_team_round__stage=choices.TeamRoundStages.DONE.value).count()
-        if all_teams_count == done_teams_count:
-            self.__advance_stage()
-
-    def is_composing(self):
-        return self.stage == choices.RoundStages.COMPOSING.value
-
-    def is_guessing(self):
-        return self.stage == choices.RoundStages.GUESSING.value
-
-    def is_done(self):
-        return self.stage == choices.RoundStages.DONE.value
+        return '(Game: '+str(self.game)+' ; Team: '+str(self.team)+' )'
 
 
-class TeamWord(TimeStamped):
-    team = models.ForeignKey(GameTeam, on_delete=models.CASCADE, related_name='team_words')
-    word = models.ForeignKey(Word, on_delete=models.CASCADE, related_name='team_words')
-    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='team_words')
+class PartyWord(TimeStamped):
+    """
+    The secret word for team they get at the start of the game.
+    """
+    party = models.ForeignKey(Party, on_delete=models.CASCADE, related_name='party_words')
+    word = models.ForeignKey(Word, on_delete=models.CASCADE, related_name='party_words')
     position = models.PositiveSmallIntegerField(_("Position"), db_index=True)
 
     def __str__(self):
@@ -201,89 +128,50 @@ class TeamWord(TimeStamped):
         return self.word.text
 
 
-class TeamRound(TimeStamped):
+class Round(TimeStamped, mixins.StagesRound):
+    """
+    Rounds break up repeatable parts of a game.
+    """
     class Meta:
-        unique_together = (('round', 'team'),)
+        verbose_name = _("Round")
+        verbose_name_plural = _("Rounds")
+        ordering = ["-created"]
 
-    round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name='team_rounds')
-    team = models.ForeignKey(GameTeam, on_delete=models.CASCADE, related_name='team_rounds')
-    leader = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='team_rounds', null=True, blank=True)
-    stage = models.PositiveSmallIntegerField(_("Stage"), default=choices.TeamRoundStages.ACTIVE.value,
-                                             choices=choices.TeamRoundStages.choices())
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='rounds')
+    number = models.PositiveSmallIntegerField(_("Round Number"), db_index=True)
 
     def __str__(self):
-        return '(Team:'+str(self.team) + ' ; Round:'+str(self.round)+')'
+        return str(self.number)
 
-    def save(self, *args, **kwargs):
-        if self.leader is None:
-            self.set_leader()
-        super(TeamRound, self).save(*args, **kwargs)
-        self.set_target_words()
-        self.set_as_current_round()
 
-    def get_current_stage_name(self):
-        return choices.TeamRoundStages.choice(self.stage)
+class PartyRound(TimeStamped, mixins.StagesPartyRound):
+    """
+    An intermediate between parties and rounds.
+    """
+    class Meta:
+        unique_together = (('party', 'round'),)
 
-    def advance_stage(self):
-        if self.stage in (choices.TeamRoundStages.ACTIVE.value, choices.TeamRoundStages.INACTIVE.value):
-            self.stage = choices.TeamRoundStages.WAITING.value
-            self.save()
-        self.round.update_all_team_stages()
+    party = models.ForeignKey(Party, on_delete=models.CASCADE, related_name='party_rounds')
+    round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name='party_rounds')
+    leader = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='party_rounds', null=True, blank=True)
 
-    def reset_stage(self):
-        self.stage = choices.TeamRoundStages.ACTIVE.value
-        self.save()
-
-    def is_waiting(self):
-        return self.stage == choices.TeamRoundStages.WAITING.value
-
-    def is_active(self):
-        return self.stage == choices.TeamRoundStages.ACTIVE.value
-
-    def is_done(self):
-        return self.stage == choices.TeamRoundStages.DONE.value
-
-    def set_as_current_round(self):
-        self.team.current_team_round = self
-        self.team.save()
-
-    def is_leader(self, player):
-        return self.leader == player
-
-    def get_guessing_players(self):
-        return self.team.players.exclude(id=self.leader.id)
-
-    def set_leader(self):
-        player_count = self.team.players.count()
-        if player_count == 0:
-            return
-        offset = self.round.number % player_count
-        self.leader = self.team.players.all()[offset]
-
-    def set_target_words(self):
-        if self.target_words.count() == 0:
-            card = self.team.draw_card()
-            for order, position in enumerate(card.value):
-                team_word = self.team.team_words.get(position=position)
-                self.target_words.create(team_word=team_word, order=order)
-
-    def get_non_target_words(self):
-        return self.team.team_words.exclude(
-            target_words__in=self.target_words.all()
-        ).all()
+    def __str__(self):
+        return '(Party:' + str(self.party) + ' ; Round:' + str(self.round) + ')'
 
 
 class TargetWord(TimeStamped):
-    """Target word per round"""
+    """
+    Target word for teams per round.
+    """
     class Meta:
-        unique_together = (('team_round', 'team_word'), ('team_round', 'order'),)
+        unique_together = (('party_round', 'party_word'), ('party_round', 'order'),)
 
-    team_round = models.ForeignKey(TeamRound, on_delete=models.CASCADE, related_name='target_words')
-    team_word = models.ForeignKey(TeamWord, on_delete=models.CASCADE, related_name='target_words')
+    party_round = models.ForeignKey(PartyRound, on_delete=models.CASCADE, related_name='target_words')
+    party_word = models.ForeignKey(PartyWord, on_delete=models.CASCADE, related_name='target_words')
     order = models.PositiveSmallIntegerField(_("Order"), db_index=True)
 
     def __str__(self):
-        return '(TeamRound:'+str(self.team_round) + ' ; TeamWord:'+str(self.team_word)+' ; Order:'+str(self.order)+')'
+        return '(TeamRound:' + str(self.party_round) + ' ; TeamWord:' + str(self.party_word) + ' ; Order:' + str(self.order) + ')'
 
     def save(self, *args, **kwargs):
         super(TargetWord, self).save(*args, **kwargs)
@@ -293,7 +181,7 @@ class TargetWord(TimeStamped):
         try:
             return self.leader_hint
         except LeaderHint.DoesNotExist:
-            self.leader_hint = LeaderHint(target_word=self, leader=self.team_round.leader)
+            self.leader_hint = LeaderHint(target_word=self, leader=self.party_round.leader)
             self.leader_hint.save()
             return self.leader_hint
 
@@ -322,17 +210,17 @@ class PlayerGuess(TimeStamped):
         unique_together = (('player', 'target_word'),)
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player_guesses')
     target_word = models.ForeignKey(TargetWord, on_delete=models.CASCADE, related_name='player_guesses')
-    guess = models.ForeignKey(TeamWord, on_delete=models.CASCADE, null=True)
+    guess = models.ForeignKey(PartyWord, on_delete=models.CASCADE, null=True)
 
 
 class TeamGuess(TimeStamped):
-    team = models.ForeignKey(GameTeam, on_delete=models.CASCADE)
+    team = models.ForeignKey(Party, on_delete=models.CASCADE)
     target_word = models.ForeignKey(TargetWord, on_delete=models.CASCADE)
-    guess = models.ForeignKey(TeamWord, on_delete=models.CASCADE)
+    guess = models.ForeignKey(PartyWord, on_delete=models.CASCADE)
 
 
 class TeamGamePoints(TimeStamped):
-    team = models.ForeignKey(GameTeam, on_delete=models.CASCADE)
+    team = models.ForeignKey(Party, on_delete=models.CASCADE)
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     wins = models.PositiveSmallIntegerField(_("Wins"))
     loses = models.PositiveSmallIntegerField(_("Loses"))

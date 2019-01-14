@@ -35,7 +35,7 @@ class GuessForm(forms.ModelForm):
         super(GuessForm, self).__init__(*args, **kwargs)
         self.fields['order'].initial = self.instance.target_word.order+1
         self.fields['hint'].initial = self.instance.target_word.leader_hint.hint
-        self.fields['guess'].queryset = models.TeamWord.objects.filter(
+        self.fields['guess'].queryset = models.PartyWord.objects.filter(
             team=self.instance.target_word.team_round.team
         )
 
@@ -55,7 +55,7 @@ class OpponentGuessForm(forms.ModelForm):
         super(OpponentGuessForm, self).__init__(*args, **kwargs)
         self.fields['order'].initial = self.instance.target_word.order+1
         self.fields['hint'].initial = self.instance.target_word.leader_hint.hint
-        self.fields['guess'].queryset = models.TeamWord.objects.only('position').filter(
+        self.fields['guess'].queryset = models.PartyWord.objects.only('position').filter(
             team=self.instance.target_word.team_round.team
         )
 

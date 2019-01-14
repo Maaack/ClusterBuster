@@ -6,7 +6,7 @@ from django.views import generic
 from extra_views import ModelFormSetView
 
 from core.models import Room, Game, Player, TargetWord, LeaderHint, PlayerGuess
-from core.interfaces import PlayerInterface, RoomInterface, GameInterface
+from core import interfaces
 from .contexts import RoomContext, PlayerRoomContext, ContextDataLoader
 from .mixins import CheckPlayerView, AssignPlayerView
 from .forms import HintForm, GuessForm, OpponentGuessForm
@@ -59,6 +59,7 @@ class RoomCreate(generic.CreateView):
         self.request.session.save()
         form.instance.session_id = self.request.session.session_key
         response = super(RoomCreate, self).form_valid(form)
+        interfaces.RoomInterface(self.object).setup()
         return response
 
     def get_success_url(self):
@@ -110,7 +111,7 @@ class JoinRoom(generic.RedirectView, generic.detail.SingleObjectMixin):
             raise Exception('Player must be logged in.')
         player = get_object_or_404(Player, pk=player_id)
         room = get_object_or_404(Room, code=kwargs['slug'])
-        PlayerInterface(player).join_room(room)
+        interfaces.Player2RoomInterface(player, room).join()
         return super().get_redirect_url(*args, **kwargs)
 
 
@@ -144,12 +145,12 @@ class StartGame(generic.RedirectView, generic.detail.SingleObjectMixin):
     slug_field = 'code'
 
     def get_redirect_url(self, *args, **kwargs):
-        player_id = self.request.session.get('player_id')
-
-        if player_id:
-            room = get_object_or_404(Room, code=kwargs['slug'])
-            RoomInterface(room).start_game()
-
+        room = get_object_or_404(Room, code=kwargs['slug'])
+        room_interface = interfaces.RoomGamesInterface(room)
+        room_interface.setup()
+        game = room_interface.get_current_game()
+        game_interface = interfaces.GameRoundsInterface(game)
+        game_interface.setup()
         return super().get_redirect_url(*args, **kwargs)
 
 
@@ -160,7 +161,7 @@ class GameNextRound(generic.RedirectView, generic.detail.SingleObjectMixin):
 
     def get_redirect_url(self, *args, **kwargs):
         game = get_object_or_404(Game, room__code=kwargs['slug'])
-        GameInterface(game).next_round()
+        interfaces.GameRoundsInterface(game).next_round()
         return super().get_redirect_url(*args, **kwargs)
 
 
@@ -172,7 +173,7 @@ class GameCreate(generic.CreateView):
         self.request.session.save()
         form.instance.session_id = self.request.session.session_key
         response = super(GameCreate, self).form_valid(form)
-        GameInterface(self.object).setup()
+        interfaces.GameInterface(self.object).setup()
         return response
 
     def get_success_url(self):
@@ -196,26 +197,27 @@ class GenericTeamRoundFormView(generic.FormView):
 
     def __init__(self):
         super(GenericTeamRoundFormView, self).__init__()
-        self.game_room = None
+        self.room = None
         self.game = None
         self.team = None
+        self.opponent_team = None
         self.player = None
         self.current_round = None
         self.current_team_round = None
         self.current_opponent_team_round = None
 
     def dispatch(self, request, *args, **kwargs):
-        game_room_code = kwargs['slug']
-        self.game_room = get_object_or_404(Room, code=game_room_code)
-        self.game = self.game_room.game
+        room_code = kwargs['slug']
+        self.room = get_object_or_404(Room, code=room_code)
+        self.game = self.room.current_game
         self.current_round = self.game.current_round
         player_id = self.request.session.get('player_id')
         self.player = get_object_or_404(Player, pk=player_id)
-        player_interface = PlayerInterface(self.player)
-        self.team = player_interface.get_team_by_game(self.game)
-        opponent_team = player_interface.get_opponent_team_by_game(self.game)
+        player_2_room_interface = interfaces.Player2RoomInterface(self.player, self.room)
+        self.team = player_2_room_interface.get_team()
+        self.opponent_team = player_2_room_interface.get_opponent_team()
         self.current_team_round = self.team.current_team_round
-        self.current_opponent_team_round = opponent_team.current_team_round
+        self.current_opponent_team_round = self.opponent_team.current_team_round
         return super(GenericTeamRoundFormView, self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -225,7 +227,7 @@ class GenericTeamRoundFormView(generic.FormView):
         return data
 
     def get_success_url(self):
-        return reverse('gameroom_detail', kwargs={'slug': self.game_room.code})
+        return reverse('room_detail', kwargs={'slug': self.room.code})
 
 
 class LeaderHintFormSetView(ModelFormSetView, GenericTeamRoundFormView):
@@ -237,7 +239,7 @@ class LeaderHintFormSetView(ModelFormSetView, GenericTeamRoundFormView):
 
     def get_context_data(self, **kwargs):
         data = super(LeaderHintFormSetView, self).get_context_data(**kwargs)
-        data['non_target_words'] = self.current_team_round.get_non_target_words()
+        data['non_target_words'] = interfaces.PartyRoundInterface(self.game).get_non_target_words()
         return data
 
     def get_queryset(self):
@@ -245,8 +247,8 @@ class LeaderHintFormSetView(ModelFormSetView, GenericTeamRoundFormView):
 
     def formset_valid(self, formset):
         response = super(LeaderHintFormSetView, self).formset_valid(formset)
-        self.current_team_round.advance_stage()
-        self.current_team_round.round.advance_stage()
+        interfaces.PartyRoundInterface(self.current_team_round).advance_stage()
+        interfaces.RoundInterface(self.current_team_round.round).advance_stage()
         return response
 
 
@@ -260,11 +262,6 @@ class PlayerGuessFormSetView(ModelFormSetView, GenericTeamRoundFormView):
     def __init__(self):
         super(PlayerGuessFormSetView, self).__init__()
         self.target_words = None
-
-    def get_context_data(self, **kwargs):
-        data = super(PlayerGuessFormSetView, self).get_context_data(**kwargs)
-        data['is_player_team'] = self.current_team_round.get_non_target_words()
-        return data
 
     def dispatch(self, request, *args, **kwargs):
         result = super(PlayerGuessFormSetView, self).dispatch(request, *args, **kwargs)

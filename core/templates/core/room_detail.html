@@ -22,21 +22,23 @@
                     <input type="submit" value="Join Room"/>
                 </form>
             {% endif %}
-            {% if not is_player %}
-                <p>Create a new player and join the game.</p>
-                <form method="post" action="{% url 'player_create_and_join_room' room.code %}">
-                    {% csrf_token %}
-                    <label>Name
-                        <input type="text" name="name" value=""/>
-                    </label>
-                    <input type="submit" value="Join Room"/>
-                </form>
-            {% endif %}
             {% if has_player %}
                 <p>You are playing in this room.</p>
             {% endif %}
         </div>
+    {% else %}
+        <div class="non-player-room-options">
+            <p>Create a new player and join the game.</p>
+            <form method="post" action="{% url 'player_create_and_join_room' room.code %}">
+                {% csrf_token %}
+                <label>Name
+                    <input type="text" name="name" value=""/>
+                </label>
+                <input type="submit" value="Join Room"/>
+            </form>
+        </div>
     {% endif %}
+
     <h2>Players</h2>
     <ul>
         {% for player in room.players.all %}

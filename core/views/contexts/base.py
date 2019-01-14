@@ -1,4 +1,4 @@
-from core.interfaces import PlayerGameInterface, RoomInterface, PlayerRoomInterface
+from core.interfaces import Player2GameInterface, RoomGamesInterface, Player2RoomInterface
 from core.models import Player, Room
 
 
@@ -22,7 +22,7 @@ class PlayerRoomContext:
         :return: dict
         """
         data = dict()
-        player_room_interface = PlayerRoomInterface(player, room)
+        player_room_interface = Player2RoomInterface(player, room)
         data['player'] = player
         data['is_player'] = True
         data['is_leader'] = player_room_interface.is_leader()
@@ -31,7 +31,7 @@ class PlayerRoomContext:
         data['player_team'] = player_room_interface.get_team()
         data['opponent_team'] = player_room_interface.get_opponent_team()
         if data['is_leader']:
-            room_interface = RoomInterface(room)
+            room_interface = RoomGamesInterface(room)
             data['can_start_game'] = room_interface.can_start_game()
         return data
 
@@ -55,11 +55,11 @@ class ContextDataLoader(object):
         :param game: Game
         :return: dict
         """
-        player_game_interface = PlayerGameInterface(player, game)
+        player_game_interface = Player2GameInterface(player, game)
         data = dict()
         data['player'] = player
         has_player = player_game_interface.has_player()
-        team = player_game_interface.get_team()
+        team = player_game_interface.get_party()
         data['player_in_game'] = has_player
         data['player_team'] = team
         data['player_team_round'] = None

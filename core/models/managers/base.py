@@ -15,11 +15,6 @@ class ActiveRoomManager(models.Manager):
         return super().get_queryset().exclude(session=None)
 
 
-class ActiveGameManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(stage__in=GAME_ROOM_ACTIVE_STAGES)
-
-
 class RandomWordManager(models.Manager):
     def random(self):
         count = self.aggregate(count=Count('id'))['count']

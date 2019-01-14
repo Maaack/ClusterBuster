@@ -21,14 +21,14 @@
         <table>
             <thead>
             <tr>
-                {% for team_word in player_team.team_words.all %}
+                {% for team_word in player_team.party_words.all %}
                     <th>{{ team_word.position }}</th>
                 {% endfor %}
             </tr>
             </thead>
             <tbody>
             <tr>
-                {% for team_word in player_team.team_words.all %}
+                {% for team_word in player_team.party_words.all %}
                     <td>{{ team_word.word.text }}</td>
                 {% endfor %}
             </tr>

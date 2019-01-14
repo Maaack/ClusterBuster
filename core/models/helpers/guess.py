@@ -1,6 +1,7 @@
 
 from .generic import AbstractService, AbstractServiceRequest, AbstractServiceResponse
-from core.models import Round, TeamRound, PlayerGuess
+from core.models import Round, PartyRound, PlayerGuess
+from core.interfaces import PartyRoundInterface
 
 
 class TeamGuessServiceRequest(AbstractServiceRequest):
@@ -31,11 +32,11 @@ class TeamGuessService(AbstractService):
         """
         if not isinstance(request, TeamGuessServiceRequest):
             raise ValueError('`request` object is not instance of TeamGuessServiceRequest.')
-        if not isinstance(request.team_round, TeamRound):
+        if not isinstance(request.team_round, PartyRound):
             raise ValueError('`round` is not instance of TeamRound.')
         response = TeamGuessServiceResponse()
 
-        team_round = request.team_round  # type: TeamRound
+        team_round = request.team_round  # type: PartyRound
         expected_guess_count = TeamGuessService.__get_expected_guess_count(team_round)
         valid_guess_count = TeamGuessService.__get_valid_guesses(team_round)
 
@@ -49,17 +50,17 @@ class TeamGuessService(AbstractService):
         return TeamGuessServiceResponse()
 
     @staticmethod
-    def __get_expected_guess_count(team_round: TeamRound):
+    def __get_expected_guess_count(team_round: PartyRound):
         target_words_count = team_round.target_words.count()
-        guesser_count = team_round.get_guessing_players().count()
+        guesser_count = PartyRoundInterface(team_round).get_guessing_players().count()
         return guesser_count * target_words_count
 
     @staticmethod
-    def __get_valid_guess_count(team_round: TeamRound):
+    def __get_valid_guess_count(team_round: PartyRound):
         return TeamGuessService.__get_valid_guesses(team_round).count()
 
     @staticmethod
-    def __get_valid_guesses(team_round: TeamRound):
+    def __get_valid_guesses(team_round: PartyRound):
         return PlayerGuess.objects.filter(
             target_word__team_round=team_round
         ).exclude(
@@ -67,7 +68,7 @@ class TeamGuessService(AbstractService):
         )
 
     @staticmethod
-    def __get_target_words_missing_guesses(team_round: TeamRound):
+    def __get_target_words_missing_guesses(team_round: PartyRound):
         return PlayerGuess.objects.filter(
             target_word__team_round=team_round
         ).exclude(
