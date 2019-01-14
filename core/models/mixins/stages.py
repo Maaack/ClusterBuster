@@ -16,5 +16,5 @@ class StagesPartyRound(models.Model):
     class Meta:
         abstract = True
 
-    stage = models.PositiveSmallIntegerField(_("Stage"), default=choices.TeamRoundStages.ACTIVE.value,
-                                             choices=choices.TeamRoundStages.choices())
+    stage = models.PositiveSmallIntegerField(_("Stage"), default=choices.PartyRoundStages.ACTIVE.value,
+                                             choices=choices.PartyRoundStages.choices())

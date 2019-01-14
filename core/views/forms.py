@@ -1,6 +1,5 @@
 from django import forms
 
-from core.constants import TEAM_WORD_LIMIT
 from core import models
 
 
@@ -16,8 +15,8 @@ class HintForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(HintForm, self).__init__(*args, **kwargs)
-        self.fields['position'].initial = self.instance.target_word.team_word.position
-        self.fields['word'].initial = self.instance.target_word.team_word.get_text()
+        self.fields['position'].initial = self.instance.target_word.party_word.position
+        self.fields['word'].initial = self.instance.target_word.party_word.get_text()
 
 
 class GuessForm(forms.ModelForm):
@@ -36,7 +35,7 @@ class GuessForm(forms.ModelForm):
         self.fields['order'].initial = self.instance.target_word.order+1
         self.fields['hint'].initial = self.instance.target_word.leader_hint.hint
         self.fields['guess'].queryset = models.PartyWord.objects.filter(
-            team=self.instance.target_word.team_round.team
+            party=self.instance.target_word.party_word.party
         )
 
 
@@ -56,6 +55,6 @@ class OpponentGuessForm(forms.ModelForm):
         self.fields['order'].initial = self.instance.target_word.order+1
         self.fields['hint'].initial = self.instance.target_word.leader_hint.hint
         self.fields['guess'].queryset = models.PartyWord.objects.only('position').filter(
-            team=self.instance.target_word.team_round.team
+            party=self.instance.target_word.party_word.party
         )
 

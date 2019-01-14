@@ -16,7 +16,7 @@ class RoundStages(ChoiceEnum):
     DONE = 3
 
 
-class TeamRoundStages(ChoiceEnum):
+class PartyRoundStages(ChoiceEnum):
     ACTIVE = 0
     INACTIVE = 1
     WAITING = 2

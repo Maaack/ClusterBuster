@@ -13,11 +13,9 @@ urlpatterns = [
     path('rooms/<slug:slug>/new_player', views.CreatePlayerAndJoinRoom.as_view(), name='player_create_and_join_room'),
     path('rooms/<slug:slug>/join', views.JoinRoom.as_view(), name='join_room'),
     path('rooms/<slug:slug>/start_game', views.StartGame.as_view(), name='start_game'),
-    path('games/<int:pk>', views.GameList.as_view(), name='game_list'),
-    path('game/start', views.GameCreate.as_view(), name='game_create'),
-    path('game_room/<slug:slug>/next_round', views.GameNextRound.as_view(), name='game_next_round'),
-    path('game_room/<slug:slug>/hints', views.LeaderHintFormSetView.as_view(), name='round_hints'),
-    path('game_room/<slug:slug>/guesses', views.PlayerGuessFormSetView.as_view(), name='round_guesses'),
-    path('game_room/<slug:slug>/opponent_guesses', views.OpponentGuessFormSetView.as_view(), name='round_opponent_guesses'),
+    path('rooms/<slug:slug>/next_round', views.GameNextRound.as_view(), name='game_next_round'),
+    path('rooms/<slug:slug>/hints', views.LeaderHintFormSetView.as_view(), name='round_hints'),
+    path('rooms/<slug:slug>/guesses', views.PlayerGuessFormSetView.as_view(), name='round_guesses'),
+    path('rooms/<slug:slug>/opponent_guesses', views.OpponentGuessFormSetView.as_view(), name='round_opponent_guesses'),
 
 ]

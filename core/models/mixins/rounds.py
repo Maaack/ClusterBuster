@@ -14,3 +14,10 @@ class RoundsParty(models.Model):
 
     current_party_round = models.ForeignKey('PartyRound', on_delete=models.SET_NULL, related_name="+", null=True,
                                             blank=True)
+
+
+class RoundLeader(models.Model):
+    class Meta:
+        abstract = True
+
+    leader = models.ForeignKey('Player', on_delete=models.SET_NULL, related_name='+', null=True, blank=True)

@@ -2,13 +2,13 @@
 
 {% block head_title %}Submit hints{% endblock %}
 {% block content %}
-    {% if is_leader %}
+    {% if is_round_leader %}
         <h1>Submit Your Hints</h1>
         <form class="hints" method="post">
             {% csrf_token %}
             {{ formset.management_form }}
             {% for form in formset %}
-              <label for="id_form-{{ forloop.counter0 }}-hint">{{ form.instance.team_word.word }}</label>
+              <label for="id_form-{{ forloop.counter0 }}-hint">{{ form.instance.party_word.word }}</label>
                 <div class="hint">
                   {% for field in form %}
                         {{ field }}

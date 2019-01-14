@@ -90,7 +90,7 @@ class Game(TimeStamped, mixins.RoundsGame):
         ordering = ["-created"]
 
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='games')
-    teams = models.ManyToManyField(Team, blank=True, through='Party')
+    teams = models.ManyToManyField(Team, blank=True, through='Party', related_name='games')
 
     def __str__(self):
         return str(self.room)
@@ -138,13 +138,14 @@ class Round(TimeStamped, mixins.StagesRound):
         ordering = ["-created"]
 
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='rounds')
+    parties = models.ManyToManyField(Party, blank=True, through='PartyRound', related_name='rounds')
     number = models.PositiveSmallIntegerField(_("Round Number"), db_index=True)
 
     def __str__(self):
         return str(self.number)
 
 
-class PartyRound(TimeStamped, mixins.StagesPartyRound):
+class PartyRound(TimeStamped, mixins.StagesPartyRound, mixins.RoundLeader):
     """
     An intermediate between parties and rounds.
     """
@@ -153,7 +154,6 @@ class PartyRound(TimeStamped, mixins.StagesPartyRound):
 
     party = models.ForeignKey(Party, on_delete=models.CASCADE, related_name='party_rounds')
     round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name='party_rounds')
-    leader = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='party_rounds', null=True, blank=True)
 
     def __str__(self):
         return '(Party:' + str(self.party) + ' ; Round:' + str(self.round) + ')'

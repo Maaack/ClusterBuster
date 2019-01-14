@@ -7,7 +7,7 @@ from extra_views import ModelFormSetView
 
 from core.models import Room, Game, Player, TargetWord, LeaderHint, PlayerGuess
 from core import interfaces
-from .contexts import RoomContext, PlayerRoomContext, ContextDataLoader
+from .contexts import RoomContext, Player2RoomContext
 from .mixins import CheckPlayerView, AssignPlayerView
 from .forms import HintForm, GuessForm, OpponentGuessForm
 
@@ -95,7 +95,7 @@ class RoomDetail(generic.DetailView):
         player_id = self.request.session.get('player_id')
         if player_id:
             player = get_object_or_404(Player, pk=player_id)
-            player_room_data = PlayerRoomContext.load(player, room)
+            player_room_data = Player2RoomContext.load(player, room)
             data.update(player_room_data)
         return data
 
@@ -165,72 +165,46 @@ class GameNextRound(generic.RedirectView, generic.detail.SingleObjectMixin):
         return super().get_redirect_url(*args, **kwargs)
 
 
-class GameCreate(generic.CreateView):
-    model = Game
-    fields = []
-
-    def form_valid(self, form):
-        self.request.session.save()
-        form.instance.session_id = self.request.session.session_key
-        response = super(GameCreate, self).form_valid(form)
-        interfaces.GameInterface(self.object).setup()
-        return response
-
-    def get_success_url(self):
-        return reverse('game_detail', kwargs={'pk': self.object.pk})
-
-
-class GameList(generic.ListView):
-    context_object_name = 'latest_games'
-
-    def get_queryset(self):
-        return Game.objects.order_by('-created')[:5]
-
-
-class GameDetail(generic.DetailView):
-    model = Game
-
-
-class GenericTeamRoundFormView(generic.FormView):
+class GenericPartyRoundFormView(generic.FormView):
     class Meta:
         abstract = True
 
     def __init__(self):
-        super(GenericTeamRoundFormView, self).__init__()
+        super(GenericPartyRoundFormView, self).__init__()
         self.room = None
-        self.game = None
-        self.team = None
-        self.opponent_team = None
         self.player = None
+        self.game = None
+        self.player_party = None
+        self.opponent_party = None
         self.current_round = None
-        self.current_team_round = None
-        self.current_opponent_team_round = None
+        self.player_party_round = None
+        self.opponent_player_round = None
 
     def dispatch(self, request, *args, **kwargs):
         room_code = kwargs['slug']
         self.room = get_object_or_404(Room, code=room_code)
-        self.game = self.room.current_game
-        self.current_round = self.game.current_round
         player_id = self.request.session.get('player_id')
         self.player = get_object_or_404(Player, pk=player_id)
-        player_2_room_interface = interfaces.Player2RoomInterface(self.player, self.room)
-        self.team = player_2_room_interface.get_team()
-        self.opponent_team = player_2_room_interface.get_opponent_team()
-        self.current_team_round = self.team.current_team_round
-        self.current_opponent_team_round = self.opponent_team.current_team_round
-        return super(GenericTeamRoundFormView, self).dispatch(request, *args, **kwargs)
+        self.game = self.room.current_game
+        self.current_round = self.game.current_round
+        player_2_game_interface = interfaces.Player2GameInterface(self.player, self.game)
+        self.player_party = player_2_game_interface.get_party()
+        self.opponent_party = player_2_game_interface.get_opponent_party()
+        self.player_party_round = self.player_party.current_party_round
+        self.opponent_player_round = self.opponent_party.current_party_round
+        return super(GenericPartyRoundFormView, self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        data = super(GenericTeamRoundFormView, self).get_context_data(**kwargs)
-        data.update(ContextDataLoader.get_game_data(self.game))
-        data.update(ContextDataLoader.get_player_data(self.player, self.game))
+        data = super(GenericPartyRoundFormView, self).get_context_data(**kwargs)
+        data.update(RoomContext.load(self.room))
+        data.update(Player2RoomContext.load(self.player, self.room))
         return data
 
     def get_success_url(self):
         return reverse('room_detail', kwargs={'slug': self.room.code})
 
 
-class LeaderHintFormSetView(ModelFormSetView, GenericTeamRoundFormView):
+class LeaderHintFormSetView(ModelFormSetView, GenericPartyRoundFormView):
     model = LeaderHint
     form_class = HintForm
     factory_kwargs = {
@@ -239,20 +213,20 @@ class LeaderHintFormSetView(ModelFormSetView, GenericTeamRoundFormView):
 
     def get_context_data(self, **kwargs):
         data = super(LeaderHintFormSetView, self).get_context_data(**kwargs)
-        data['non_target_words'] = interfaces.PartyRoundInterface(self.game).get_non_target_words()
+        data['non_target_words'] = interfaces.PartyRoundInterface(self.player_party_round).get_non_target_words()
         return data
 
     def get_queryset(self):
-        return LeaderHint.objects.filter(target_word__team_round=self.current_team_round)
+        return LeaderHint.objects.filter(target_word__party_round=self.player_party_round)
 
     def formset_valid(self, formset):
         response = super(LeaderHintFormSetView, self).formset_valid(formset)
-        interfaces.PartyRoundInterface(self.current_team_round).advance_stage()
-        interfaces.RoundInterface(self.current_team_round.round).advance_stage()
+        interfaces.PartyRoundInterface(self.player_party_round).advance_stage()
+        interfaces.RoundInterface(self.player_party_round.round).advance_stage()
         return response
 
 
-class PlayerGuessFormSetView(ModelFormSetView, GenericTeamRoundFormView):
+class PlayerGuessFormSetView(ModelFormSetView, GenericPartyRoundFormView):
     model = PlayerGuess
     form_class = GuessForm
     factory_kwargs = {
@@ -263,9 +237,14 @@ class PlayerGuessFormSetView(ModelFormSetView, GenericTeamRoundFormView):
         super(PlayerGuessFormSetView, self).__init__()
         self.target_words = None
 
+    def get_context_data(self, **kwargs):
+        data = super(PlayerGuessFormSetView, self).get_context_data(**kwargs)
+        data['is_player_party'] = True
+        return data
+
     def dispatch(self, request, *args, **kwargs):
         result = super(PlayerGuessFormSetView, self).dispatch(request, *args, **kwargs)
-        self.target_words = TargetWord.objects.filter(team_round=self.current_team_round).all()
+        self.target_words = TargetWord.objects.filter(party_round=self.player_party_round).all()
         for word in self.target_words:
             PlayerGuess.objects.update_or_create(player=self.player, target_word=word)
         return result
@@ -273,11 +252,11 @@ class PlayerGuessFormSetView(ModelFormSetView, GenericTeamRoundFormView):
     def get_queryset(self):
         return PlayerGuess.objects.filter(
             player=self.player,
-            target_word__team_round=self.current_team_round
+            target_word__party_round=self.player_party_round,
         )
 
 
-class OpponentGuessFormSetView(ModelFormSetView, GenericTeamRoundFormView):
+class OpponentGuessFormSetView(ModelFormSetView, GenericPartyRoundFormView):
     model = PlayerGuess
     form_class = OpponentGuessForm
     factory_kwargs = {
@@ -288,9 +267,14 @@ class OpponentGuessFormSetView(ModelFormSetView, GenericTeamRoundFormView):
         super(OpponentGuessFormSetView, self).__init__()
         self.target_words = None
 
+    def get_context_data(self, **kwargs):
+        data = super(OpponentGuessFormSetView, self).get_context_data(**kwargs)
+        data['is_player_party'] = False
+        return data
+
     def dispatch(self, request, *args, **kwargs):
         result = super(OpponentGuessFormSetView, self).dispatch(request, *args, **kwargs)
-        self.target_words = TargetWord.objects.filter(team_round=self.current_opponent_team_round).all()
+        self.target_words = TargetWord.objects.filter(party_round=self.opponent_player_round).all()
         for word in self.target_words:
             PlayerGuess.objects.update_or_create(player=self.player, target_word=word)
         return result
@@ -298,6 +282,6 @@ class OpponentGuessFormSetView(ModelFormSetView, GenericTeamRoundFormView):
     def get_queryset(self):
         return PlayerGuess.objects.filter(
             player=self.player,
-            target_word__team_round=self.current_opponent_team_round
+            target_word__party_round=self.opponent_player_round
         )
 

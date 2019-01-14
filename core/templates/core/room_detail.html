@@ -3,7 +3,7 @@
 {% block head_title %}Room {{ room.code }}{% endblock %}
 {% block content %}
     <h1>Room {{ room.code }}</h1>
-    {% if is_leader %}
+    {% if is_room_leader %}
         <p>Your lead.</p>
         <div class="leader-room-options">
             {% if can_start_game %}
@@ -22,7 +22,7 @@
                     <input type="submit" value="Join Room"/>
                 </form>
             {% endif %}
-            {% if has_player %}
+            {% if room_has_player %}
                 <p>You are playing in this room.</p>
             {% endif %}
         </div>
@@ -38,7 +38,8 @@
             </form>
         </div>
     {% endif %}
-
+    {% include "core/includes/round_status_block.html" %}
+    {% include "core/includes/game_detail_block.html" %}
     <h2>Players</h2>
     <ul>
         {% for player in room.players.all %}

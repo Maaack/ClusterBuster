@@ -16,20 +16,20 @@
         {% endfor %}
         <button type="submit" class="btn btn-primary">Save</button>
     </form>
-        {% if is_player_team %}
+        {% if is_player_party %}
         <h2>Your Team's Words</h2>
         <table>
             <thead>
             <tr>
-                {% for team_word in player_team.party_words.all %}
-                    <th>{{ team_word.position }}</th>
+                {% for player_word in player_party.party_words.all %}
+                    <th>{{ player_word.position }}</th>
                 {% endfor %}
             </tr>
             </thead>
             <tbody>
             <tr>
-                {% for team_word in player_team.party_words.all %}
-                    <td>{{ team_word.word.text }}</td>
+                {% for player_word in player_party.party_words.all %}
+                    <td>{{ player_word.word.text }}</td>
                 {% endfor %}
             </tr>
             </tbody>
