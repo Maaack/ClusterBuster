@@ -1,8 +1,7 @@
 from clusterbuster.mixins import interfaces
 
 from core.models import Player, Round, PartyRound, TargetWord, choices
-from . import PartyInterface
-from .game import GameInterface
+from . import PartyInterface, GameInterface
 
 
 class RoundInterface(interfaces.ModelInterface, interfaces.SetupInterface):
@@ -25,6 +24,10 @@ class RoundInterface(interfaces.ModelInterface, interfaces.SetupInterface):
 
     def get_parties(self):
         return self.round.game.parties
+
+    def get_players(self):
+        party_rounds = self.round.party_rounds
+        return Player.objects.filter(team__parties__party_rounds__in=party_rounds)
 
     def has_party_rounds(self):
         return self.get_party_rounds().count() == self.get_parties().count()
@@ -163,7 +166,7 @@ class PartyRoundInterface(interfaces.ModelInterface, interfaces.SetupInterface):
     def is_leader(self, player):
         return self.party_round.leader == player
 
-    def get_guessing_players(self):
+    def get_non_leader_players(self):
         return self.party_round.party.team.players.exclude(id=self.party_round.leader.id)
 
     def set_leader(self):
@@ -174,8 +177,14 @@ class PartyRoundInterface(interfaces.ModelInterface, interfaces.SetupInterface):
         player = self.party_round.party.team.players.all()[offset]
         Player2PartyRoundInterface(player, self.party_round).set_leader()
 
+    def get_target_words(self):
+        return self.party_round.target_words
+
+    def get_target_words_count(self):
+        return self.get_target_words().count()
+
     def has_target_words(self):
-        return self.party_round.target_words.count() > 0
+        return self.get_target_words_count() > 0
 
     def get_party_word_at_position(self, position_int):
         return self.party_round.party.party_words.get(position=position_int)
@@ -187,8 +196,7 @@ class PartyRoundInterface(interfaces.ModelInterface, interfaces.SetupInterface):
         card = party_interface.draw_card()
         for order, position in enumerate(card.value):
             party_word = self.get_party_word_at_position(position)
-            target_word = TargetWord(party_round=self.party_round, party_word=party_word, order=order)
-            target_word.save()
+            TargetWord.objects.get_or_create(party_round=self.party_round, party_word=party_word, order=order)
 
     def get_non_target_words(self):
         return self.party_round.party.party_words.exclude(

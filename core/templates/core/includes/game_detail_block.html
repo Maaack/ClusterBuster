@@ -16,10 +16,16 @@
                 <h2>Your Team's Hints</h2>
                 <ol>
                     {% for player_hint in player_party_round_hints %}
-                        <li>{{ player_hint.hint }}
+                        <li>
+                            {{ player_hint.hint }}
+                            {% if player_hint.conflicting_guesses %}
+                            <span class="conflicting-guess"> -- conflicting guesses!</span>
+                            {% endif %}
                         </li>
                     {% endfor %}
                 </ol>
+                <h3>Your Team's Guesses</h3>
+                <div id="player-party-round-guesses"></div>
                 {% if not is_round_leader %}
                     <a href="{% url 'round_guesses' room.code %}">Guess on your team's hints!</a>
                 {% endif %}
@@ -31,31 +37,34 @@
                     {% endfor %}
 
                 </ol>
+                <h3>Your Team's Guesses</h3>
+                <div id="opponent-party-round-guesses"></div>
                 {% if not is_round_leader %}
                     <a href="{% url 'round_opponent_guesses' room.code %}">Guess on your opponent team's hints!</a>
                 {% endif %}
                 <h2>Your Team's Guessers</h2>
                 <ol>
-                    {% for player in party_round_guessing_players %}
+                    {% for player in player_party_round_context.guessing_players %}
                         <li>{{ player.name }}
                         </li>
                     {% endfor %}
                 </ol>
+
             {% endif %}
         </div>
         <h2>Words</h2>
         <table>
             <thead>
             <tr>
-                {% for teamword in player_party.party_words.all %}
-                    <th>{{ teamword.position }}</th>
+                {% for party_word in player_party.party_words.all %}
+                    <th>{{ party_word.position }}</th>
                 {% endfor %}
             </tr>
             </thead>
             <tbody>
             <tr>
-                {% for teamword in player_party.party_words.all %}
-                    <td>{{ teamword.word }}</td>
+                {% for party_word in player_party.party_words.all %}
+                    <td>{{ party_word.word }}</td>
                 {% endfor %}
             </tr>
             </tbody>

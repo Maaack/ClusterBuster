@@ -176,7 +176,7 @@ class GenericPartyRoundFormView(generic.FormView):
         self.game = None
         self.player_party = None
         self.opponent_party = None
-        self.current_round = None
+        self.round = None
         self.player_party_round = None
         self.opponent_player_round = None
 
@@ -186,7 +186,7 @@ class GenericPartyRoundFormView(generic.FormView):
         player_id = self.request.session.get('player_id')
         self.player = get_object_or_404(Player, pk=player_id)
         self.game = self.room.current_game
-        self.current_round = self.game.current_round
+        self.round = self.game.current_round
         player_2_game_interface = interfaces.Player2GameInterface(self.player, self.game)
         self.player_party = player_2_game_interface.get_party()
         self.opponent_party = player_2_game_interface.get_opponent_party()
@@ -222,7 +222,8 @@ class LeaderHintFormSetView(ModelFormSetView, GenericPartyRoundFormView):
     def formset_valid(self, formset):
         response = super(LeaderHintFormSetView, self).formset_valid(formset)
         interfaces.PartyRoundInterface(self.player_party_round).advance_stage()
-        interfaces.RoundInterface(self.player_party_round.round).advance_stage()
+        interfaces.RoundInterface(self.round).advance_stage()
+        interfaces.RoundGuessesInterface(self.round).setup()
         return response
 
 
@@ -244,16 +245,22 @@ class PlayerGuessFormSetView(ModelFormSetView, GenericPartyRoundFormView):
 
     def dispatch(self, request, *args, **kwargs):
         result = super(PlayerGuessFormSetView, self).dispatch(request, *args, **kwargs)
-        self.target_words = TargetWord.objects.filter(party_round=self.player_party_round).all()
-        for word in self.target_words:
-            PlayerGuess.objects.update_or_create(player=self.player, target_word=word)
+        interfaces.RoundGuessesInterface(self.round).setup()
+        interfaces.Player2PartyRoundGuessesInterface(self.player, self.opponent_player_round).setup()
         return result
 
     def get_queryset(self):
         return PlayerGuess.objects.filter(
             player=self.player,
             target_word__party_round=self.player_party_round,
-        )
+        ).order_by('target_word__order')
+
+    def formset_valid(self, formset):
+        response = super(PlayerGuessFormSetView, self).formset_valid(formset)
+        interface = interfaces.PartyRoundGuessesInterface(self.player_party_round)
+        if interface.can_set_party_guess():
+            interface.set_party_guess()
+        return response
 
 
 class OpponentGuessFormSetView(ModelFormSetView, GenericPartyRoundFormView):
@@ -274,14 +281,20 @@ class OpponentGuessFormSetView(ModelFormSetView, GenericPartyRoundFormView):
 
     def dispatch(self, request, *args, **kwargs):
         result = super(OpponentGuessFormSetView, self).dispatch(request, *args, **kwargs)
-        self.target_words = TargetWord.objects.filter(party_round=self.opponent_player_round).all()
-        for word in self.target_words:
-            PlayerGuess.objects.update_or_create(player=self.player, target_word=word)
+        interfaces.RoundGuessesInterface(self.round).setup()
+        interfaces.Player2PartyRoundGuessesInterface(self.player, self.opponent_player_round).setup()
         return result
 
     def get_queryset(self):
         return PlayerGuess.objects.filter(
             player=self.player,
             target_word__party_round=self.opponent_player_round
-        )
+        ).order_by('target_word__order')
 
+    def formset_valid(self, formset):
+        response = super(OpponentGuessFormSetView, self).formset_valid(formset)
+
+        interface = interfaces.PartyRoundGuessesInterface(self.opponent_player_round)
+        if interface.can_set_party_guess():
+            interface.set_party_guess()
+        return response

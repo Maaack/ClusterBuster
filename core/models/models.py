@@ -149,6 +149,7 @@ class PartyRound(TimeStamped, mixins.StagesPartyRound, mixins.RoundLeader):
     """
     An intermediate between parties and rounds.
     """
+
     class Meta:
         unique_together = (('party', 'round'),)
 
@@ -171,7 +172,7 @@ class TargetWord(TimeStamped):
     order = models.PositiveSmallIntegerField(_("Order"), db_index=True)
 
     def __str__(self):
-        return '(TeamRound:' + str(self.party_round) + ' ; TeamWord:' + str(self.party_word) + ' ; Order:' + str(self.order) + ')'
+        return '(PartyRound:' + str(self.party_round) + ' ; PartyWord:' + str(self.party_word) + ' ; Order:' + str(self.order) + ')'
 
     def save(self, *args, **kwargs):
         super(TargetWord, self).save(*args, **kwargs)
@@ -205,9 +206,16 @@ class LeaderHint(TimeStamped):
 
 
 class PlayerGuess(TimeStamped):
-    """Relates the target word with the player's guess"""
+    """
+    Relates the target word with the player's guess
+    """
+
     class Meta:
+        verbose_name = _("Player Guess")
+        verbose_name_plural = _("Player Guesses")
+        ordering = ["-created"]
         unique_together = (('player', 'target_word'),)
+
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player_guesses')
     target_word = models.ForeignKey(TargetWord, on_delete=models.CASCADE, related_name='player_guesses')
     guess = models.ForeignKey(PartyWord, on_delete=models.CASCADE, null=True)
