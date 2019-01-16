@@ -107,6 +107,7 @@ class Player2GameContext:
         data['player_party_round'] = player_party_round
         data['opponent_party_round'] = opponent_party_round
         data['player_party_round_context'] = Player2PartyRoundContext.load(player, player_party_round)
+        data['is_round_leader'] = data['player_party_round_context']['is_round_leader']
         data['opponent_party_round_context'] = Player2PartyRoundContext.load(player, opponent_party_round)
         data['player_party_round_hints'] = PartyRoundHintsContext.load(player_party_round)
         data['opponent_party_round_hints'] = PartyRoundHintsContext.load(opponent_party_round)

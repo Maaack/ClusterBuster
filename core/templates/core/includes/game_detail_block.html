@@ -33,6 +33,9 @@
                 <ol>
                     {% for opponent_hint in opponent_party_round_hints %}
                         <li>{{ opponent_hint.hint }}
+                            {% if opponent_hint.conflicting_guesses %}
+                            <span class="conflicting-guess"> -- conflicting guesses!</span>
+                            {% endif %}
                         </li>
                     {% endfor %}
 

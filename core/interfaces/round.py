@@ -26,7 +26,7 @@ class RoundInterface(interfaces.ModelInterface, interfaces.SetupInterface):
         return self.round.game.parties
 
     def get_players(self):
-        party_rounds = self.round.party_rounds
+        party_rounds = self.round.party_rounds.all()
         return Player.objects.filter(team__parties__party_rounds__in=party_rounds)
 
     def has_party_rounds(self):
