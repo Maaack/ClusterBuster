@@ -2,7 +2,7 @@ from django.db.models import Count
 
 from clusterbuster.mixins import interfaces
 
-from core.models import Player, Round, PartyRound, PlayerGuess
+from core.models import Player, Round, PartyRound, PlayerGuess, PartyGuess
 from . import PartyRoundInterface, RoundInterface, Player2PartyRoundInterface
 
 
@@ -94,17 +94,29 @@ class Player2PartyRoundGuessesInterface(Player2PartyRoundInterface, interfaces.S
 
 
 class PartyRoundGuessesInterface(PartyRoundInterface):
-    def __get_player_guesses_by_target_word(self):
-        return self.party_round.target_words.values('pk', 'player_guesses__player', 'player_guesses__guess')
-
-    def __set_team_guess_to_first_guess(self):
-        valid_guesses = self.get_valid_guesses()
-        target_word_guesses = self.__get_player_guesses_by_target_word()
-        # TODO: Continue working here
-        print(target_word_guesses)
+    def __get_guess_by_target_word(self):
+        return self.party_round.target_words.values('pk', 'player_guesses__guess')
 
     def get_target_word_distinct_guess_count(self):
         return self.party_round.target_words.annotate(guesses=Count('player_guesses__guess', distinct=True))
+
+    def get_target_words_with_conflicting_guesses(self):
+        return self.get_target_word_distinct_guess_count().filter(guesses__gt=1)
+
+    def get_target_words_with_matching_guesses(self):
+        return self.get_target_word_distinct_guess_count().filter(guesses=1)
+
+    def __set_team_guess_to_first_guess(self):
+        # This only gets half of the target words and guess combinations.
+        target_words = self.get_target_words_with_matching_guesses()
+
+        for target_word in target_words:
+            # TODO: This is crap and only does half of what it needs to.
+            first_player_guess = target_word.player_guesses.first()  # type: PlayerGuess
+            if first_player_guess is None:
+                raise ValueError('PlayerGuess must exist to create PartyGuess.')
+            party_guess = PartyGuess(target_word=target_word, party=self.party_round.party, guess=first_player_guess.guess)
+            party_guess.save()
 
     def get_guessing_players(self):
         return self.get_non_leader_players()
@@ -133,9 +145,6 @@ class PartyRoundGuessesInterface(PartyRoundInterface):
     def get_valid_guess_count(self):
         return self.get_valid_guesses().count()
 
-    def get_target_words_with_conflicting_guesses(self):
-        return self.get_target_word_distinct_guess_count().filter(guesses__gt=1)
-
     def get_conflicting_guesses_count(self):
         return self.get_target_words_with_conflicting_guesses().count()
 
@@ -145,8 +154,6 @@ class PartyRoundGuessesInterface(PartyRoundInterface):
         if expected_guess_count != valid_guess_count:
             return False
         conflicting_guesses_count = self.get_conflicting_guesses_count()
-        print("Conflicting Guesses")
-        print(conflicting_guesses_count)
         if conflicting_guesses_count > 0:
             return False
         self.__set_team_guess_to_first_guess()

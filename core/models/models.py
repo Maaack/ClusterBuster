@@ -167,6 +167,7 @@ class TargetWord(TimeStamped):
     class Meta:
         unique_together = (('party_round', 'party_word'), ('party_round', 'order'),)
 
+    round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name='target_words')
     party_round = models.ForeignKey(PartyRound, on_delete=models.CASCADE, related_name='target_words')
     party_word = models.ForeignKey(PartyWord, on_delete=models.CASCADE, related_name='target_words')
     order = models.PositiveSmallIntegerField(_("Order"), db_index=True)
@@ -221,8 +222,8 @@ class PlayerGuess(TimeStamped):
     guess = models.ForeignKey(PartyWord, on_delete=models.CASCADE, null=True)
 
 
-class TeamGuess(TimeStamped):
-    team = models.ForeignKey(Party, on_delete=models.CASCADE)
+class PartyGuess(TimeStamped):
+    party = models.ForeignKey(Party, on_delete=models.CASCADE)
     target_word = models.ForeignKey(TargetWord, on_delete=models.CASCADE)
     guess = models.ForeignKey(PartyWord, on_delete=models.CASCADE)
 

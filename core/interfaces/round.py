@@ -196,7 +196,8 @@ class PartyRoundInterface(interfaces.ModelInterface, interfaces.SetupInterface):
         card = party_interface.draw_card()
         for order, position in enumerate(card.value):
             party_word = self.get_party_word_at_position(position)
-            TargetWord.objects.get_or_create(party_round=self.party_round, party_word=party_word, order=order)
+            TargetWord.objects.get_or_create(round=self.party_round.round, party_round=self.party_round,
+                                             party_word=party_word, order=order)
 
     def get_non_target_words(self):
         return self.party_round.party.party_words.exclude(
