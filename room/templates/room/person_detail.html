@@ -1,0 +1,7 @@
+{% extends "room/base/html_base.html" %}
+
+{% block head_title %}{{ person.name }}{% endblock %}
+{% block content %}
+<h1>{{ person.name }} {% if current_person %}(This is you!){% endif %}</h1>
+<p>Nothing to say here.</p>
+{% endblock %}

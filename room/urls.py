@@ -11,6 +11,6 @@ urlpatterns = [
     path('new_room/', RoomCreate.as_view(), name='room_create'),
     path('rooms/', RoomList.as_view(), name='room_list'),
     path('rooms/<slug:slug>', RoomDetail.as_view(), name='room_detail'),
-    path('rooms/<slug:slug>/new_player', CreatePersonAndJoinRoom.as_view(), name='player_create_and_join_room'),
+    path('rooms/<slug:slug>/new_player', CreatePersonAndJoinRoom.as_view(), name='person_create_and_join_room'),
     path('rooms/<slug:slug>/join', JoinRoom.as_view(), name='join_room'),
 ]

@@ -1,0 +1,64 @@
+{% extends "room/base/html_base.html" %}
+
+{% block head_title %}Room {{ room.code }}{% endblock %}
+{% block content %}
+    <h1>Room {{ room.code }}</h1>
+    <div id="room-options">
+        {% if is_leader %}
+            <p>Your lead.</p>
+            <div id="room-leader-options">
+                {% block room_leader_options %}{% endblock %}
+            </div>
+        {% elif is_person %}
+            <div id="room-person-options">
+                {% if can_join %}
+                    <form method="post" action="{% url 'join_room' room.code %}">
+                        {% csrf_token %}
+                        <input type="submit" value="Join Room"/>
+                    </form>
+                {% endif %}
+                {% if has_person %}
+                    <p>You are in this room.</p>
+                {% endif %}
+                {% block room_person_options %}{% endblock %}
+            </div>
+        {% else %}
+            <div id="room-anonymous-options">
+                <p>Create a new player and join the room.</p>
+                <form method="post" action="{% url 'person_create_and_join_room' room.code %}">
+                    {% csrf_token %}
+                    <label>Name
+                        <input type="text" name="name" value=""/>
+                    </label>
+                    <input type="submit" value="Join Room"/>
+                </form>
+                {% block room_anonymous_options %}{% endblock %}
+            </div>
+        {% endif %}
+    </div>
+    <div id="room-details">
+        <h2>People</h2>
+        <ul>
+            {% for person in room.people.all %}
+                <li>{{ person.name }}</li>
+                {% empty %}
+                <p>No players yet...</p>
+            {% endfor %}
+        </ul>
+        <h2>Groups</h2>
+        {% for group_extra in group_extras %}
+            <strong>{{ group_extra.group.name }}</strong>
+            {% if group_extra.has_person %}(Your Group){% endif %}
+            <ul>
+                {% for person in group_extra.group.people.all %}
+                    <li>{{ person.name }}</li>
+                {% empty %}
+                    <p>No people yet...</p>
+                {% endfor %}
+            </ul>
+            {% empty %}
+            <p>No groups yet...</p>
+        {% endfor %}
+        {% block room_details %}{% endblock %}
+    </div>
+{% endblock %}

@@ -3,7 +3,7 @@ from django.views import generic
 
 from core import interfaces
 from room.models import Room
-from .contexts import PersonContext, Person2RoomContext, Person2GroupContext
+from .contexts import PersonContext, GroupContext, Person2RoomContext, Person2GroupContext
 from .mixins import CheckPersonView
 
 
@@ -46,16 +46,19 @@ class RoomDetail(generic.DetailView, CheckPersonView):
     def get_context_data(self, **kwargs):
         data = super(RoomDetail, self).get_context_data(**kwargs)
         room = self.get_object()
+        groups = room.groups.all()
+        for count, group in enumerate(groups):
+            data['group_extras'][count] = GroupContext.load(group)
         person = self.get_current_person()
         if person:
             person_data = PersonContext.load(person)
             data.update(person_data)
             person_room_data = Person2RoomContext.load(person, room)
-            data['person2room'] = person_room_data
+            data.update(person_room_data)
             groups = room.groups.all()
             for count, group in enumerate(groups):
                 person_group_data = Person2GroupContext.load(person, group)
-                data['person2group'][count] = person_group_data
+                data['group_extras'][count].update(person_group_data)
         return data
 
 
