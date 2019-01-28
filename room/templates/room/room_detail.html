@@ -39,8 +39,15 @@
     <div id="room-details">
         <h2>People</h2>
         <ul>
-            {% for person in room.people.all %}
-                <li>{{ person.name }}</li>
+            {% for person_extra in people %}
+                <li>
+                    {{ person_extra.person.name }}
+                    {% if person_extra.is_leader %}
+                        (Room Leader)
+                    {% elif person_extra.is_person %}
+                        (You)
+                    {% endif %}
+                </li>
                 {% empty %}
                 <p>No players yet...</p>
             {% endfor %}

@@ -52,18 +52,27 @@ class RoomDetail(generic.DetailView, CheckPersonView):
     def get_context_data(self, **kwargs):
         data = super(RoomDetail, self).get_context_data(**kwargs)
         room = self.get_object()
-        person = self.get_current_person()
-        if person:
-            person_data = PersonContext.load(person)
+        current_person = self.get_current_person()
+        if current_person:
+            person_data = PersonContext.load(current_person)
             data.update(person_data)
-            person_room_data = Person2RoomContext.load(person, room)
+            person_room_data = Person2RoomContext.load(current_person, room)
             data.update(person_room_data)
+        people = room.people.all()
+        people_data = list()
+        for person in people:
+            person_data = PersonContext.load(person)
+            person_room_data = Person2RoomContext.load(person, room)
+            person_data.update(person_room_data)
+            person_data['is_person'] = person == current_person
+            people_data.append(person_data)
+        data['people'] = people_data
         groups = room.groups.all()
         groups_data = list()
-        for count, group in enumerate(groups):
+        for group in groups:
             group_data = GroupContext.load(group)
-            if person:
-                person_group_data = Person2GroupContext.load(person, group)
+            if current_person:
+                person_group_data = Person2GroupContext.load(current_person, group)
                 group_data.update(person_group_data)
             groups_data.append(group_data)
         data['groups'] = groups_data
