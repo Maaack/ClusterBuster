@@ -46,7 +46,7 @@
             {% endfor %}
         </ul>
         <h2>Groups</h2>
-        {% for group_extra in group_extras %}
+        {% for group_extra in groups %}
             <strong>{{ group_extra.group.name }}</strong>
             {% if group_extra.has_person %}(Your Group){% endif %}
             <ul>

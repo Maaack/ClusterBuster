@@ -1,10 +1,17 @@
 from django.urls import reverse
 from django.views import generic
+from django.http import HttpResponse
+from django.template import loader
 
-from core import interfaces
 from room.models import Room
+
 from .contexts import PersonContext, GroupContext, Person2RoomContext, Person2GroupContext
 from .mixins import CheckPersonView
+
+
+def index_view(request):
+    template = loader.get_template('room/index.html')
+    return HttpResponse(template.render({}, request))
 
 
 class RoomCreate(generic.CreateView):
@@ -15,7 +22,6 @@ class RoomCreate(generic.CreateView):
         self.request.session.save()
         form.instance.session_id = self.request.session.session_key
         response = super(RoomCreate, self).form_valid(form)
-        interfaces.RoomInterface(self.object).setup()
         return response
 
     def get_success_url(self):
@@ -46,19 +52,22 @@ class RoomDetail(generic.DetailView, CheckPersonView):
     def get_context_data(self, **kwargs):
         data = super(RoomDetail, self).get_context_data(**kwargs)
         room = self.get_object()
-        groups = room.groups.all()
-        for count, group in enumerate(groups):
-            data['group_extras'][count] = GroupContext.load(group)
         person = self.get_current_person()
         if person:
             person_data = PersonContext.load(person)
             data.update(person_data)
             person_room_data = Person2RoomContext.load(person, room)
             data.update(person_room_data)
-            groups = room.groups.all()
-            for count, group in enumerate(groups):
+        groups = room.groups.all()
+        groups_data = list()
+        for count, group in enumerate(groups):
+            group_data = GroupContext.load(group)
+            if person:
                 person_group_data = Person2GroupContext.load(person, group)
-                data['group_extras'][count].update(person_group_data)
+                group_data.update(person_group_data)
+            groups_data.append(group_data)
+        data['groups'] = groups_data
+
         return data
 
 

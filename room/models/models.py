@@ -101,7 +101,7 @@ class Room(TimeStamped, SessionOptional):
             self.code = CodeGenerator.room_code()
 
     def __get_groups_with_person_count(self):
-        return self.groups.annotate(num_players=models.Count('people')).order_by('num_people')
+        return self.groups.annotate(num_people=models.Count('people')).order_by('num_people')
 
     def save(self, *args, **kwargs):
         self.__setup_code()

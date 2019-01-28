@@ -1,10 +1,12 @@
 from django.urls import path
 
 from .views import (
-    PersonCreate, PersonDetail, PersonUpdate, RoomCreate, RoomList, RoomDetail, CreatePersonAndJoinRoom, JoinRoom
+    index_view, PersonCreate, PersonDetail, PersonUpdate, RoomCreate, RoomList, RoomDetail, CreatePersonAndJoinRoom,
+    JoinRoom
 )
 
 urlpatterns = [
+    path('', index_view, name='index'),
     path('new_player/', PersonCreate.as_view(), name='person_create'),
     path('players/<int:pk>', PersonDetail.as_view(), name='person_detail'),
     path('players/<int:pk>/update', PersonUpdate.as_view(), name='person_update'),
