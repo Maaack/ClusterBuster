@@ -9,23 +9,24 @@ class CheckPersonView(View):
 
     model = Person
 
-    def is_current_person(self, player):
-        return self.get_current_person() == player
+    def is_current_person(self, person):
+        return self.get_current_person() == person
 
     def get_current_person(self):
-        player_id = self.request.session.get('player_id')
-        if player_id:
+        person_id = self.request.session.get('person_id')
+        if person_id:
             try:
-                return Person.objects.get(pk=player_id)
+                return Person.objects.get(pk=person_id)
             except Person.DoesNotExist:
                 return None
+        return None
 
 
 class AssignPersonView(generic.edit.FormMixin, View):
     class Meta:
         abstract = True
 
-    def assign_player(self, person):
+    def assign_person(self, person):
         if type(person) is Person:
             self.request.session['person_id'] = person.pk
             self.request.session['person_name'] = person.name
@@ -38,7 +39,7 @@ class AssignPersonView(generic.edit.FormMixin, View):
     def get_success_url(self):
         if type(self.object) is Person:
             player = self.object
-            self.assign_player(player)
+            self.assign_person(player)
             return reverse('person_detail', kwargs={'pk': self.object.pk})
         return reverse('person_list')
 

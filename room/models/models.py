@@ -48,6 +48,14 @@ class Group(TimeStamped, SessionOptional):
         """
         return self.people.filter(pk=person.pk).exists()
 
+    def is_leader(self, person: Person) -> bool:
+        """
+        Returns `True` if the person is the group leader.
+        :param person: Person
+        :return: bool
+        """
+        return bool(self.session == person.session)
+
     def can_join(self, person: Person) -> bool:
         """
         Returns `True` if the person can join the group.
