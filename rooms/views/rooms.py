@@ -10,7 +10,7 @@ from .mixins import CheckPlayerView
 
 
 def index_view(request):
-    template = loader.get_template('room/index.html')
+    template = loader.get_template('rooms/index.html')
     return HttpResponse(template.render({}, request))
 
 
