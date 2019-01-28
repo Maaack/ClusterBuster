@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views import generic
 
-from room.models import Player
+from rooms.models import Player
 from .mixins import CheckPlayerView, AssignPlayerView
 
 

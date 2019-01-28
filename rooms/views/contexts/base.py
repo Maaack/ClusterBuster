@@ -1,4 +1,4 @@
-from room.models import Player, Team, Room
+from rooms.models import Player, Team, Room
 
 
 class RoomContext:

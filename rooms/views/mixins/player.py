@@ -1,6 +1,6 @@
 from django.views import generic, View
 from django.urls import reverse
-from room.models import Player
+from rooms.models import Player
 
 
 class CheckPlayerView(View):

@@ -3,7 +3,7 @@ from django.views import generic
 from django.http import HttpResponse
 from django.template import loader
 
-from room.models import Room
+from rooms.models import Room
 
 from .contexts import PlayerContext, TeamContext, Player2RoomContext, Player2TeamContext
 from .mixins import CheckPlayerView
