@@ -5,7 +5,7 @@ from django.template import loader
 
 from room.models import Room
 
-from .contexts import PlayerContext, GroupContext, Player2RoomContext, Player2GroupContext
+from .contexts import PlayerContext, TeamContext, Player2RoomContext, Player2TeamContext
 from .mixins import CheckPlayerView
 
 
@@ -67,15 +67,15 @@ class RoomDetail(generic.DetailView, CheckPlayerView):
             player_data['is_player'] = player == current_player
             players_data.append(player_data)
         data['players'] = players_data
-        groups = room.groups.all()
-        groups_data = list()
-        for group in groups:
-            group_data = GroupContext.load(group)
+        teams = room.teams.all()
+        teams_data = list()
+        for team in teams:
+            team_data = TeamContext.load(team)
             if current_player:
-                player_group_data = Player2GroupContext.load(current_player, group)
-                group_data.update(player_group_data)
-            groups_data.append(group_data)
-        data['groups'] = groups_data
+                player_team_data = Player2TeamContext.load(current_player, team)
+                team_data.update(player_team_data)
+            teams_data.append(team_data)
+        data['teams'] = teams_data
 
         return data
 

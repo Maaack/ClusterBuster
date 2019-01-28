@@ -52,19 +52,19 @@
                 <p>No players yet...</p>
             {% endfor %}
         </ul>
-        <h2>Groups</h2>
-        {% for group_extra in groups %}
-            <strong>{{ group_extra.group.name }}</strong>
-            {% if group_extra.has_player %}(Your Group){% endif %}
+        <h2>Teams</h2>
+        {% for team_extra in teams %}
+            <strong>{{ team_extra.team.name }}</strong>
+            {% if team_extra.has_player %}(Your Team){% endif %}
             <ul>
-                {% for player in group_extra.group.players.all %}
+                {% for player in team_extra.team.players.all %}
                     <li>{{ player.name }}</li>
                 {% empty %}
                     <p>No players yet...</p>
                 {% endfor %}
             </ul>
             {% empty %}
-            <p>No groups yet...</p>
+            <p>No teams yet...</p>
         {% endfor %}
         {% block room_details %}{% endblock %}
     </div>

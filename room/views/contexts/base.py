@@ -1,4 +1,4 @@
-from room.models import Player, Group, Room
+from room.models import Player, Team, Room
 
 
 class RoomContext:
@@ -26,15 +26,15 @@ class PlayerContext:
         return data
 
 
-class GroupContext:
+class TeamContext:
     @staticmethod
-    def load(group: Group) -> dict:
+    def load(team: Team) -> dict:
         """
-        :param group: Group
+        :param team: Team
         :return: dict
         """
         data = dict()
-        data['group'] = group
+        data['team'] = team
         return data
 
 
@@ -55,18 +55,18 @@ class Player2RoomContext:
         return data
 
 
-class Player2GroupContext:
+class Player2TeamContext:
     @staticmethod
-    def load(player: Player, group: Group):
+    def load(player: Player, team: Team):
         """
         :param player: Player
-        :param group: Group
+        :param team: Team
         :return: dict
         """
         data = dict()
-        has_player = group.has_player(player)
-        data['has_player'] = group.has_player(player)
-        data['can_join'] = group.can_join(player)
+        has_player = team.has_player(player)
+        data['has_player'] = team.has_player(player)
+        data['can_join'] = team.can_join(player)
         if has_player:
-            data['is_leader'] = group.is_leader(player)
+            data['is_leader'] = team.is_leader(player)
         return data
