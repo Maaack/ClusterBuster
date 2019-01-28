@@ -9,23 +9,23 @@
             <div id="room-leader-options">
                 {% block room_leader_options %}{% endblock %}
             </div>
-        {% elif is_person %}
-            <div id="room-person-options">
+        {% elif is_player %}
+            <div id="room-player-options">
                 {% if can_join %}
                     <form method="post" action="{% url 'join_room' room.code %}">
                         {% csrf_token %}
                         <input type="submit" value="Join Room"/>
                     </form>
                 {% endif %}
-                {% if has_person %}
+                {% if has_player %}
                     <p>You are in this room.</p>
                 {% endif %}
-                {% block room_person_options %}{% endblock %}
+                {% block room_player_options %}{% endblock %}
             </div>
         {% else %}
             <div id="room-anonymous-options">
                 <p>Create a new player and join the room.</p>
-                <form method="post" action="{% url 'person_create_and_join_room' room.code %}">
+                <form method="post" action="{% url 'player_create_and_join_room' room.code %}">
                     {% csrf_token %}
                     <label>Name
                         <input type="text" name="name" value=""/>
@@ -37,14 +37,14 @@
         {% endif %}
     </div>
     <div id="room-details">
-        <h2>People</h2>
+        <h2>Players</h2>
         <ul>
-            {% for person_extra in people %}
+            {% for player_extra in players %}
                 <li>
-                    {{ person_extra.person.name }}
-                    {% if person_extra.is_leader %}
+                    {{ player_extra.player.name }}
+                    {% if player_extra.is_leader %}
                         (Room Leader)
-                    {% elif person_extra.is_person %}
+                    {% elif player_extra.is_player %}
                         (You)
                     {% endif %}
                 </li>
@@ -55,12 +55,12 @@
         <h2>Groups</h2>
         {% for group_extra in groups %}
             <strong>{{ group_extra.group.name }}</strong>
-            {% if group_extra.has_person %}(Your Group){% endif %}
+            {% if group_extra.has_player %}(Your Group){% endif %}
             <ul>
-                {% for person in group_extra.group.people.all %}
-                    <li>{{ person.name }}</li>
+                {% for player in group_extra.group.players.all %}
+                    <li>{{ player.name }}</li>
                 {% empty %}
-                    <p>No people yet...</p>
+                    <p>No players yet...</p>
                 {% endfor %}
             </ul>
             {% empty %}

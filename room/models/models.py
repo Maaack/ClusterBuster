@@ -10,15 +10,15 @@ from .mixins import SessionOptional
 from .managers import ActiveRoomManager
 
 
-class Person(TimeStamped, SessionOptional):
+class Player(TimeStamped, SessionOptional):
     """
-    People are named individuals logging into the platform.
+    Players are named individuals logging into the platform.
     """
     name = models.CharField(_("Name"), max_length=64)
 
     class Meta:
-        verbose_name = _("Person")
-        verbose_name_plural = _("People")
+        verbose_name = _("Player")
+        verbose_name_plural = _("Players")
         ordering = ["name", "-created"]
 
     def __str__(self):
@@ -27,10 +27,10 @@ class Person(TimeStamped, SessionOptional):
 
 class Group(TimeStamped, SessionOptional):
     """
-    Groups are a named collection of people.
+    Groups are a named collection of players.
     """
     name = models.CharField(_('Team Name'), max_length=64, default="")
-    people = models.ManyToManyField(Person, blank=True)
+    players = models.ManyToManyField(Player, blank=True)
 
     class Meta:
         verbose_name = _("Group")
@@ -40,49 +40,59 @@ class Group(TimeStamped, SessionOptional):
     def __str__(self):
         return str(self.name)
 
-    def has_person(self, person: Person) -> bool:
+    def has_player(self, player: Player) -> bool:
         """
-        Returns `True` if the person is in the group.
-        :param person: Person
+        Returns `True` if the player is in the group.
+        :param player: Player
         :return: bool
         """
-        return self.people.filter(pk=person.pk).exists()
+        return self.players.filter(pk=player.pk).exists()
 
-    def is_leader(self, person: Person) -> bool:
+    def has(self, model_object) -> bool:
         """
-        Returns `True` if the person is the group leader.
-        :param person: Person
+        Returns `True` if the player is in the group.
+        :param model_object: Player
+        :return:
+        """
+        if isinstance(model_object, Player):
+            return self.has_player(player=model_object)
+        return False
+
+    def is_leader(self, player: Player) -> bool:
+        """
+        Returns `True` if the player is the group leader.
+        :param player: Player
         :return: bool
         """
-        return bool(self.session == person.session)
+        return bool(self.session == player.session)
 
-    def can_join(self, person: Person) -> bool:
+    def can_join(self, player: Player) -> bool:
         """
-        Returns `True` if the person can join the group.
+        Returns `True` if the player can join the group.
         :return: bool
         """
-        return not self.has_person(person)
+        return not self.has_player(player)
 
-    def join(self, person: Person):
+    def join(self, player: Player):
         """
-        Attempts to join the person to the group.
+        Attempts to join the player to the group.
         :return: None
         """
-        if not self.can_join(person):
-            raise Exception('Person can not join this Group')
-        self.people.add(person)
+        if not self.can_join(player):
+            raise Exception('Player can not join this Group')
+        self.players.add(player)
         self.save()
 
 
 class Room(TimeStamped, SessionOptional):
     """
-    Rooms are for people and groups to join together.
+    Rooms are for players and groups to join together.
     """
     DEFAULT_GROUP_COUNT = 2
     DEFAULT_GROUP_NAMES = ['RED', 'BLUE', 'GREEN', 'CYAN', 'MAGENTA', 'YELLOW']
 
     code = models.SlugField(_("Code"), max_length=16)
-    people = models.ManyToManyField(Person, blank=True)
+    players = models.ManyToManyField(Player, blank=True)
     groups = models.ManyToManyField(Group, blank=True)
 
     objects = models.Manager()
@@ -100,20 +110,20 @@ class Room(TimeStamped, SessionOptional):
         if not self.code:
             self.code = CodeGenerator.room_code()
 
-    def __get_groups_with_person_count(self):
-        return self.groups.annotate(num_people=models.Count('people')).order_by('num_people')
+    def __get_groups_with_player_count(self):
+        return self.groups.annotate(num_players=models.Count('players')).order_by('num_players')
 
     def save(self, *args, **kwargs):
         self.__setup_code()
         super(Room, self).save(*args, **kwargs)
 
-    def has_person(self, person: Person) -> bool:
+    def has_player(self, player: Player) -> bool:
         """
-        Returns `True` if the person is in the room.
-        :param person: Person
+        Returns `True` if the player is in the room.
+        :param player: Player
         :return: bool
         """
-        return self.people.filter(pk=person.pk).exists()
+        return self.players.filter(pk=player.pk).exists()
 
     def has_group(self, group: Group) -> bool:
         """
@@ -125,47 +135,47 @@ class Room(TimeStamped, SessionOptional):
 
     def has(self, model_object) -> bool:
         """
-        Returns `True` if the room has the person or group in it.
-        :param model_object: Person or Group
+        Returns `True` if the room has the player or group in it.
+        :param model_object: Player or Group
         :return:
         """
-        if isinstance(model_object, Person):
-            return self.has_person(person=model_object)
+        if isinstance(model_object, Player):
+            return self.has_player(player=model_object)
         elif isinstance(model_object, Group):
             return self.has_group(group=model_object)
         return False
 
-    def is_leader(self, person: Person) -> bool:
+    def is_leader(self, player: Player) -> bool:
         """
-        Returns `True` if the person is the room leader.
-        :param person: Person
+        Returns `True` if the player is the room leader.
+        :param player: Player
         :return: bool
         """
-        return bool(self.session == person.session)
+        return bool(self.session == player.session)
 
-    def can_join(self, person: Person) -> bool:
+    def can_join(self, player: Player) -> bool:
         """
-        Returns `True` if the person can join the room.
+        Returns `True` if the player can join the room.
         :return: bool
         """
-        return not self.has_person(person)
+        return not self.has_player(player)
 
-    def get_group_with_fewest_people(self) -> Optional[Group]:
+    def get_group_with_fewest_players(self) -> Optional[Group]:
         """
-        Returns the group with the fewest people.
+        Returns the group with the fewest players.
         :return: Optional[Group]
         """
-        return self.__get_groups_with_person_count().first()
+        return self.__get_groups_with_player_count().first()
 
-    def get_fewest_persons_per_group(self) -> int:
+    def get_fewest_players_per_group(self) -> int:
         """
-        Returns the number of the fewest people in a group.
+        Returns the number of the fewest players in a group.
         :return: int
         """
-        group = self.get_group_with_fewest_people()
+        group = self.get_group_with_fewest_players()
         if group is None:
             return 0
-        return group.people.count()
+        return group.players.count()
 
     def set_default_groups(self):
         """
@@ -189,34 +199,34 @@ class Room(TimeStamped, SessionOptional):
         """
         if self.groups.count() <= self.DEFAULT_GROUP_COUNT:
             self.set_default_groups()
-        return self.get_group_with_fewest_people()
+        return self.get_group_with_fewest_players()
 
-    def join_group(self, person: Person, group: Group):
+    def join_group(self, player: Player, group: Group):
         """
-        Attempts to join the person to a specific group in the room.
+        Attempts to join the player to a specific group in the room.
         Raises an exception if it fails.
-        :param person: Person
+        :param player: Player
         :param group: Group
         :raise: Exception
         :return:
         """
         if not self.has_group(group):
             raise Exception('Group does not exist in this Room.')
-        group.join(person)
+        group.join(player)
 
-    def join(self, person: Person, group=None):
+    def join(self, player: Player, group=None):
         """
-        Attempts to join the person to the room.
+        Attempts to join the player to the room.
         Raises an exception if it fails.
-        :param person: Person
+        :param player: Player
         :param group: Group or None
         :raise: Exception
         :return: None
         """
-        if not self.can_join(person):
-            raise Exception('Person can not join room.')
-        self.people.add(person)
+        if not self.can_join(player):
+            raise Exception('Player can not join room.')
+        self.players.add(player)
         if group is None:
             group = self.get_default_group()
-        group.join(person)
+        group.join(player)
         self.save()

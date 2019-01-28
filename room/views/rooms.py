@@ -5,8 +5,8 @@ from django.template import loader
 
 from room.models import Room
 
-from .contexts import PersonContext, GroupContext, Person2RoomContext, Person2GroupContext
-from .mixins import CheckPersonView
+from .contexts import PlayerContext, GroupContext, Player2RoomContext, Player2GroupContext
+from .mixins import CheckPlayerView
 
 
 def index_view(request):
@@ -35,7 +35,7 @@ class RoomList(generic.ListView):
         return Room.active_rooms.all()
 
 
-class RoomDetail(generic.DetailView, CheckPersonView):
+class RoomDetail(generic.DetailView, CheckPlayerView):
     model = Room
     slug_field = 'code'
 
@@ -52,43 +52,43 @@ class RoomDetail(generic.DetailView, CheckPersonView):
     def get_context_data(self, **kwargs):
         data = super(RoomDetail, self).get_context_data(**kwargs)
         room = self.get_object()
-        current_person = self.get_current_person()
-        if current_person:
-            person_data = PersonContext.load(current_person)
-            data.update(person_data)
-            person_room_data = Person2RoomContext.load(current_person, room)
-            data.update(person_room_data)
-        people = room.people.all()
-        people_data = list()
-        for person in people:
-            person_data = PersonContext.load(person)
-            person_room_data = Person2RoomContext.load(person, room)
-            person_data.update(person_room_data)
-            person_data['is_person'] = person == current_person
-            people_data.append(person_data)
-        data['people'] = people_data
+        current_player = self.get_current_player()
+        if current_player:
+            player_data = PlayerContext.load(current_player)
+            data.update(player_data)
+            player_room_data = Player2RoomContext.load(current_player, room)
+            data.update(player_room_data)
+        players = room.players.all()
+        players_data = list()
+        for player in players:
+            player_data = PlayerContext.load(player)
+            player_room_data = Player2RoomContext.load(player, room)
+            player_data.update(player_room_data)
+            player_data['is_player'] = player == current_player
+            players_data.append(player_data)
+        data['players'] = players_data
         groups = room.groups.all()
         groups_data = list()
         for group in groups:
             group_data = GroupContext.load(group)
-            if current_person:
-                person_group_data = Person2GroupContext.load(current_person, group)
-                group_data.update(person_group_data)
+            if current_player:
+                player_group_data = Player2GroupContext.load(current_player, group)
+                group_data.update(player_group_data)
             groups_data.append(group_data)
         data['groups'] = groups_data
 
         return data
 
 
-class JoinRoom(generic.RedirectView, generic.detail.SingleObjectMixin, CheckPersonView):
+class JoinRoom(generic.RedirectView, generic.detail.SingleObjectMixin, CheckPlayerView):
     model = Room
     pattern_name = 'room_detail'
     slug_field = 'code'
 
     def get_redirect_url(self, *args, **kwargs):
-        person = self.get_current_person()
-        if not person:
-            raise Exception('Person must be logged in.')
+        player = self.get_current_player()
+        if not player:
+            raise Exception('Player must be logged in.')
         room = self.get_object()
-        room.join(person)
+        room.join(player)
         return super().get_redirect_url(*args, **kwargs)

@@ -1,1 +1,1 @@
-from .person import *
+from .player import *

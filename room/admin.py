@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from .models import Person, Group, Room
+from .models import Player, Group, Room
 
-admin.site.register(Person)
+admin.site.register(Player)
 admin.site.register(Group)
 admin.site.register(Room)

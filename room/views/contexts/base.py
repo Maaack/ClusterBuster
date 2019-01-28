@@ -1,4 +1,4 @@
-from room.models import Person, Group, Room
+from room.models import Player, Group, Room
 
 
 class RoomContext:
@@ -13,16 +13,16 @@ class RoomContext:
         return data
 
 
-class PersonContext:
+class PlayerContext:
     @staticmethod
-    def load(person: Person) -> dict:
+    def load(player: Player) -> dict:
         """
-        :param person: Person
+        :param player: Player
         :return: dict
         """
         data = dict()
-        data['person'] = person
-        data['is_person'] = True
+        data['player'] = player
+        data['is_player'] = True
         return data
 
 
@@ -38,35 +38,35 @@ class GroupContext:
         return data
 
 
-class Person2RoomContext:
+class Player2RoomContext:
     @staticmethod
-    def load(person: Person, room: Room):
+    def load(player: Player, room: Room):
         """
-        :param person: Person
+        :param player: Player
         :param room: Room
         :return: dict
         """
         data = dict()
-        has_person = room.has_person(person)
-        data['has_person'] = has_person
-        data['can_join'] = room.can_join(person)
-        if has_person:
-            data['is_leader'] = room.is_leader(person)
+        has_player = room.has_player(player)
+        data['has_player'] = has_player
+        data['can_join'] = room.can_join(player)
+        if has_player:
+            data['is_leader'] = room.is_leader(player)
         return data
 
 
-class Person2GroupContext:
+class Player2GroupContext:
     @staticmethod
-    def load(person: Person, group: Group):
+    def load(player: Player, group: Group):
         """
-        :param person: Person
+        :param player: Player
         :param group: Group
         :return: dict
         """
         data = dict()
-        has_person = group.has_person(person)
-        data['has_person'] = group.has_person(person)
-        data['can_join'] = group.can_join(person)
-        if has_person:
-            data['is_leader'] = group.is_leader(person)
+        has_player = group.has_player(player)
+        data['has_player'] = group.has_player(player)
+        data['can_join'] = group.can_join(player)
+        if has_player:
+            data['is_leader'] = group.is_leader(player)
         return data

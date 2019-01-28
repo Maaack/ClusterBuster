@@ -1,2 +1,2 @@
-from .people import *
+from .players import *
 from .rooms import *
