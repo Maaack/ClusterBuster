@@ -103,12 +103,6 @@ class Player2GameInterface(interfaces.Model2ModelInterface):
         self.player = player
         self.game = game
 
-    def __get_teams_with_player_counts(self):
-        return self.game.teams.annotate(num_players=Count('players')).order_by('num_players')
-
-    def get_player_count(self):
-        return self.__get_teams_with_player_counts().aggregate(Sum('num_players'))['num_players__sum'] or 0
-
     def has_player(self):
         return self.game.teams.filter(players=self.player).exists()
 
