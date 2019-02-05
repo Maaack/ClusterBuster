@@ -134,6 +134,17 @@ class Condition(TimeStamped):
         return self.__condition()
 
 
+class Parameter(TimeStamped):
+    """
+    Condition with a label and condition method.
+    """
+    key = models.SlugField(_("Key"), max_length=32)
+    value = models.BooleanField(_("Value"), default=False)
+
+    def __str__(self):
+        return str(self.key)
+
+
 class StateMachine(TimeStamped):
     """
     State Machines manage the State and its Transitions.
