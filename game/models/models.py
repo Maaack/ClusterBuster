@@ -2,11 +2,12 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from clusterbuster.mixins import TimeStamped
+from core.basics.utils import CodeGenerator
 
 from rooms.models import Player, Team, Room
 
 
-class LeafState(TimeStamped):
+class BaseState(TimeStamped):
     """
     State with a label.
     """
@@ -19,18 +20,16 @@ class LeafState(TimeStamped):
         return str(self.label)
 
 
-class State(LeafState):
+class State(BaseState):
     """
     State with links to other states.
     """
-    parent_state = models.ForeignKey('State', on_delete=models.SET_NULL, null=True, blank=True)
+    parent_state = models.ForeignKey('State', on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    transitions = models.ManyToManyField('Transition', blank=True, related_name="+")
 
     class Meta:
         verbose_name = _("State")
         verbose_name_plural = _("States")
-
-    def __str__(self):
-        return str(self.label)
 
 
 class Stage(State):
@@ -65,14 +64,14 @@ class ConsecutiveTeamTurn(State):
     """
     Turns to all teams simultaneously.
     """
-    teams = models.ManyToManyField(Team, blank=True)
+    teams = models.ManyToManyField(Team, blank=True, related_name="+")
 
 
 class ConsecutivePlayerTurn(State):
     """
     Turns to all players simultaneously.
     """
-    players = models.ManyToManyField(Player, blank=True)
+    players = models.ManyToManyField(Player, blank=True, related_name="+")
 
 
 class SequentialTurn(State):
@@ -86,11 +85,70 @@ class SequentialTeamTurn(SequentialTurn):
     """
     Turns for each team, one at a time.
     """
-    team = models.ForeignKey(Team)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="+")
 
 
 class SequentialPlayerTurn(SequentialTurn):
     """
     Turns for each team, one at a time.
     """
-    player = models.ForeignKey(Player)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="+")
+
+
+class Transition(TimeStamped):
+    """
+    Transition pass Conditions to State.
+    """
+    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
+
+    def __can_transit(self):
+        for condition in self.conditions.all():
+            if not condition.is_satisfied():
+                return False
+        return True
+
+    def can_transit(self):
+        return self.__can_transit()
+
+    def pre_transit(self):
+        pass
+
+    def post_transit(self):
+        pass
+
+
+class Condition(TimeStamped):
+    """
+    Condition with a label and condition method.
+    """
+    label = models.SlugField(_("Label"), max_length=32)
+    transition = models.ForeignKey(Transition, on_delete=models.CASCADE, related_name="conditions")
+
+    def __str__(self):
+        return str(self.label)
+
+    def __condition(self) -> bool:
+        pass
+
+    def passes(self):
+        return self.__condition()
+
+
+class StateMachine(TimeStamped):
+    """
+    State Machines manage the State and its Transitions.
+    """
+    current_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __transition(self):
+        if self.current_state.transitions.count() > 0:
+            for transition in self.current_state.transitions.all():
+                if transition.can_transit():
+                    transition.pre_transit()
+                    self.current_state = transition.to_state
+                    self.save()
+                    transition.post_transit()
+                    return
+
+    def transition(self):
+        self.__transition()
