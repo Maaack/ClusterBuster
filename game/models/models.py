@@ -154,3 +154,15 @@ class StateMachine(TimeStamped):
 
     def transition(self):
         self.__transition()
+
+
+class Game(StateMachine):
+    players = models.ManyToManyField(Player, blank=True)
+    teams = models.ManyToManyField(Team, blank=True)
+    room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True, related_name="games")
+
+    def setup_from_room(self, room: Room):
+        self.room = room
+        self.players = room.players
+        self.teams = room.teams
+        self.save()
