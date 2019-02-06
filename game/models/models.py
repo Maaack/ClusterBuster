@@ -7,6 +7,30 @@ from core.basics.utils import CodeGenerator
 from rooms.models import Player, Team, Room
 
 
+class Parameter(TimeStamped):
+    """
+    Condition with a label and condition method.
+    """
+    key = models.SlugField(_("Key"), max_length=32)
+    value = models.BooleanField(_("Value"), default=False)
+
+    def __str__(self):
+        return str(self.key) + ": " + str(self.value)
+
+
+class Condition(TimeStamped):
+    """
+    Condition wraps a parameter.
+    """
+    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return str(self.parameter)
+
+    def passes(self):
+        return bool(self.parameter.value)
+
+
 class BaseState(TimeStamped):
     """
     State with a label.
@@ -100,49 +124,17 @@ class Transition(TimeStamped):
     Transition pass Conditions to State.
     """
     to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
+    conditions = models.ManyToManyField(Condition, blank=True, related_name="transitions")
 
     def __can_transit(self):
-        for condition in self.conditions.all():
-            if not condition.is_satisfied():
+        conditions = self.conditions.all()
+        for condition in conditions:
+            if not condition.passes():
                 return False
         return True
 
     def can_transit(self):
         return self.__can_transit()
-
-    def pre_transit(self):
-        pass
-
-    def post_transit(self):
-        pass
-
-
-class Condition(TimeStamped):
-    """
-    Condition with a label and condition method.
-    """
-    label = models.SlugField(_("Label"), max_length=32)
-    transition = models.ForeignKey(Transition, on_delete=models.CASCADE, related_name="conditions")
-
-    def __str__(self):
-        return str(self.label)
-
-    def __condition(self) -> bool:
-        pass
-
-    def passes(self):
-        return self.__condition()
-
-
-class Parameter(TimeStamped):
-    """
-    Condition with a label and condition method.
-    """
-    key = models.SlugField(_("Key"), max_length=32)
-    value = models.BooleanField(_("Value"), default=False)
-
-    def __str__(self):
-        return str(self.key)
 
 
 class StateMachine(TimeStamped):
@@ -150,15 +142,14 @@ class StateMachine(TimeStamped):
     State Machines manage the State and its Transitions.
     """
     current_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True)
+    parameters = models.ManyToManyField(Condition, blank=True)
 
     def __transition(self):
         if self.current_state.transitions.count() > 0:
             for transition in self.current_state.transitions.all():
                 if transition.can_transit():
-                    transition.pre_transit()
                     self.current_state = transition.to_state
                     self.save()
-                    transition.post_transit()
                     return
 
     def transition(self):
