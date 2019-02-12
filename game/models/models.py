@@ -157,12 +157,70 @@ class StateMachine(TimeStamped):
 
 
 class Game(StateMachine):
-    players = models.ManyToManyField(Player, blank=True)
-    teams = models.ManyToManyField(Team, blank=True)
-    room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True, related_name="games")
+    """
+    A simple game with a code, state, players, and teams.
+    """
+    code = models.SlugField(_("Code"), max_length=16)
+    players = models.ManyToManyField(Player, blank=True, related_name='games')
+    teams = models.ManyToManyField(Team, blank=True, related_name='games')
+    room = models.ForeignKey(Room, null=True, blank=True, on_delete=models.SET_NULL, related_name='games')
+    leader = models.ForeignKey(Player, null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
 
-    def setup_from_room(self, room: Room):
+    class Meta:
+        verbose_name = _("Game")
+        verbose_name_plural = _("Games")
+        ordering = ["-created"]
+
+    def __str__(self):
+        return str(self.code)
+
+    def __setup_code(self):
+        if not self.code:
+            self.code = CodeGenerator.game_code()
+
+    def __setup_from_room(self, room: Room):
         self.room = room
         self.players = room.players
         self.teams = room.teams
         self.save()
+
+    def save(self, *args, **kwargs):
+        self.__setup_code()
+        super(Game, self).save(*args, **kwargs)
+
+    def has_player(self, player) -> bool:
+        """
+        Returns `True` if the player is in the game.
+        :param player: Player
+        :return: bool
+        """
+        return self.players.filter(pk=player.pk).exists()
+
+    def has_team(self, team) -> bool:
+        """
+        Returns `True` if the team is in the room.
+        :param team: Team
+        :return: bool
+        """
+        return self.teams.filter(pk=team.pk).exists()
+
+    def has(self, model_object) -> bool:
+        """
+        Returns `True` if the room has the player or team in it.
+        :param model_object: Player or Team
+        :return:
+        """
+        if isinstance(model_object, Player):
+            return self.has_player(player=model_object)
+        elif isinstance(model_object, Team):
+            return self.has_team(team=model_object)
+        return False
+
+    def setup(self, room: Room):
+        """
+        Sets up the game from a room.
+        :param room: Room
+        :return:
+        """
+        self.__setup_from_room(room)
+
