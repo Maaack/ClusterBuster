@@ -136,6 +136,10 @@ class Transition(TimeStamped):
     def can_transit(self):
         return self.__can_transit()
 
+    def add_parameter(self, parameter):
+        condition = Condition.objects.create(parameter=parameter)
+        self.conditions.add(condition)
+
 
 class StateMachine(TimeStamped):
     """
@@ -184,6 +188,26 @@ class Game(StateMachine):
         self.teams = room.teams
         self.save()
 
+    def __init_state(self) -> State:
+        init_state = State.objects.create(label="init_cluster_buster")
+        self.current_state = init_state
+        self.save()
+        return init_state
+
+    def __setup_game_state(self, state: State) -> State:
+        game_state = State.objects.create(label="ready_cluster_buster")
+        transition = Transition.objects.create(to_state=game_state)
+        parameter = Parameter.objects.create(key="game_setup", value=False)
+        self.parameters.add(parameter)
+        transition.add_parameter(parameter)
+        state.transitions.add(transition)
+        state.save()
+        return game_state
+
+    def __setup_cluster_buster(self):
+        init_state = self.__init_state()
+        self.__setup_game_state(init_state)
+
     def save(self, *args, **kwargs):
         self.__setup_code()
         super(Game, self).save(*args, **kwargs)
@@ -223,4 +247,4 @@ class Game(StateMachine):
         :return:
         """
         self.__setup_from_room(room)
-
+        self.__setup_cluster_buster()
