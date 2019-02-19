@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from django.views import generic
 
 from rooms.models import Room
-from game.models import Game
+from games.models import Game
 
 
 class StartGame(generic.RedirectView, generic.detail.SingleObjectMixin):
