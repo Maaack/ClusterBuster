@@ -6,6 +6,8 @@ from core.basics.utils import CodeGenerator
 
 from rooms.models import Player, Team, Room
 
+__all__ = ['Parameter', 'Condition', 'Transition', 'State', 'StateMachine', 'Game']
+
 
 class Parameter(TimeStamped):
     """
@@ -146,7 +148,7 @@ class StateMachine(TimeStamped):
     State Machines manage the State and its Transitions.
     """
     current_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True)
-    parameters = models.ManyToManyField(Condition, blank=True)
+    parameters = models.ManyToManyField(Parameter, blank=True)
 
     def __transition(self):
         if self.current_state.transitions.count() > 0:
@@ -184,8 +186,8 @@ class Game(StateMachine):
 
     def __setup_from_room(self, room: Room):
         self.room = room
-        self.players = room.players
-        self.teams = room.teams
+        self.players.set(room.players.all())
+        self.teams.set(room.teams.all())
         self.save()
 
     def __init_state(self) -> State:
