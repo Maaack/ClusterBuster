@@ -47,9 +47,10 @@ class State(TimeStamped):
     State with label, payload, parent, and transitions to other states.
     """
     label = models.SlugField(_("Label"), max_length=32)
-    payload = models.ForeignKey(Payload, on_delete=models.SET_NULL, null=True, blank=True)
-    parent_state = models.ForeignKey('State', on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     transitions = models.ManyToManyField('Transition', blank=True, related_name="+")
+    payload = models.ForeignKey(Payload, on_delete=models.SET_NULL, null=True, blank=True)
+    state_machine = models.ForeignKey('StateMachine', on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    parent_state = models.ForeignKey('State', on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
 
     class Meta:
         verbose_name = _("State")
