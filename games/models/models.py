@@ -148,6 +148,7 @@ class StateMachine(TimeStamped):
     """
     State Machines manage the State and its Transitions.
     """
+    root_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True)
     current_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True)
     parameters = models.ManyToManyField(Parameter, blank=True)
 
@@ -191,26 +192,6 @@ class Game(StateMachine):
         self.teams.set(room.teams.all())
         self.save()
 
-    def __init_state(self) -> State:
-        init_state = State.objects.create(label="init_cluster_buster")
-        self.current_state = init_state
-        self.save()
-        return init_state
-
-    def __setup_game_state(self, state: State) -> State:
-        game_state = State.objects.create(label="ready_cluster_buster")
-        transition = Transition.objects.create(to_state=game_state)
-        parameter = Parameter.objects.create(key="game_setup", value=False)
-        self.parameters.add(parameter)
-        transition.add_parameter(parameter)
-        state.transitions.add(transition)
-        state.save()
-        return game_state
-
-    def __setup_cluster_buster(self):
-        init_state = self.__init_state()
-        self.__setup_game_state(init_state)
-
     def save(self, *args, **kwargs):
         self.__setup_code()
         super(Game, self).save(*args, **kwargs)
@@ -250,4 +231,48 @@ class Game(StateMachine):
         :return:
         """
         self.__setup_from_room(room)
+
+
+class ClusterBusterGame(Game):
+    """
+    A game of Cluster Buster!
+    """
+    code = models.SlugField(_("Code"), max_length=16)
+    players = models.ManyToManyField(Player, blank=True, related_name='games')
+    teams = models.ManyToManyField(Team, blank=True, related_name='games')
+    room = models.ForeignKey(Room, null=True, blank=True, on_delete=models.SET_NULL, related_name='games')
+    leader = models.ForeignKey(Player, null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+
+    class Meta:
+        verbose_name = _("Cluster Buster Game")
+        verbose_name_plural = _("Cluster Buster Games")
+        ordering = ["-created"]
+
+    def __init_state(self) -> State:
+        init_state = State.objects.create(label="init_cluster_buster")
+        self.current_state = init_state
+        self.save()
+        return init_state
+
+    def __setup_game_state(self, state: State) -> State:
+        game_state = State.objects.create(label="ready_cluster_buster")
+        transition = Transition.objects.create(to_state=game_state)
+        parameter = Parameter.objects.create(key="game_setup", value=False)
+        self.parameters.add(parameter)
+        transition.add_parameter(parameter)
+        state.transitions.add(transition)
+        state.save()
+        return game_state
+
+    def __setup_cluster_buster(self):
+        init_state = self.__init_state()
+        self.__setup_game_state(init_state)
+
+    def setup(self, room: Room):
+        """
+        Sets up the game from a room.
+        :param room: Room
+        :return:
+        """
+        super(ClusterBusterGame, self).setup(room)
         self.__setup_cluster_buster()
