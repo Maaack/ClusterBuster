@@ -33,23 +33,21 @@ class Condition(TimeStamped):
         return bool(self.parameter.value)
 
 
-class BaseState(TimeStamped):
+class Payload(TimeStamped):
     """
-    State with a label.
+    Payload links to a State
     """
-    label = models.SlugField(_("Label"), max_length=32)
 
     class Meta:
         abstract = True
 
-    def __str__(self):
-        return str(self.label)
 
-
-class State(BaseState):
+class State(TimeStamped):
     """
-    State with links to other states.
+    State with label, payload, parent, and transitions to other states.
     """
+    label = models.SlugField(_("Label"), max_length=32)
+    payload = models.ForeignKey(Payload, on_delete=models.SET_NULL, null=True, blank=True)
     parent_state = models.ForeignKey('State', on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     transitions = models.ManyToManyField('Transition', blank=True, related_name="+")
 
@@ -57,8 +55,11 @@ class State(BaseState):
         verbose_name = _("State")
         verbose_name_plural = _("States")
 
+    def __str__(self):
+        return str(self.label)
 
-class Stage(State):
+
+class Stage(Payload):
     """
     Stages are named and typically distinct from their neighbors.
     """
@@ -72,35 +73,35 @@ class Stage(State):
         return str(self.name)
 
 
-class Round(State):
+class Round(Payload):
     """
     Rounds are sequentially numbered and typically similar to their neighbors.
     """
     number = models.PositiveSmallIntegerField(_("Number"))
 
     class Meta:
-        verbose_name = _("Stage")
-        verbose_name_plural = _("Stages")
+        verbose_name = _("Round")
+        verbose_name_plural = _("Rounds")
 
     def __str__(self):
         return "Round " + str(self.number)
 
 
-class ConsecutiveTeamTurn(State):
+class ConsecutiveTeamTurn(Payload):
     """
     Turns to all teams simultaneously.
     """
     teams = models.ManyToManyField(Team, blank=True, related_name="+")
 
 
-class ConsecutivePlayerTurn(State):
+class ConsecutivePlayerTurn(Payload):
     """
     Turns to all players simultaneously.
     """
     players = models.ManyToManyField(Player, blank=True, related_name="+")
 
 
-class SequentialTurn(State):
+class SequentialTurn(Payload):
     """
     Turns are sequentially numbered and applied to a player or team.
     """
