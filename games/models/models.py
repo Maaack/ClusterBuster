@@ -78,28 +78,46 @@ class IntegerCondition(Condition):
     )
 
     parameter = models.ForeignKey(IntegerParameter, on_delete=models.CASCADE)
-    comparison = models.PositiveSmallIntegerField(_("Comparison Operation"))
+    comparison = models.PositiveSmallIntegerField(_("Comparison Operation"), choices=COMPARISON_OPTIONS)
     integer = models.IntegerField(_("Integer"))
 
     def __str__(self):
         return str(self.parameter)
 
-    def __is_comparison(self, comparison_option):
-        return self.comparison == comparison_option
+    def __is_not_equal(self):
+        return self.comparison == IntegerCondition.NOT_EQUAL
+
+    def __is_equal(self):
+        return self.comparison == IntegerCondition.EQUAL
+
+    def __is_gt(self):
+        return self.comparison == IntegerCondition.GREATER_THAN
+
+    def __is_lt(self):
+        return self.comparison == IntegerCondition.LESS_THAN
+
+    def __is_gt_or_equal(self):
+        return self.comparison == IntegerCondition.GREATER_THAN_OR_EQUAL
+
+    def __is_lt_or_equal(self):
+        return self.comparison == IntegerCondition.LESS_THAN_OR_EQUAL
+
+    def get_readable_comparison(self):
+        return self.get_comparison_display()
 
     def passes(self):
         current_integer = self.parameter.value
-        if self.__is_comparison(IntegerCondition.NOT_EQUAL):
+        if self.__is_not_equal():
             return current_integer != self.integer
-        if self.__is_comparison(IntegerCondition.EQUAL):
+        if self.__is_equal():
             return current_integer == self.integer
-        if self.__is_comparison(IntegerCondition.GREATER_THAN):
+        if self.__is_gt():
             return current_integer > self.integer
-        if self.__is_comparison(IntegerCondition.LESS_THAN):
+        if self.__is_lt():
             return current_integer < self.integer
-        if self.__is_comparison(IntegerCondition.GREATER_THAN_OR_EQUAL):
+        if self.__is_gt_or_equal():
             return current_integer >= self.integer
-        if self.__is_comparison(IntegerCondition.LESS_THAN_OR_EQUAL):
+        if self.__is_lt_or_equal():
             return current_integer <= self.integer
 
 
