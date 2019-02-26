@@ -238,11 +238,6 @@ class ClusterBusterGame(Game):
     """
     A game of Cluster Buster!
     """
-    code = models.SlugField(_("Code"), max_length=16)
-    players = models.ManyToManyField(Player, blank=True, related_name='games')
-    teams = models.ManyToManyField(Team, blank=True, related_name='games')
-    room = models.ForeignKey(Room, null=True, blank=True, on_delete=models.SET_NULL, related_name='games')
-    leader = models.ForeignKey(Player, null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
 
     class Meta:
         verbose_name = _("Cluster Buster Game")
