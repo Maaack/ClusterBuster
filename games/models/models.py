@@ -11,10 +11,29 @@ __all__ = ['Parameter', 'Condition', 'Transition', 'State', 'StateMachine', 'Gam
 
 class Parameter(TimeStamped):
     """
-    Condition with a label and condition method.
+    Parameters store all data about a specific game and the state.
     """
     key = models.SlugField(_("Key"), max_length=32)
+
+    def __str__(self):
+        return str(self.key)
+
+
+class BooleanParameter(Parameter):
+    """
+    Value stores True/False
+    """
     value = models.BooleanField(_("Value"), default=False)
+
+    def __str__(self):
+        return str(self.key) + ": " + str(self.value)
+
+
+class IntegerParameter(Parameter):
+    """
+    Value stores ...-2, -1, 0, 1, 2...
+    """
+    value = models.IntegerField(_("Value"), default=0)
 
     def __str__(self):
         return str(self.key) + ": " + str(self.value)
@@ -24,7 +43,16 @@ class Condition(TimeStamped):
     """
     Condition wraps a parameter.
     """
-    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True
+
+    def passes(self):
+        return False
+
+
+class BooleanCondition(Condition):
+    parameter = models.ForeignKey(BooleanParameter, on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.parameter)
@@ -33,9 +61,9 @@ class Condition(TimeStamped):
         return bool(self.parameter.value)
 
 
-class Payload(TimeStamped):
+class StateManager(TimeStamped):
     """
-    Payload links to a State
+    StateManager to work with states
     """
 
     class Meta:
@@ -48,8 +76,6 @@ class State(TimeStamped):
     """
     label = models.SlugField(_("Label"), max_length=32)
     transitions = models.ManyToManyField('Transition', blank=True, related_name="+")
-    payload = models.ForeignKey(Payload, on_delete=models.SET_NULL, null=True, blank=True)
-    state_machine = models.ForeignKey('StateMachine', on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     parent_state = models.ForeignKey('State', on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
 
     class Meta:
@@ -60,7 +86,7 @@ class State(TimeStamped):
         return str(self.label)
 
 
-class Stage(Payload):
+class Stage(StateManager):
     """
     Stages are named and typically distinct from their neighbors.
     """
@@ -74,7 +100,7 @@ class Stage(Payload):
         return str(self.name)
 
 
-class Round(Payload):
+class Round(StateManager):
     """
     Rounds are sequentially numbered and typically similar to their neighbors.
     """
@@ -88,21 +114,21 @@ class Round(Payload):
         return "Round " + str(self.number)
 
 
-class ConsecutiveTeamTurn(Payload):
+class ConsecutiveTeamTurn(StateManager):
     """
     Turns to all teams simultaneously.
     """
     teams = models.ManyToManyField(Team, blank=True, related_name="+")
 
 
-class ConsecutivePlayerTurn(Payload):
+class ConsecutivePlayerTurn(StateManager):
     """
     Turns to all players simultaneously.
     """
     players = models.ManyToManyField(Player, blank=True, related_name="+")
 
 
-class SequentialTurn(Payload):
+class SequentialTurn(StateManager):
     """
     Turns are sequentially numbered and applied to a player or team.
     """
