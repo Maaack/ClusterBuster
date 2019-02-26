@@ -61,6 +61,48 @@ class BooleanCondition(Condition):
         return bool(self.parameter.value)
 
 
+class IntegerCondition(Condition):
+    NOT_EQUAL = 0
+    EQUAL = 1
+    GREATER_THAN = 2
+    LESS_THAN = 3
+    GREATER_THAN_OR_EQUAL = 4
+    LESS_THAN_OR_EQUAL = 4
+    COMPARISON_OPTIONS = (
+        (NOT_EQUAL, "!="),
+        (EQUAL, "=="),
+        (GREATER_THAN, ">"),
+        (LESS_THAN, "<"),
+        (GREATER_THAN_OR_EQUAL, ">="),
+        (LESS_THAN_OR_EQUAL, "<="),
+    )
+
+    parameter = models.ForeignKey(IntegerParameter, on_delete=models.CASCADE)
+    comparison = models.PositiveSmallIntegerField(_("Comparison Operation"))
+    integer = models.IntegerField(_("Integer"))
+
+    def __str__(self):
+        return str(self.parameter)
+
+    def __is_comparison(self, comparison_option):
+        return self.comparison == comparison_option
+
+    def passes(self):
+        current_integer = self.parameter.value
+        if self.__is_comparison(IntegerCondition.NOT_EQUAL):
+            return current_integer != self.integer
+        if self.__is_comparison(IntegerCondition.EQUAL):
+            return current_integer == self.integer
+        if self.__is_comparison(IntegerCondition.GREATER_THAN):
+            return current_integer > self.integer
+        if self.__is_comparison(IntegerCondition.LESS_THAN):
+            return current_integer < self.integer
+        if self.__is_comparison(IntegerCondition.GREATER_THAN_OR_EQUAL):
+            return current_integer >= self.integer
+        if self.__is_comparison(IntegerCondition.LESS_THAN_OR_EQUAL):
+            return current_integer <= self.integer
+
+
 class StateManager(TimeStamped):
     """
     StateManager to work with states
