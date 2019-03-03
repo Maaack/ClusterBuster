@@ -152,16 +152,6 @@ class VariableIntegerCondition(IntegerCondition):
             return integer_1 <= integer_2
 
 
-
-class StateManager(TimeStamped):
-    """
-    StateManager to work with states
-    """
-
-    class Meta:
-        abstract = True
-
-
 class State(TimeStamped):
     """
     State with label, payload, parent, and transitions to other states.
@@ -175,69 +165,6 @@ class State(TimeStamped):
 
     def __str__(self):
         return str(self.label)
-
-
-class Stage(StateManager):
-    """
-    Stages are named and typically distinct from their neighbors.
-    """
-    name = models.CharField(_("Name"), max_length=64)
-
-    class Meta:
-        verbose_name = _("Stage")
-        verbose_name_plural = _("Stages")
-
-    def __str__(self):
-        return str(self.name)
-
-
-class Round(StateManager):
-    """
-    Rounds are sequentially numbered and typically similar to their neighbors.
-    """
-    number = models.PositiveSmallIntegerField(_("Number"))
-
-    class Meta:
-        verbose_name = _("Round")
-        verbose_name_plural = _("Rounds")
-
-    def __str__(self):
-        return "Round " + str(self.number)
-
-
-class ConsecutiveTeamTurn(StateManager):
-    """
-    Turns to all teams simultaneously.
-    """
-    teams = models.ManyToManyField(Team, blank=True, related_name="+")
-
-
-class ConsecutivePlayerTurn(StateManager):
-    """
-    Turns to all players simultaneously.
-    """
-    players = models.ManyToManyField(Player, blank=True, related_name="+")
-
-
-class SequentialTurn(StateManager):
-    """
-    Turns are sequentially numbered and applied to a player or team.
-    """
-    turn = models.PositiveSmallIntegerField(_("Turn"))
-
-
-class SequentialTeamTurn(SequentialTurn):
-    """
-    Turns for each team, one at a time.
-    """
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="+")
-
-
-class SequentialPlayerTurn(SequentialTurn):
-    """
-    Turns for each team, one at a time.
-    """
-    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="+")
 
 
 class Transition(TimeStamped):
