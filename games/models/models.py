@@ -254,6 +254,13 @@ class Game(TimeStamped):
         if not self.code:
             self.code = CodeGenerator.game_code()
 
+    def __setup_state_machine(self):
+        if not self.game_state_machine:
+            state_machine = GameStateMachine()
+            state_machine.setup()
+            self.game_state_machine = state_machine
+            self.save()
+
     def __setup_from_room(self, room: Room):
         self.room = room
         self.players.set(room.players.all())
@@ -298,6 +305,7 @@ class Game(TimeStamped):
         :param room: Room
         :return:
         """
+        self.__setup_state_machine()
         self.__setup_from_room(room)
 
 
