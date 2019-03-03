@@ -52,7 +52,7 @@ class Condition(TimeStamped):
 
 
 class BooleanCondition(Condition):
-    parameter = models.ForeignKey(BooleanParameter, on_delete=models.CASCADE)
+    parameter = models.ForeignKey(BooleanParameter, on_delete=models.CASCADE, related_name="+")
 
     def __str__(self):
         return str(self.parameter)
@@ -77,12 +77,10 @@ class IntegerCondition(Condition):
         (LESS_THAN_OR_EQUAL, "<="),
     )
 
-    parameter = models.ForeignKey(IntegerParameter, on_delete=models.CASCADE)
     comparison = models.PositiveSmallIntegerField(_("Comparison Operation"), choices=COMPARISON_OPTIONS)
-    integer = models.IntegerField(_("Integer"))
 
-    def __str__(self):
-        return str(self.parameter)
+    class Meta:
+        abstract = True
 
     def __is_not_equal(self):
         return self.comparison == IntegerCondition.NOT_EQUAL
@@ -105,6 +103,14 @@ class IntegerCondition(Condition):
     def get_readable_comparison(self):
         return self.get_comparison_display()
 
+
+class FixedIntegerCondition(IntegerCondition):
+    parameter = models.ForeignKey(IntegerParameter, on_delete=models.CASCADE, related_name="+")
+    integer = models.IntegerField(_("Integer"))
+
+    def __str__(self):
+        return str(self.parameter)
+
     def passes(self):
         current_integer = self.parameter.value
         if self.__is_not_equal():
@@ -119,6 +125,32 @@ class IntegerCondition(Condition):
             return current_integer >= self.integer
         if self.__is_lt_or_equal():
             return current_integer <= self.integer
+
+
+class VariableIntegerCondition(IntegerCondition):
+    parameter_1 = models.ForeignKey(IntegerParameter, on_delete=models.CASCADE, related_name="+")
+    parameter_2 = models.ForeignKey(IntegerParameter, on_delete=models.CASCADE, related_name="+")
+
+    def __str__(self):
+        comparison_str = self.get_comparison_display()
+        return str(self.parameter_1) + comparison_str + str(self.parameter_2)
+
+    def passes(self):
+        integer_1 = self.parameter_1.value
+        integer_2 = self.parameter_2.value
+        if self.__is_not_equal():
+            return integer_1 != integer_2
+        if self.__is_equal():
+            return integer_1 == integer_2
+        if self.__is_gt():
+            return integer_1 > integer_2
+        if self.__is_lt():
+            return integer_1 < integer_2
+        if self.__is_gt_or_equal():
+            return integer_1 >= integer_2
+        if self.__is_lt_or_equal():
+            return integer_1 <= integer_2
+
 
 
 class StateManager(TimeStamped):
@@ -136,7 +168,6 @@ class State(TimeStamped):
     """
     label = models.SlugField(_("Label"), max_length=32)
     transitions = models.ManyToManyField('Transition', blank=True, related_name="+")
-    parent_state = models.ForeignKey('State', on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
 
     class Meta:
         verbose_name = _("State")
@@ -215,7 +246,8 @@ class Transition(TimeStamped):
     """
     to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
     boolean_conditions = models.ManyToManyField(BooleanCondition, blank=True, related_name="transitions")
-    integer_conditions = models.ManyToManyField(IntegerCondition, blank=True, related_name="transitions")
+    fixed_integer_conditions = models.ManyToManyField(FixedIntegerCondition, blank=True, related_name="transitions")
+    variable_integer_conditions = models.ManyToManyField(VariableIntegerCondition, blank=True, related_name="transitions")
 
     def __can_transit(self):
         conditions = self.get_conditions()
@@ -225,7 +257,9 @@ class Transition(TimeStamped):
         return True
 
     def get_conditions(self):
-        return list(chain(self.boolean_conditions.all(), self.integer_conditions.all()))
+        return list(chain(self.boolean_conditions.all(),
+                          self.fixed_integer_conditions.all(),
+                          self.variable_integer_conditions.all()))
 
     def can_transit(self):
         return self.__can_transit()
@@ -239,6 +273,7 @@ class StateMachine(TimeStamped):
     State Machines manage the State and its Transitions.
     """
     root_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    previous_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     current_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     parameters = models.ManyToManyField(Parameter, blank=True)
 
