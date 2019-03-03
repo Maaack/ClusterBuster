@@ -207,15 +207,41 @@ class StateMachine(TimeStamped):
                 self.__transit_to_state(next_state)
 
 
-class Game(StateMachine):
+class GameStateMachine(StateMachine):
+    """
+    GameStateMachine keeps track of the topmost State of a Game!
+    """
+
+    class Meta:
+        verbose_name = _("Game State Machine")
+        verbose_name_plural = _("Game State Machines")
+        ordering = ["-created"]
+
+    def __init_state(self) -> State:
+        game_init_state = State.objects.get(label=GameStates.INIT)
+        self.root_state = game_init_state
+        self.current_state = game_init_state
+        self.save()
+        return game_init_state
+
+    def setup(self):
+        """
+        Sets up the game from a room.
+        :return:
+        """
+        self.__init_state()
+
+
+class Game(TimeStamped):
     """
     A simple game with a code, state, players, and teams.
     """
     code = models.SlugField(_("Code"), max_length=16)
     players = models.ManyToManyField(Player, blank=True, related_name='games')
     teams = models.ManyToManyField(Team, blank=True, related_name='games')
-    room = models.ForeignKey(Room, null=True, blank=True, on_delete=models.SET_NULL, related_name='games')
-    leader = models.ForeignKey(Player, null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+    room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True, related_name='games')
+    leader = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    game_state_machine = models.ForeignKey(GameStateMachine, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         verbose_name = _("Game")
