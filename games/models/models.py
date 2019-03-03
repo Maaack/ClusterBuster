@@ -1,3 +1,5 @@
+from itertools import chain
+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -5,8 +7,6 @@ from clusterbuster.mixins import TimeStamped
 from core.basics.utils import CodeGenerator
 
 from rooms.models import Player, Team, Room
-
-__all__ = ['Parameter', 'Condition', 'Transition', 'State', 'StateMachine', 'Game']
 
 
 class Parameter(TimeStamped):
@@ -214,29 +214,32 @@ class Transition(TimeStamped):
     Transition pass Conditions to State.
     """
     to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
-    conditions = models.ManyToManyField(Condition, blank=True, related_name="transitions")
+    boolean_conditions = models.ManyToManyField(BooleanCondition, blank=True, related_name="transitions")
+    integer_conditions = models.ManyToManyField(IntegerCondition, blank=True, related_name="transitions")
 
     def __can_transit(self):
-        conditions = self.conditions.all()
+        conditions = self.get_conditions()
         for condition in conditions:
             if not condition.passes():
                 return False
         return True
 
+    def get_conditions(self):
+        return list(chain(self.boolean_conditions.all(), self.integer_conditions.all()))
+
     def can_transit(self):
         return self.__can_transit()
 
     def add_parameter(self, parameter):
-        condition = Condition.objects.create(parameter=parameter)
-        self.conditions.add(condition)
+        pass
 
 
 class StateMachine(TimeStamped):
     """
     State Machines manage the State and its Transitions.
     """
-    root_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True)
-    current_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True)
+    root_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    current_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     parameters = models.ManyToManyField(Parameter, blank=True)
 
     def __transition(self):
