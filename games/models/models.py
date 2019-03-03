@@ -154,10 +154,9 @@ class VariableIntegerCondition(IntegerCondition):
 
 class State(TimeStamped):
     """
-    State with label, payload, parent, and transitions to other states.
+    States determine the rules that currently apply to the Game.
     """
     label = models.SlugField(_("Label"), max_length=32)
-    transitions = models.ManyToManyField('Transition', blank=True, related_name="+")
 
     class Meta:
         verbose_name = _("State")
@@ -169,9 +168,11 @@ class State(TimeStamped):
 
 class Transition(TimeStamped):
     """
-    Transition pass Conditions to State.
+    Transitions define how the StateMachine can move from one State to another State.
     """
-    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
+    label = models.SlugField(_("Label"), max_length=32)
+    from_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_out")
+    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_in")
     boolean_conditions = models.ManyToManyField(BooleanCondition, blank=True, related_name="transitions")
     fixed_integer_conditions = models.ManyToManyField(FixedIntegerCondition, blank=True, related_name="transitions")
     variable_integer_conditions = models.ManyToManyField(VariableIntegerCondition, blank=True, related_name="transitions")
