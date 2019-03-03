@@ -209,9 +209,8 @@ class StateMachine(TimeStamped):
 
 class GameStateMachine(StateMachine):
     """
-    GameStateMachine keeps track of the topmost State of a Game!
+    GameStateMachine keeps track of the topmost State of a Game.
     """
-
     class Meta:
         verbose_name = _("Game State Machine")
         verbose_name_plural = _("Game State Machines")
@@ -234,7 +233,7 @@ class GameStateMachine(StateMachine):
 
 class Game(TimeStamped):
     """
-    A simple game with a code, state, players, and teams.
+    Games have codes, state machines, players, and teams.
     """
     code = models.SlugField(_("Code"), max_length=16)
     players = models.ManyToManyField(Player, blank=True, related_name='games')
@@ -265,7 +264,7 @@ class Game(TimeStamped):
         self.__setup_code()
         super(Game, self).save(*args, **kwargs)
 
-    def has_player(self, player) -> bool:
+    def has_player(self, player: Player) -> bool:
         """
         Returns `True` if the player is in the game.
         :param player: Player
@@ -273,7 +272,7 @@ class Game(TimeStamped):
         """
         return self.players.filter(pk=player.pk).exists()
 
-    def has_team(self, team) -> bool:
+    def has_team(self, team: Team) -> bool:
         """
         Returns `True` if the team is in the room.
         :param team: Team
