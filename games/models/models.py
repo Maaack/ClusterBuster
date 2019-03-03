@@ -7,6 +7,7 @@ from clusterbuster.mixins import TimeStamped
 from core.basics.utils import CodeGenerator
 
 from rooms.models import Player, Team, Room
+from .constants import GameStates
 
 
 class State(TimeStamped):
@@ -286,24 +287,14 @@ class ClusterBusterGame(Game):
         ordering = ["-created"]
 
     def __init_state(self) -> State:
-        init_state = State.objects.create(label="init_cluster_buster")
-        self.current_state = init_state
+        game_init_state = State.objects.get(label=GameStates.INIT)
+        self.root_state = game_init_state
+        self.current_state = game_init_state
         self.save()
-        return init_state
-
-    def __setup_game_state(self, state: State) -> State:
-        game_state = State.objects.create(label="ready_cluster_buster")
-        transition = Transition.objects.create(to_state=game_state)
-        parameter = Parameter.objects.create(key="game_setup", value=False)
-        self.parameters.add(parameter)
-        transition.add_parameter(parameter)
-        state.transitions.add(transition)
-        state.save()
-        return game_state
+        return game_init_state
 
     def __setup_cluster_buster(self):
-        init_state = self.__init_state()
-        self.__setup_game_state(init_state)
+        return self.__init_state()
 
     def setup(self, room: Room):
         """
