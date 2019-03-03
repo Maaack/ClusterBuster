@@ -100,44 +100,7 @@ class IntegerCondition(Condition):
     def __is_lt_or_equal(self):
         return self.comparison == IntegerCondition.LESS_THAN_OR_EQUAL
 
-    def get_readable_comparison(self):
-        return self.get_comparison_display()
-
-
-class FixedIntegerCondition(IntegerCondition):
-    parameter = models.ForeignKey(IntegerParameter, on_delete=models.CASCADE, related_name="+")
-    integer = models.IntegerField(_("Integer"))
-
-    def __str__(self):
-        return str(self.parameter)
-
-    def passes(self):
-        current_integer = self.parameter.value
-        if self.__is_not_equal():
-            return current_integer != self.integer
-        if self.__is_equal():
-            return current_integer == self.integer
-        if self.__is_gt():
-            return current_integer > self.integer
-        if self.__is_lt():
-            return current_integer < self.integer
-        if self.__is_gt_or_equal():
-            return current_integer >= self.integer
-        if self.__is_lt_or_equal():
-            return current_integer <= self.integer
-
-
-class VariableIntegerCondition(IntegerCondition):
-    parameter_1 = models.ForeignKey(IntegerParameter, on_delete=models.CASCADE, related_name="+")
-    parameter_2 = models.ForeignKey(IntegerParameter, on_delete=models.CASCADE, related_name="+")
-
-    def __str__(self):
-        comparison_str = self.get_comparison_display()
-        return str(self.parameter_1) + comparison_str + str(self.parameter_2)
-
-    def passes(self):
-        integer_1 = self.parameter_1.value
-        integer_2 = self.parameter_2.value
+    def __compare_2_ints(self, integer_1, integer_2):
         if self.__is_not_equal():
             return integer_1 != integer_2
         if self.__is_equal():
@@ -151,49 +114,31 @@ class VariableIntegerCondition(IntegerCondition):
         if self.__is_lt_or_equal():
             return integer_1 <= integer_2
 
+    def get_readable_comparison(self):
+        return self.get_comparison_display()
 
-class State(TimeStamped):
-    """
-    States determine the rules that currently apply to the Game.
-    """
-    label = models.SlugField(_("Label"), max_length=32)
 
-    class Meta:
-        verbose_name = _("State")
-        verbose_name_plural = _("States")
+class FixedIntegerCondition(IntegerCondition):
+    parameter = models.ForeignKey(IntegerParameter, on_delete=models.CASCADE, related_name="+")
+    integer = models.IntegerField(_("Integer"))
 
     def __str__(self):
-        return str(self.label)
+        return str(self.parameter)
+
+    def passes(self):
+        return self.__compare_2_ints(self.parameter.value, self.integer)
 
 
-class Transition(TimeStamped):
-    """
-    Transitions define how the StateMachine can move from one State to another State.
-    """
-    label = models.SlugField(_("Label"), max_length=32)
-    from_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_out")
-    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_in")
-    boolean_conditions = models.ManyToManyField(BooleanCondition, blank=True, related_name="transitions")
-    fixed_integer_conditions = models.ManyToManyField(FixedIntegerCondition, blank=True, related_name="transitions")
-    variable_integer_conditions = models.ManyToManyField(VariableIntegerCondition, blank=True, related_name="transitions")
+class VariableIntegerCondition(IntegerCondition):
+    parameter_1 = models.ForeignKey(IntegerParameter, on_delete=models.CASCADE, related_name="+")
+    parameter_2 = models.ForeignKey(IntegerParameter, on_delete=models.CASCADE, related_name="+")
 
-    def __can_transit(self):
-        conditions = self.get_conditions()
-        for condition in conditions:
-            if not condition.passes():
-                return False
-        return True
+    def __str__(self):
+        comparison_str = self.get_comparison_display()
+        return str(self.parameter_1) + comparison_str + str(self.parameter_2)
 
-    def get_conditions(self):
-        return list(chain(self.boolean_conditions.all(),
-                          self.fixed_integer_conditions.all(),
-                          self.variable_integer_conditions.all()))
-
-    def can_transit(self):
-        return self.__can_transit()
-
-    def add_parameter(self, parameter):
-        pass
+    def passes(self):
+        return self.__compare_2_ints(self.parameter_1.value, self.parameter_2.value)
 
 
 class StateMachine(TimeStamped):
