@@ -9,6 +9,29 @@ from core.basics.utils import CodeGenerator
 from rooms.models import Player, Team, Room
 
 
+class State(TimeStamped):
+    """
+    States determine the rules that currently apply to the Game.
+    """
+    label = models.SlugField(_("Label"), max_length=32)
+
+    class Meta:
+        verbose_name = _("State")
+        verbose_name_plural = _("States")
+
+    def __str__(self):
+        return str(self.label)
+
+
+class Transition(TimeStamped):
+    """
+    Transitions define how the StateMachine can move from one State to another State.
+    """
+    label = models.SlugField(_("Label"), max_length=32)
+    from_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_out")
+    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_in")
+
+
 class Parameter(TimeStamped):
     """
     Parameters store all data about a specific game and the state.
@@ -43,12 +66,16 @@ class Condition(TimeStamped):
     """
     Condition wraps a parameter.
     """
+    transition = models.ForeignKey(Transition, on_delete=models.CASCADE, related_name="+")
 
     class Meta:
         abstract = True
 
     def passes(self):
         return False
+
+    def get_next_state(self):
+        return self.transition.to_state
 
 
 class BooleanCondition(Condition):
@@ -149,17 +176,34 @@ class StateMachine(TimeStamped):
     previous_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     current_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     parameters = models.ManyToManyField(Parameter, blank=True)
+    boolean_conditions = models.ManyToManyField(BooleanCondition, blank=True, related_name="transitions")
+    fixed_integer_conditions = models.ManyToManyField(FixedIntegerCondition, blank=True, related_name="transitions")
+    variable_integer_conditions = models.ManyToManyField(VariableIntegerCondition, blank=True,
+                                                         related_name="transitions")
 
-    def __transition(self):
-        if self.current_state.transitions.count() > 0:
-            for transition in self.current_state.transitions.all():
-                if transition.can_transit():
-                    self.current_state = transition.to_state
-                    self.save()
-                    return
+    def __transit_to_state(self, state: State):
+        self.previous_state = self.current_state
+        self.current_state = state
+        self.save()
+
+    def get_conditions(self):
+        return list(chain(self.boolean_conditions.all(),
+                          self.fixed_integer_conditions.all(),
+                          self.variable_integer_conditions.all()))
+
+    def can_transit(self):
+        conditions = self.get_conditions()
+        for condition in conditions:
+            if condition.passes():
+                return True
+        return False
 
     def transition(self):
-        self.__transition()
+        conditions = self.get_conditions()
+        for condition in conditions:
+            if condition.passes():
+                next_state = condition.get_next_state()
+                self.__transit_to_state(next_state)
 
 
 class Game(StateMachine):
