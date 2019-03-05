@@ -207,40 +207,38 @@ class StateMachine(TimeStamped):
                 self.__transit_to_state(next_state)
 
 
-class GameStateMachine(StateMachine):
-    """
-    GameStateMachine keeps track of the topmost State of a Game.
-    """
+class GameDefinition(TimeStamped):
+
+    slug = models.SlugField(_("Slug"), max_length=64)
+    title = models.CharField(_("Title"), max_length=128, default='')
+    description = models.TextField(_("Description"), default='')
+    root_states = models.ManyToManyField(State, blank=True, related_name='+')
+
     class Meta:
-        verbose_name = _("Game State Machine")
-        verbose_name_plural = _("Game State Machines")
+        verbose_name = _("Game Definition")
+        verbose_name_plural = _("Games Definitions")
         ordering = ["-created"]
 
-    def __init_state(self) -> State:
-        game_init_state = State.objects.get(label=GameStates.INIT)
-        self.root_state = game_init_state
-        self.current_state = game_init_state
-        self.save()
-        return game_init_state
+    def __str__(self):
+        return str(self.slug)
 
-    def setup(self):
-        """
-        Sets up the game from a room.
-        :return:
-        """
-        self.__init_state()
+    def __init__(self, *args, **kwargs):
+        super(GameDefinition, self).__init__(*args, **kwargs)
+        self.state_rules = []
+        self.transition_rules = []
 
 
 class Game(TimeStamped):
     """
-    Games have codes, state machines, players, and teams.
+    Games are instances of Game Definitions, that have codes, State Machines, Players, and Teams.
     """
+    game_definition = models.ForeignKey(GameDefinition, on_delete=models.SET_NULL, null=True, blank=True)
+    state_machines = models.ManyToManyField(StateMachine, blank=True)
     code = models.SlugField(_("Code"), max_length=16)
     players = models.ManyToManyField(Player, blank=True, related_name='games')
     teams = models.ManyToManyField(Team, blank=True, related_name='games')
     room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True, related_name='games')
     leader = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
-    game_state_machine = models.ForeignKey(GameStateMachine, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         verbose_name = _("Game")
@@ -254,11 +252,17 @@ class Game(TimeStamped):
         if not self.code:
             self.code = CodeGenerator.game_code()
 
-    def __setup_state_machine(self):
-        if not self.game_state_machine:
-            state_machine = GameStateMachine()
-            state_machine.setup()
-            self.game_state_machine = state_machine
+    def __setup_game_defintion(self, game_definition_slug):
+        """
+        :param game_definition: GameDefinition
+        :return:
+        """
+        self.game_definition = GameDefinition.objects.get(slug=game_definition_slug)
+
+    def __setup_state_machines(self):
+        if self.game_definition:
+            for root_state in self.game_definition.root_states.all():
+                self.state_machines.create(root_state=root_state)
             self.save()
 
     def __setup_from_room(self, room: Room):
@@ -268,7 +272,6 @@ class Game(TimeStamped):
         self.save()
 
     def save(self, *args, **kwargs):
-        self.__setup_code()
         super(Game, self).save(*args, **kwargs)
 
     def has_player(self, player: Player) -> bool:
@@ -299,15 +302,17 @@ class Game(TimeStamped):
             return self.has_team(team=model_object)
         return False
 
-    def setup(self, room: Room):
+    def setup(self, game_definition_slug: str, room: Room):
         """
-        Sets up the game from a room.
+        Sets up a Game from a GameDefinition slug and Room.
+        :param game_definition_slug:
         :param room: Room
         :return:
         """
-        self.__setup_state_machine()
+        self.__setup_game_defintion(game_definition_slug)
+        self.__setup_state_machines()
         self.__setup_from_room(room)
-
+        self.__setup_code()
 
 class ClusterBusterGame(Game):
     """
