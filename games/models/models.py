@@ -173,7 +173,7 @@ class StateMachine(TimeStamped):
     """
     State Machines manage the State and its Transitions.
     """
-    root_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    root_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
     previous_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     current_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     parameters = models.ManyToManyField(Parameter, blank=True)
