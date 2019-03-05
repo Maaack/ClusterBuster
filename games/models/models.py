@@ -10,11 +10,28 @@ from rooms.models import Player, Team, Room
 from .constants import GameStates
 
 
+class Rule(TimeStamped):
+    """
+    Rules define how the game is played.
+    """
+    slug = models.SlugField(_("Label"), max_length=64)
+    description = models.TextField(_("Description"), default='')
+
+    class Meta:
+        verbose_name = _("Rule")
+        verbose_name_plural = _("Rules")
+        ordering = ["-created"]
+
+    def __str__(self):
+        return str(self.slug)
+
+
 class State(TimeStamped):
     """
     States determine the rules that currently apply to the Game.
     """
     label = models.SlugField(_("Label"), max_length=32)
+    rules = models.ManyToManyField(Rule, blank=True, related_name="states")
 
     class Meta:
         verbose_name = _("State")
@@ -31,22 +48,6 @@ class Transition(TimeStamped):
     label = models.SlugField(_("Label"), max_length=32)
     from_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_out")
     to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_in")
-
-
-class Rule(TimeStamped):
-    """
-    Rules define how the game is played.
-    """
-    slug = models.SlugField(_("Label"), max_length=64)
-    description = models.TextField(_("Description"), default='')
-
-    class Meta:
-        verbose_name = _("Rule")
-        verbose_name_plural = _("Rules")
-        ordering = ["-created"]
-
-    def __str__(self):
-        return str(self.slug)
 
 
 class Parameter(TimeStamped):
@@ -228,7 +229,7 @@ class GameDefinition(TimeStamped):
     slug = models.SlugField(_("Slug"), max_length=64)
     title = models.CharField(_("Title"), max_length=128, default='')
     description = models.TextField(_("Description"), default='')
-    root_states = models.ManyToManyField(State, blank=True, related_name='+')
+    root_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name='game_definition')
 
     class Meta:
         verbose_name = _("Game Definition")
@@ -277,11 +278,14 @@ class Game(TimeStamped):
 
     def __setup_state_machines(self):
         if self.game_definition:
-            for root_state in self.game_definition.root_states.all():
-                self.state_machines.create(root_state=root_state)
+            self.state_machines.create(root_state=self.game_definition.root_state)
             self.save()
 
     def __setup_from_room(self, room: Room):
+        """
+        :param room: Room
+        :return:
+        """
         self.room = room
         self.players.set(room.players.all())
         self.teams.set(room.teams.all())
