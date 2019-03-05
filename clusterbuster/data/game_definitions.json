@@ -1,0 +1,1 @@
+[{"model": "games.gamedefinition", "pk": 1, "fields": {"created": "2019-03-05T01:16:17.756Z", "updated": "2019-03-05T05:28:29.773Z", "slug": "cluster_buster", "title": "Cluster Buster v 0.1.0", "description": "Cluster Buster is based on Decrypto board game. Made for web.", "root_state": 1}}]
