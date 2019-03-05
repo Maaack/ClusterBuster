@@ -314,31 +314,3 @@ class Game(TimeStamped):
         self.__setup_from_room(room)
         self.__setup_code()
 
-class ClusterBusterGame(Game):
-    """
-    A game of Cluster Buster!
-    """
-
-    class Meta:
-        verbose_name = _("Cluster Buster Game")
-        verbose_name_plural = _("Cluster Buster Games")
-        ordering = ["-created"]
-
-    def __init_state(self) -> State:
-        game_init_state = State.objects.get(label=GameStates.INIT)
-        self.root_state = game_init_state
-        self.current_state = game_init_state
-        self.save()
-        return game_init_state
-
-    def __setup_cluster_buster(self):
-        return self.__init_state()
-
-    def setup(self, room: Room):
-        """
-        Sets up the game from a room.
-        :param room: Room
-        :return:
-        """
-        super(ClusterBusterGame, self).setup(room)
-        self.__setup_cluster_buster()
