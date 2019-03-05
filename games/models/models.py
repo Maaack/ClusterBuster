@@ -33,6 +33,22 @@ class Transition(TimeStamped):
     to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_in")
 
 
+class Rule(TimeStamped):
+    """
+    Rules define how the game is played.
+    """
+    slug = models.SlugField(_("Label"), max_length=64)
+    description = models.TextField(_("Description"), default='')
+
+    class Meta:
+        verbose_name = _("Rule")
+        verbose_name_plural = _("Rules")
+        ordering = ["-created"]
+
+    def __str__(self):
+        return str(self.slug)
+
+
 class Parameter(TimeStamped):
     """
     Parameters store all data about a specific game and the state.
