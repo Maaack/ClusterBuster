@@ -1,4 +1,5 @@
 from itertools import chain
+from abc import ABC, abstractmethod
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -50,34 +51,96 @@ class Transition(TimeStamped):
     to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_in")
 
 
+class ParameterKey(TimeStamped):
+    key = models.SlugField(_("Key"), max_length=128, blank=True, null=True)
+    player = models.ForeignKey(Player, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
+    team = models.ForeignKey(Team, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
+
+    def __str__(self):
+        return str(self.get())
+
+    def __eq__(self, other):
+        if type(other) is not Player and type(other) is not Team and type(other) is not str:
+            return False
+        return self.get() == other
+
+    def get(self):
+        if self.key is not None:
+            return self.key
+        elif self.player is not None:
+            return self.player
+        elif self.team is not None:
+            return self.team
+        else:
+            return None
+
+
+class ParameterValue(TimeStamped):
+    boolean = models.NullBooleanField(_("Boolean"), default=None)
+    integer = models.IntegerField(_("Integer"), null=True, default=None)
+    float = models.FloatField(_("Float"), null=True, default=None)
+
+    def __str__(self):
+        return str(self.get())
+
+    def __bool__(self):
+        if self.boolean:
+            return self.boolean
+        return False
+
+    def get(self):
+        if self.boolean is not None:
+            return self.boolean
+        elif self.integer is not None:
+            return self.integer
+        elif self.float is not None:
+            return self.float
+        else:
+            return False
+
+
 class Parameter(TimeStamped):
     """
     Parameters store all data about a specific game and the state.
     """
-    key = models.SlugField(_("Key"), max_length=32)
+    key = models.ForeignKey(ParameterKey, on_delete=models.CASCADE)
+    value = models.ForeignKey(ParameterValue, on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.key)
 
+    def __bool__(self):
+        return bool(self.value)
 
-class BooleanParameter(Parameter):
-    """
-    Value stores True/False
-    """
-    value = models.BooleanField(_("Value"), default=False)
+    def __eq__(self, other):
+        if type(other) is not Parameter:
+            return False
+        return self.value.get() == other.value.get()
 
-    def __str__(self):
-        return str(self.key) + ": " + str(self.value)
+    def __ne__(self, other):
+        if type(other) is not Parameter:
+            return False
+        return self.value.get() != other.value.get()
 
+    def __gt__(self, other):
+        if type(other) is not Parameter:
+            return False
+        return self.value.get() > other.value.get()
 
-class IntegerParameter(Parameter):
-    """
-    Value stores ...-2, -1, 0, 1, 2...
-    """
-    value = models.IntegerField(_("Value"), default=0)
+    def __lt__(self, other):
+        if type(other) is not Parameter:
+            return False
+        return self.value.get() < other.value.get()
 
-    def __str__(self):
-        return str(self.key) + ": " + str(self.value)
+    def __ge__(self, other):
+        if type(other) is not Parameter:
+            return False
+        return self.value.get() >= other.value.get()
+
+    def __le__(self, other):
+        if type(other) is not Parameter:
+            return False
+        return self.value.get() <= other.value.get()
 
 
 class Condition(TimeStamped):
@@ -97,7 +160,7 @@ class Condition(TimeStamped):
 
 
 class BooleanCondition(Condition):
-    parameter = models.ForeignKey(BooleanParameter, on_delete=models.CASCADE, related_name="+")
+    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
 
     def __str__(self):
         return str(self.parameter)
@@ -106,7 +169,7 @@ class BooleanCondition(Condition):
         return bool(self.parameter.value)
 
 
-class IntegerCondition(Condition):
+class ComparisonCondition(Condition):
     NOT_EQUAL = 0
     EQUAL = 1
     GREATER_THAN = 2
@@ -128,62 +191,51 @@ class IntegerCondition(Condition):
         abstract = True
 
     def __is_not_equal(self):
-        return self.comparison == IntegerCondition.NOT_EQUAL
+        return self.comparison == ComparisonCondition.NOT_EQUAL
 
     def __is_equal(self):
-        return self.comparison == IntegerCondition.EQUAL
+        return self.comparison == ComparisonCondition.EQUAL
 
     def __is_gt(self):
-        return self.comparison == IntegerCondition.GREATER_THAN
+        return self.comparison == ComparisonCondition.GREATER_THAN
 
     def __is_lt(self):
-        return self.comparison == IntegerCondition.LESS_THAN
+        return self.comparison == ComparisonCondition.LESS_THAN
 
     def __is_gt_or_equal(self):
-        return self.comparison == IntegerCondition.GREATER_THAN_OR_EQUAL
+        return self.comparison == ComparisonCondition.GREATER_THAN_OR_EQUAL
 
     def __is_lt_or_equal(self):
-        return self.comparison == IntegerCondition.LESS_THAN_OR_EQUAL
+        return self.comparison == ComparisonCondition.LESS_THAN_OR_EQUAL
 
-    def __compare_2_ints(self, integer_1, integer_2):
+    def __compare_2_parameters(self, number_1, number_2):
         if self.__is_not_equal():
-            return integer_1 != integer_2
+            return number_1 != number_2
         if self.__is_equal():
-            return integer_1 == integer_2
+            return number_1 == number_2
         if self.__is_gt():
-            return integer_1 > integer_2
+            return number_1 > number_2
         if self.__is_lt():
-            return integer_1 < integer_2
+            return number_1 < number_2
         if self.__is_gt_or_equal():
-            return integer_1 >= integer_2
+            return number_1 >= number_2
         if self.__is_lt_or_equal():
-            return integer_1 <= integer_2
+            return number_1 <= number_2
 
     def get_readable_comparison(self):
         return self.get_comparison_display()
 
 
-class FixedIntegerCondition(IntegerCondition):
-    parameter = models.ForeignKey(IntegerParameter, on_delete=models.CASCADE, related_name="+")
-    integer = models.IntegerField(_("Integer"))
-
-    def __str__(self):
-        return str(self.parameter)
-
-    def passes(self):
-        return self.__compare_2_ints(self.parameter.value, self.integer)
-
-
-class VariableIntegerCondition(IntegerCondition):
-    parameter_1 = models.ForeignKey(IntegerParameter, on_delete=models.CASCADE, related_name="+")
-    parameter_2 = models.ForeignKey(IntegerParameter, on_delete=models.CASCADE, related_name="+")
+class ParameterComparisonCondition(ComparisonCondition):
+    parameter_1 = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
+    parameter_2 = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
 
     def __str__(self):
         comparison_str = self.get_comparison_display()
         return str(self.parameter_1) + comparison_str + str(self.parameter_2)
 
     def passes(self):
-        return self.__compare_2_ints(self.parameter_1.value, self.parameter_2.value)
+        return self.__compare_2_parameters(self.parameter_1, self.parameter_2)
 
 
 class StateMachine(TimeStamped):
@@ -195,19 +247,20 @@ class StateMachine(TimeStamped):
     current_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     parameters = models.ManyToManyField(Parameter, blank=True)
     boolean_conditions = models.ManyToManyField(BooleanCondition, blank=True, related_name="transitions")
-    fixed_integer_conditions = models.ManyToManyField(FixedIntegerCondition, blank=True, related_name="transitions")
-    variable_integer_conditions = models.ManyToManyField(VariableIntegerCondition, blank=True,
-                                                         related_name="transitions")
+    parameter_comparison_conditions = models.ManyToManyField(ParameterComparisonCondition, blank=True,
+                                                             related_name="transitions")
 
     def __transit_to_state(self, state: State):
         self.previous_state = self.current_state
         self.current_state = state
         self.save()
 
+    def get_current_rules(self):
+        return self.current_state.rules
+
     def get_conditions(self):
         return list(chain(self.boolean_conditions.all(),
-                          self.fixed_integer_conditions.all(),
-                          self.variable_integer_conditions.all()))
+                          self.parameter_comparison_conditions.all()))
 
     def can_transit(self):
         conditions = self.get_conditions()
