@@ -8,7 +8,7 @@ from clusterbuster.mixins import TimeStamped
 from core.basics.utils import CodeGenerator
 
 from rooms.models import Player, Team, Room
-from gamedefinitions.models import State, GameDefinition
+from gamedefinitions.models import State, GameDefinition, StateMachineInterface, GameInterface
 
 
 class Transition(TimeStamped):
@@ -21,7 +21,8 @@ class Transition(TimeStamped):
 
 
 class ParameterKey(TimeStamped):
-    key = models.SlugField(_("Key"), max_length=128, blank=True, null=True)
+    key = models.SlugField(_("Key"), max_length=128, blank=True, null=True, db_index=True)
+    counter = models.IntegerField(_("Counter"), blank=True, null=True, db_index=True)
     player = models.ForeignKey(Player, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
     team = models.ForeignKey(Team, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
 
@@ -29,19 +30,12 @@ class ParameterKey(TimeStamped):
         return str(self.get())
 
     def __eq__(self, other):
-        if type(other) is not Player and type(other) is not Team and type(other) is not str:
+        if type(other) is not tuple:
             return False
         return self.get() == other
 
     def get(self):
-        if self.key is not None:
-            return self.key
-        elif self.player is not None:
-            return self.player
-        elif self.team is not None:
-            return self.team
-        else:
-            return None
+        return self.key, self.counter, self.player, self.team
 
 
 class ParameterValue(TimeStamped):
@@ -110,6 +104,24 @@ class Parameter(TimeStamped):
         if type(other) is not Parameter:
             return False
         return self.value.get() <= other.value.get()
+
+    @staticmethod
+    def build(composite_key, value):
+        parameter_key = None
+        parameter_value = None
+        if type(composite_key) is tuple:
+            key, counter, player, team = composite_key
+            parameter_key = ParameterKey(key=key, counter=counter, player=player, team=team)
+        if type(value) is int:
+            parameter_value = ParameterValue(integer=value)
+        elif type(value) is float:
+            parameter_value = ParameterValue(float=value)
+        elif type(value) is bool:
+            parameter_value = ParameterValue(boolean=value)
+        if parameter_key and parameter_value:
+            parameter_key.save()
+            parameter_value.save()
+            return Parameter(key=parameter_key, value=parameter_value)
 
 
 class Condition(TimeStamped):
@@ -207,14 +219,13 @@ class ParameterComparisonCondition(ComparisonCondition):
         return self.__compare_2_parameters(self.parameter_1, self.parameter_2)
 
 
-class StateMachine(TimeStamped):
+class StateMachine(TimeStamped, StateMachineInterface):
     """
     State Machines manage the State and its Transitions.
     """
     root_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
     previous_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     current_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
-    parameters = models.ManyToManyField(Parameter, blank=True)
     boolean_conditions = models.ManyToManyField(BooleanCondition, blank=True, related_name="transitions")
     parameter_comparison_conditions = models.ManyToManyField(ParameterComparisonCondition, blank=True,
                                                              related_name="transitions")
@@ -223,6 +234,9 @@ class StateMachine(TimeStamped):
         self.previous_state = self.current_state
         self.current_state = state
         self.save()
+
+    def get_state(self):
+        return self.current_state
 
     def get_current_rules(self):
         return self.current_state.rules
@@ -246,13 +260,14 @@ class StateMachine(TimeStamped):
                 self.__transit_to_state(next_state)
 
 
-class Game(TimeStamped):
+class Game(TimeStamped, GameInterface):
     """
     Games are instances of Game Definitions, that have codes, State Machines, Players, and Teams.
     """
     game_definition = models.ForeignKey(GameDefinition, on_delete=models.SET_NULL, null=True, blank=True)
     state_machines = models.ManyToManyField(StateMachine, blank=True)
     code = models.SlugField(_("Code"), max_length=16)
+    parameters = models.ManyToManyField(Parameter, blank=True)
     players = models.ManyToManyField(Player, blank=True, related_name='games')
     teams = models.ManyToManyField(Team, blank=True, related_name='games')
     room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True, related_name='games')
@@ -279,8 +294,7 @@ class Game(TimeStamped):
 
     def __setup_state_machines(self):
         if self.game_definition:
-            self.state_machines.create(root_state=self.game_definition.root_state)
-            self.save()
+            self.add_state_machine(self.game_definition.root_state)
 
     def __setup_from_room(self, room: Room):
         """
@@ -323,7 +337,7 @@ class Game(TimeStamped):
             return self.has_team(team=model_object)
         return False
 
-    def setup(self, game_definition_slug: str, room: Room):
+    def setup(self, game_definition_slug: str, *args, **kwargs):
         """
         Sets up a Game from a GameDefinition slug and Room.
         :param game_definition_slug:
@@ -332,8 +346,20 @@ class Game(TimeStamped):
         """
         self.__setup_game_defintion(game_definition_slug)
         self.__setup_state_machines()
-        self.__setup_from_room(room)
+        self.__setup_from_room(kwargs['room'])
         self.__setup_code()
+
+    def add_parameter(self, composite_key, value):
+        parameter = Parameter.build(composite_key, value)
+        parameter.save()
+        self.parameters.add(parameter)
+        self.save()
+
+    def add_state_machine(self, state: State):
+        state_machine = StateMachine(root_state=state, current_state=state)
+        state_machine.save()
+        self.state_machines.add(state_machine)
+        self.save()
 
 
 class RuleLibrary(ABC):
