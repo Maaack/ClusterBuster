@@ -1,7 +1,7 @@
-from games.models import StateMachine, GameLibrary, Game, Parameter
+from games.models import StateMachine, RuleLibrary, Game, Parameter
 
 
-class ClusterBuster(GameLibrary):
+class ClusterBuster(RuleLibrary):
     @staticmethod
     def evaluate(state_machine: StateMachine, game: Game):
         prefix = "cluster_buster_"

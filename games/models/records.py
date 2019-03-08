@@ -8,45 +8,14 @@ from clusterbuster.mixins import TimeStamped
 from core.basics.utils import CodeGenerator
 
 from rooms.models import Player, Team, Room
-from .constants import GameStates
-
-
-class Rule(TimeStamped):
-    """
-    Rules define how the game is played.
-    """
-    slug = models.SlugField(_("Label"), max_length=64)
-    description = models.TextField(_("Description"), default='')
-
-    class Meta:
-        verbose_name = _("Rule")
-        verbose_name_plural = _("Rules")
-        ordering = ["-created"]
-
-    def __str__(self):
-        return str(self.slug)
-
-
-class State(TimeStamped):
-    """
-    States determine the rules that currently apply to the Game.
-    """
-    label = models.SlugField(_("Label"), max_length=32)
-    rules = models.ManyToManyField(Rule, blank=True, related_name="states")
-
-    class Meta:
-        verbose_name = _("State")
-        verbose_name_plural = _("States")
-
-    def __str__(self):
-        return str(self.label)
+from .definitions import State, GameDefinition
 
 
 class Transition(TimeStamped):
     """
-    Transitions define how the StateMachine can move from one State to another State.
+    Transitions record a StateMachine moving from one State to another State.
     """
-    label = models.SlugField(_("Label"), max_length=32)
+    reason = models.SlugField(_("Reason"), max_length=32)
     from_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_out")
     to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_in")
 
@@ -277,27 +246,6 @@ class StateMachine(TimeStamped):
                 self.__transit_to_state(next_state)
 
 
-class GameDefinition(TimeStamped):
-
-    slug = models.SlugField(_("Slug"), max_length=64)
-    title = models.CharField(_("Title"), max_length=128, default='')
-    description = models.TextField(_("Description"), default='')
-    root_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name='game_definition')
-
-    class Meta:
-        verbose_name = _("Game Definition")
-        verbose_name_plural = _("Games Definitions")
-        ordering = ["-created"]
-
-    def __str__(self):
-        return str(self.slug)
-
-    def __init__(self, *args, **kwargs):
-        super(GameDefinition, self).__init__(*args, **kwargs)
-        self.state_rules = []
-        self.transition_rules = []
-
-
 class Game(TimeStamped):
     """
     Games are instances of Game Definitions, that have codes, State Machines, Players, and Teams.
@@ -388,9 +336,9 @@ class Game(TimeStamped):
         self.__setup_code()
 
 
-class GameLibrary(ABC):
+class RuleLibrary(ABC):
     """
-    GameLibraries help map Rule.slugs to actual methods to perform on the StateMachine and Game.
+    RuleLibraries help map a State's Rules to methods that alter the Game.
     """
 
     @staticmethod
@@ -398,6 +346,7 @@ class GameLibrary(ABC):
     def evaluate(state_machine: StateMachine, game: Game):
         """
         :param state_machine: StateMachine
+        :param game: Game
         :return:
         """
         pass
