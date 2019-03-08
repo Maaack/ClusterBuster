@@ -8,7 +8,7 @@ from clusterbuster.mixins import TimeStamped
 from core.basics.utils import CodeGenerator
 
 from rooms.models import Player, Team, Room
-from .definitions import State, GameDefinition
+from gamedefinitions.models import State, GameDefinition
 
 
 class Transition(TimeStamped):
