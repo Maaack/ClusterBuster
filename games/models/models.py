@@ -277,21 +277,6 @@ class StateMachine(TimeStamped):
                 self.__transit_to_state(next_state)
 
 
-class GameLibrary(ABC):
-    """
-    GameLibraries help map Rule.slugs to actual methods to perform on the StateMachine and Game.
-    """
-
-    @staticmethod
-    @abstractmethod
-    def evaluate(state_machine: StateMachine):
-        """
-        :param state_machine: StateMachine
-        :return:
-        """
-        pass
-
-
 class GameDefinition(TimeStamped):
 
     slug = models.SlugField(_("Slug"), max_length=64)
@@ -402,3 +387,17 @@ class Game(TimeStamped):
         self.__setup_from_room(room)
         self.__setup_code()
 
+
+class GameLibrary(ABC):
+    """
+    GameLibraries help map Rule.slugs to actual methods to perform on the StateMachine and Game.
+    """
+
+    @staticmethod
+    @abstractmethod
+    def evaluate(state_machine: StateMachine, game: Game):
+        """
+        :param state_machine: StateMachine
+        :return:
+        """
+        pass
