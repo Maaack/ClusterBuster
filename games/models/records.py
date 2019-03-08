@@ -349,6 +349,12 @@ class Game(TimeStamped, GameInterface):
         self.__setup_from_room(kwargs['room'])
         self.__setup_code()
 
+    def get_parameters(self):
+        return self.parameters
+
+    def get_state_machines(self):
+        return self.state_machines
+
     def add_parameter(self, composite_key, value):
         parameter = Parameter.build(composite_key, value)
         parameter.save()

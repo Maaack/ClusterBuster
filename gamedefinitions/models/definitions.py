@@ -92,6 +92,14 @@ class GameInterface(ABC):
         pass
 
     @abstractmethod
+    def get_parameters(self):
+        pass
+
+    @abstractmethod
+    def get_state_machines(self):
+        pass
+
+    @abstractmethod
     def add_parameter(self, key, value):
         """
         Adds a Parameter to the Game object.
