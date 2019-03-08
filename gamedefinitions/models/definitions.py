@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -55,3 +57,71 @@ class GameDefinition(TimeStamped):
         super(GameDefinition, self).__init__(*args, **kwargs)
         self.state_rules = []
         self.transition_rules = []
+
+
+class StateMachineInterface(ABC):
+
+    @abstractmethod
+    def get_state(self):
+        pass
+
+    @abstractmethod
+    def get_current_rules(self):
+        pass
+
+    @abstractmethod
+    def get_conditions(self):
+        pass
+
+    @abstractmethod
+    def can_transit(self):
+        pass
+
+    @abstractmethod
+    def transition(self):
+        pass
+
+
+class GameInterface(ABC):
+    """
+    RuleLibraries help map a State's Rules to methods that alter the Game.
+    """
+
+    @abstractmethod
+    def setup(self, game_definition_slug: str, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def add_parameter(self, key, value):
+        """
+        Adds a Parameter to the Game object.
+        :param key:
+        :param value:
+        :return:
+        """
+        pass
+
+    @abstractmethod
+    def add_state_machine(self, state: State):
+        """
+        Adds a StateMachine to the Game object.
+        :param state: State
+        :return:
+        """
+        pass
+
+
+class RuleLibrary(ABC):
+    """
+    RuleLibraries help map a State's Rules to methods that alter the Game.
+    """
+
+    @staticmethod
+    @abstractmethod
+    def evaluate(state_machine: StateMachineInterface, game: GameInterface):
+        """
+        :param state_machine: StateMachineInterface
+        :param game: GameInterface
+        :return:
+        """
+        pass
