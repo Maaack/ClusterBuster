@@ -15,10 +15,10 @@ class ClusterBuster(RuleLibrary):
             current_method = ClusterBuster.method_map(current_rule)
             current_method(state_machine, game)
 
-
     @staticmethod
     def start_game(state_machine: StateMachineInterface, game: GameInterface):
-        pass
+        game.add_parameter(("tokens_required_to_win",), 2)
+        game.add_parameter(("tokens_required_to_lose",), 2)
 
     @staticmethod
     def method_map(rule):
