@@ -113,101 +113,6 @@ class Parameter(TimeStamped):
             return Parameter(key=parameter_key, value=parameter_value)
 
 
-class Condition(TimeStamped):
-    """
-    Condition wraps a parameter.
-    """
-    transition = models.ForeignKey(Transition, on_delete=models.CASCADE, related_name="+")
-
-    class Meta:
-        abstract = True
-
-    def passes(self):
-        return False
-
-    def get_next_state(self):
-        return self.transition.to_state
-
-
-class BooleanCondition(Condition):
-    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
-
-    def __str__(self):
-        return str(self.parameter)
-
-    def passes(self):
-        return bool(self.parameter.value)
-
-
-class ComparisonCondition(Condition):
-    NOT_EQUAL = 0
-    EQUAL = 1
-    GREATER_THAN = 2
-    LESS_THAN = 3
-    GREATER_THAN_OR_EQUAL = 4
-    LESS_THAN_OR_EQUAL = 4
-    COMPARISON_OPTIONS = (
-        (NOT_EQUAL, "!="),
-        (EQUAL, "=="),
-        (GREATER_THAN, ">"),
-        (LESS_THAN, "<"),
-        (GREATER_THAN_OR_EQUAL, ">="),
-        (LESS_THAN_OR_EQUAL, "<="),
-    )
-
-    comparison = models.PositiveSmallIntegerField(_("Comparison Operation"), choices=COMPARISON_OPTIONS)
-
-    class Meta:
-        abstract = True
-
-    def __is_not_equal(self):
-        return self.comparison == ComparisonCondition.NOT_EQUAL
-
-    def __is_equal(self):
-        return self.comparison == ComparisonCondition.EQUAL
-
-    def __is_gt(self):
-        return self.comparison == ComparisonCondition.GREATER_THAN
-
-    def __is_lt(self):
-        return self.comparison == ComparisonCondition.LESS_THAN
-
-    def __is_gt_or_equal(self):
-        return self.comparison == ComparisonCondition.GREATER_THAN_OR_EQUAL
-
-    def __is_lt_or_equal(self):
-        return self.comparison == ComparisonCondition.LESS_THAN_OR_EQUAL
-
-    def __compare_2_parameters(self, number_1, number_2):
-        if self.__is_not_equal():
-            return number_1 != number_2
-        if self.__is_equal():
-            return number_1 == number_2
-        if self.__is_gt():
-            return number_1 > number_2
-        if self.__is_lt():
-            return number_1 < number_2
-        if self.__is_gt_or_equal():
-            return number_1 >= number_2
-        if self.__is_lt_or_equal():
-            return number_1 <= number_2
-
-    def get_readable_comparison(self):
-        return self.get_comparison_display()
-
-
-class ParameterComparisonCondition(ComparisonCondition):
-    parameter_1 = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
-    parameter_2 = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
-
-    def __str__(self):
-        comparison_str = self.get_comparison_display()
-        return str(self.parameter_1) + comparison_str + str(self.parameter_2)
-
-    def passes(self):
-        return self.__compare_2_parameters(self.parameter_1, self.parameter_2)
-
-
 class StateMachine(TimeStamped, StateMachineInterface):
     """
     State Machines manage the State and its Transitions.
@@ -353,17 +258,99 @@ class Game(TimeStamped, GameInterface):
         self.save()
 
 
-class RuleLibrary(ABC):
+class Condition(TimeStamped):
     """
-    RuleLibraries help map a State's Rules to methods that alter the Game.
+    Condition wraps a parameter.
     """
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="+")
+    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
 
-    @staticmethod
-    @abstractmethod
-    def evaluate(state_machine: StateMachine, game: Game):
-        """
-        :param state_machine: StateMachine
-        :param game: Game
-        :return:
-        """
-        pass
+    class Meta:
+        abstract = True
+
+    def passes(self):
+        return False
+
+    def get_next_state(self):
+        return self.to_state
+
+
+class BooleanCondition(Condition):
+    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
+
+    def __str__(self):
+        return str(self.parameter)
+
+    def passes(self):
+        return bool(self.parameter.value)
+
+
+class AbstractComparisonCondition(Condition):
+    NOT_EQUAL = 0
+    EQUAL = 1
+    GREATER_THAN = 2
+    LESS_THAN = 3
+    GREATER_THAN_OR_EQUAL = 4
+    LESS_THAN_OR_EQUAL = 4
+    COMPARISON_OPTIONS = (
+        (NOT_EQUAL, "!="),
+        (EQUAL, "=="),
+        (GREATER_THAN, ">"),
+        (LESS_THAN, "<"),
+        (GREATER_THAN_OR_EQUAL, ">="),
+        (LESS_THAN_OR_EQUAL, "<="),
+    )
+
+    comparison = models.PositiveSmallIntegerField(_("Comparison Operation"), choices=COMPARISON_OPTIONS)
+
+    class Meta:
+        abstract = True
+
+    def __is_not_equal(self):
+        return self.comparison == AbstractComparisonCondition.NOT_EQUAL
+
+    def __is_equal(self):
+        return self.comparison == AbstractComparisonCondition.EQUAL
+
+    def __is_gt(self):
+        return self.comparison == AbstractComparisonCondition.GREATER_THAN
+
+    def __is_lt(self):
+        return self.comparison == AbstractComparisonCondition.LESS_THAN
+
+    def __is_gt_or_equal(self):
+        return self.comparison == AbstractComparisonCondition.GREATER_THAN_OR_EQUAL
+
+    def __is_lt_or_equal(self):
+        return self.comparison == AbstractComparisonCondition.LESS_THAN_OR_EQUAL
+
+    def __compare_2(self, number_1, number_2):
+        if self.__is_not_equal():
+            return number_1 != number_2
+        if self.__is_equal():
+            return number_1 == number_2
+        if self.__is_gt():
+            return number_1 > number_2
+        if self.__is_lt():
+            return number_1 < number_2
+        if self.__is_gt_or_equal():
+            return number_1 >= number_2
+        if self.__is_lt_or_equal():
+            return number_1 <= number_2
+
+    def get_readable_comparison(self):
+        return self.get_comparison_display()
+
+
+class ComparisonCondition(AbstractComparisonCondition):
+    parameter_1 = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
+    parameter_2 = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
+
+    def __str__(self):
+        comparison_str = self.get_comparison_display()
+        return str(self.parameter_1) + comparison_str + str(self.parameter_2)
+
+    def passes(self):
+        return self.__compare_2(self.parameter_1, self.parameter_2)
+
+
