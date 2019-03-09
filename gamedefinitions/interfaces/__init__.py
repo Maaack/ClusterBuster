@@ -8,8 +8,8 @@ from gamedefinitions.models import State, GameDefinition
 
 class StateMachineAbstract(models.Model):
     root_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
-    previous_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
-    current_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    current_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
+    previous_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
 
     class Meta:
         abstract = True
@@ -38,11 +38,6 @@ class GameAbstract(models.Model):
     class Meta:
         abstract = True
 
-    def __init__(self):
-        self.players = models.QuerySet()
-        self.teams = models.QuerySet()
-        super(GameAbstract, self).__init__()
-
     def __setup_game_definition(self, game_definition_slug: str):
         """
         :param game_definition_slug: str
@@ -61,6 +56,15 @@ class GameAbstract(models.Model):
         """
         self.condition_query_sets = list(chain(self.condition_query_sets, condition_query_set))
 
+    def get_state_machines(self) -> models.QuerySet:
+        raise NotImplementedError('GameAbstract subclasses must override get_state_machines()')
+
+    def get_players(self) -> models.QuerySet:
+        raise NotImplementedError('GameAbstract subclasses must override get_players()')
+
+    def get_teams(self) -> models.QuerySet:
+        raise NotImplementedError('GameAbstract subclasses must override get_teams()')
+
     def add_parameter(self, composite_key, value):
         raise NotImplementedError('GameAbstract subclasses must override add_parameter()')
 
@@ -75,9 +79,8 @@ class RuleLibrary(ABC):
 
     @staticmethod
     @abstractmethod
-    def evaluate(state_machine: StateMachineAbstract, game: GameAbstract):
+    def evaluate(game: GameAbstract):
         """
-        :param state_machine: StateMachineAbstract
         :param game: GameAbstract
         :return:
         """

@@ -96,21 +96,35 @@ class Parameter(TimeStamped):
 
     @staticmethod
     def build(composite_key, value):
-        parameter_key = None
-        parameter_value = None
-        if type(composite_key) is tuple:
-            key, counter, player, team = composite_key
-            parameter_key = ParameterKey(key=key, counter=counter, player=player, team=team)
+        key = None
+        counter = None
+        player = None
+        team = None
+        if type(composite_key) is not tuple:
+            raise ValueError('composite_key must be a tuple')
+        for composite_key_part in composite_key:
+            if type(composite_key_part) is Player:
+                player = composite_key_part
+            elif type(composite_key_part) is Team:
+                team = composite_key_part
+            elif type(composite_key_part) is int:
+                counter = composite_key_part
+            elif type(composite_key_part) is str:
+                key = composite_key_part
+        if key is None and counter is None and counter is None and key is None:
+            raise ValueError('composite_key must contain a string, integer, Player, or Team')
+        parameter_key = ParameterKey(key=key, counter=counter, player=player, team=team)
         if type(value) is int:
             parameter_value = ParameterValue(integer=value)
         elif type(value) is float:
             parameter_value = ParameterValue(float=value)
         elif type(value) is bool:
             parameter_value = ParameterValue(boolean=value)
-        if parameter_key and parameter_value:
-            parameter_key.save()
-            parameter_value.save()
-            return Parameter(key=parameter_key, value=parameter_value)
+        else:
+            raise ValueError('value must be a boolean, integer, or float')
+        parameter_key.save()
+        parameter_value.save()
+        return Parameter(key=parameter_key, value=parameter_value)
 
 
 class StateMachine(TimeStamped, StateMachineAbstract):
@@ -159,6 +173,7 @@ class Game(TimeStamped, GameAbstract):
     def __setup_code(self):
         if not self.code:
             self.code = CodeGenerator.game_code()
+            self.save()
 
     def __setup_state_machines(self):
         if self.game_definition:
@@ -172,7 +187,6 @@ class Game(TimeStamped, GameAbstract):
         self.room = room
         self.players.set(room.players.all())
         self.teams.set(room.teams.all())
-        self.save()
 
     def save(self, *args, **kwargs):
         super(Game, self).save(*args, **kwargs)
@@ -215,6 +229,16 @@ class Game(TimeStamped, GameAbstract):
         self.__setup_state_machines()
         self.__setup_from_room(kwargs['room'])
         self.__setup_code()
+        self.save()
+
+    def get_state_machines(self) -> models.QuerySet:
+        return self.state_machines
+
+    def get_players(self) -> models.QuerySet:
+        return self.players
+
+    def get_teams(self) -> models.QuerySet:
+        return self.teams
 
     def add_parameter(self, composite_key, value):
         """
