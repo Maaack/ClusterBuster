@@ -6,37 +6,16 @@ from core.basics.utils import CodeGenerator
 
 from rooms.models import Player, Team, Room
 from gamedefinitions.models import State, GameDefinition
-from gamedefinitions.interfaces import StateMachineAbstract, GameAbstract
+from gamedefinitions.interfaces import (
+    StateMachineAbstract, GameAbstract,
+    BooleanConditionAbstract, ComparisonConditionAbstract
+)
 
 
-class StateMachine(TimeStamped, StateMachineAbstract):
-    """
-    State Machines manage the State and its Transitions.
-    """
-
-    def transit(self, to_state: State, reason=""):
-        from_state = self.get_state()
-        transition = Transition(state_machine=self, from_state=from_state, to_state=to_state, reason="")
-        transition.save()
-        self.set_state(to_state)
-        self.save()
-
-
-class Transition(TimeStamped):
-    """
-    Transitions record a StateMachine moving from one State to another State.
-    """
-    reason = models.SlugField(_("Reason"), max_length=32)
-    state_machine = models.ForeignKey(StateMachine, on_delete=models.CASCADE, related_name="transitions")
-    from_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_out")
-    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_in")
-
-
-class Game(TimeStamped, GameAbstract):
+class Game(GameAbstract):
     """
     Games are instances of Game Definitions, that have codes, State Machines, Players, and Teams.
     """
-    state_machines = models.ManyToManyField(StateMachine, blank=True)
     players = models.ManyToManyField(Player, blank=True, related_name='games')
     teams = models.ManyToManyField(Team, blank=True, related_name='games')
     code = models.SlugField(_("Code"), max_length=16)
@@ -162,18 +141,61 @@ class Game(TimeStamped, GameAbstract):
             state_machine = StateMachine.objects.create(root_state=state, current_state=state)
             self.state_machines.add(state_machine)
             self.save()
-    #
-    # def add_condition(self, condition):
-    #     """
-    #     Adds a Condition to the Game object.
-    #     :param condition:
-    #     :return:
-    #     """
-    #     parameter = self.get_parameter(**key_dict)
-    #     parameter.set_value(value)
-    #     if self.parameters.filter(id=parameter.id).first() is None:
-    #         self.parameters.add(parameter)
-    #         self.save()
+
+    def add_condition(self, state_machine, condition_query_set):
+        """
+        :param state_machine: StateMachineAbstract
+        :param condition_query_set: models.QuerySet
+        :return:
+        """
+        pass
+
+
+class StateMachine(StateMachineAbstract):
+    """
+    State Machines manage the State and its Transitions.
+    """
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="state_machines")
+
+    def transit(self, to_state: State, reason=""):
+        from_state = self.get_state()
+        transition = Transition(state_machine=self, from_state=from_state, to_state=to_state, reason="")
+        transition.save()
+        self.set_state(to_state)
+        self.save()
+
+    def evaluate_conditions(self):
+        for condition in self.boolean_conditions.all():
+            if condition.passes():
+                next_state = condition.get_next_state()
+                self.transit(next_state, str(condition.parameter.key))
+        for condition in self.comparison_conditions.all():
+            if condition.passes():
+                next_state = condition.get_next_state()
+                self.transit(next_state, str(condition.parameter_1.key))
+
+    def get_game_parameter(self, **kwargs):
+        return self.game.get_parameter(**kwargs)
+
+    def add_comparison_condition(self, key_dict_1, key_dict_2, comparison, to_state):
+        parameter_1 = self.get_game_parameter(**key_dict_1)
+        parameter_2 = self.get_game_parameter(**key_dict_2)
+        self.comparison_conditions.get_or_create(parameter_1=parameter_1, parameter_2=parameter_2,
+                                                 comparison=comparison, to_state=to_state)
+
+    def add_boolean_condition(self, key_dict, to_state):
+        parameter = self.get_game_parameter(**key_dict)
+        self.boolean_conditions.get_or_create(parameter=parameter, to_state=to_state)
+
+
+class Transition(TimeStamped):
+    """
+    Transitions record a StateMachine moving from one State to another State.
+    """
+    reason = models.SlugField(_("Reason"), max_length=32)
+    state_machine = models.ForeignKey(StateMachine, on_delete=models.CASCADE, related_name="transitions")
+    from_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_out")
+    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_in")
 
 
 class ParameterKey(TimeStamped):
@@ -301,25 +323,8 @@ class Parameter(TimeStamped):
         self.save()
 
 
-class Condition(TimeStamped):
-    """
-    Condition wraps a parameter.
-    """
-    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="+")
-    state_machine = models.ForeignKey(StateMachine, on_delete=models.CASCADE, related_name="+")
-    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
-
-    class Meta:
-        abstract = True
-
-    def passes(self):
-        return False
-
-    def get_next_state(self):
-        return self.to_state
-
-
-class BooleanCondition(Condition):
+class BooleanCondition(BooleanConditionAbstract):
+    state_machine = models.ForeignKey(StateMachine, on_delete=models.CASCADE, related_name="boolean_conditions")
     parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
 
     def __str__(self):
@@ -329,64 +334,8 @@ class BooleanCondition(Condition):
         return bool(self.parameter.value)
 
 
-class ComparisonConditionAbstract(Condition):
-    NOT_EQUAL = 0
-    EQUAL = 1
-    GREATER_THAN = 2
-    LESS_THAN = 3
-    GREATER_THAN_OR_EQUAL = 4
-    LESS_THAN_OR_EQUAL = 4
-    COMPARISON_OPTIONS = (
-        (NOT_EQUAL, "!="),
-        (EQUAL, "=="),
-        (GREATER_THAN, ">"),
-        (LESS_THAN, "<"),
-        (GREATER_THAN_OR_EQUAL, ">="),
-        (LESS_THAN_OR_EQUAL, "<="),
-    )
-
-    comparison = models.PositiveSmallIntegerField(_("Comparison Operation"), choices=COMPARISON_OPTIONS)
-
-    class Meta:
-        abstract = True
-
-    def __is_not_equal(self):
-        return self.comparison == ComparisonConditionAbstract.NOT_EQUAL
-
-    def __is_equal(self):
-        return self.comparison == ComparisonConditionAbstract.EQUAL
-
-    def __is_gt(self):
-        return self.comparison == ComparisonConditionAbstract.GREATER_THAN
-
-    def __is_lt(self):
-        return self.comparison == ComparisonConditionAbstract.LESS_THAN
-
-    def __is_gt_or_equal(self):
-        return self.comparison == ComparisonConditionAbstract.GREATER_THAN_OR_EQUAL
-
-    def __is_lt_or_equal(self):
-        return self.comparison == ComparisonConditionAbstract.LESS_THAN_OR_EQUAL
-
-    def __compare_2(self, number_1, number_2):
-        if self.__is_not_equal():
-            return number_1 != number_2
-        if self.__is_equal():
-            return number_1 == number_2
-        if self.__is_gt():
-            return number_1 > number_2
-        if self.__is_lt():
-            return number_1 < number_2
-        if self.__is_gt_or_equal():
-            return number_1 >= number_2
-        if self.__is_lt_or_equal():
-            return number_1 <= number_2
-
-    def get_readable_comparison(self):
-        return self.get_comparison_display()
-
-
 class ComparisonCondition(ComparisonConditionAbstract):
+    state_machine = models.ForeignKey(StateMachine, on_delete=models.CASCADE, related_name="comparison_conditions")
     parameter_1 = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
     parameter_2 = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
 

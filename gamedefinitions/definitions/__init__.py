@@ -1,4 +1,6 @@
-from gamedefinitions.interfaces import StateMachineAbstract, GameAbstract, RuleLibrary
+from gamedefinitions.interfaces import (StateMachineAbstract, GameAbstract, BooleanConditionAbstract,
+                                        ComparisonConditionAbstract,
+                                        RuleLibrary)
 from gamedefinitions.models import State
 
 
@@ -45,11 +47,25 @@ class ClusterBuster(RuleLibrary):
 
     @staticmethod
     def win_condition(game: GameAbstract, state_machine: StateMachineAbstract):
-        print('Win Condition')
+        to_state = State.objects.get(label='game_over')
+        for team in game.get_teams().all():
+            state_machine.add_comparison_condition(
+                {'key': "team_winning_tokens", 'team': team},
+                {'key': "winning_tokens_required_to_win"},
+                ComparisonConditionAbstract.GREATER_THAN_OR_EQUAL,
+                to_state=to_state
+            )
 
     @staticmethod
     def lose_condition(game: GameAbstract, state_machine: StateMachineAbstract):
-        print('Lose Condition')
+        to_state = State.objects.get(label='game_over')
+        for team in game.get_teams().all():
+            state_machine.add_comparison_condition(
+                {'key': "team_losing_tokens", 'team': team},
+                {'key': "losing_tokens_required_to_lose"},
+                ComparisonConditionAbstract.GREATER_THAN_OR_EQUAL,
+                to_state=to_state
+            )
 
     @staticmethod
     def draw_cards(game: GameAbstract, state_machine: StateMachineAbstract):
@@ -65,4 +81,3 @@ class ClusterBuster(RuleLibrary):
             'lose_condition': ClusterBuster.lose_condition,
 
         }[rule]
-
