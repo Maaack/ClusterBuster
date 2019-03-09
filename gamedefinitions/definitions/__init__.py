@@ -25,11 +25,12 @@ class ClusterBuster(RuleLibrary):
         :param state_machine:
         :return:
         """
-        game.add_parameter(("winnin_tokens_required_to_win",), 2)
-        game.add_parameter(("losing_tokens_required_to_lose",), 2)
+
+        game.add_parameter({'key': "winning_tokens_required_to_win"}, 2)
+        game.add_parameter({'key': "losing_tokens_required_to_lose"}, 2)
         for team in game.get_teams().all():
-            game.add_parameter(("team_winning_tokens", None, None, team), 0)
-            game.add_parameter(("team_losing_tokens", None, None, team), 0)
+            game.add_parameter({'key': "team_winning_tokens", 'team': team}, 0)
+            game.add_parameter({'key': "team_losing_tokens", 'team': team}, 0)
 
     @staticmethod
     def method_map(rule):

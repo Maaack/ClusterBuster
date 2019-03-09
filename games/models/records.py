@@ -9,124 +9,6 @@ from gamedefinitions.models import State, GameDefinition
 from gamedefinitions.interfaces import StateMachineAbstract, GameAbstract
 
 
-class ParameterKey(TimeStamped):
-    key = models.SlugField(_("Key"), max_length=128, blank=True, null=True, db_index=True)
-    counter = models.IntegerField(_("Counter"), blank=True, null=True, db_index=True)
-    player = models.ForeignKey(Player, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
-    team = models.ForeignKey(Team, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
-
-    def __str__(self):
-        return str(self.get())
-
-    def __eq__(self, other):
-        if type(other) is not tuple:
-            return False
-        return self.get() == other
-
-    def get(self):
-        return self.key, self.counter, self.player, self.team
-
-
-class ParameterValue(TimeStamped):
-    boolean = models.NullBooleanField(_("Boolean"), default=None)
-    integer = models.IntegerField(_("Integer"), null=True, default=None)
-    float = models.FloatField(_("Float"), null=True, default=None)
-
-    def __str__(self):
-        return str(self.get())
-
-    def __bool__(self):
-        if self.boolean:
-            return self.boolean
-        return False
-
-    def get(self):
-        if self.boolean is not None:
-            return self.boolean
-        elif self.integer is not None:
-            return self.integer
-        elif self.float is not None:
-            return self.float
-        else:
-            return False
-
-
-class Parameter(TimeStamped):
-    """
-    Parameters store all data about a specific game and the state.
-    """
-    key = models.ForeignKey(ParameterKey, on_delete=models.CASCADE)
-    value = models.ForeignKey(ParameterValue, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return str(self.key)
-
-    def __bool__(self):
-        return bool(self.value)
-
-    def __eq__(self, other):
-        if type(other) is not Parameter:
-            return False
-        return self.value.get() == other.value.get()
-
-    def __ne__(self, other):
-        if type(other) is not Parameter:
-            return False
-        return self.value.get() != other.value.get()
-
-    def __gt__(self, other):
-        if type(other) is not Parameter:
-            return False
-        return self.value.get() > other.value.get()
-
-    def __lt__(self, other):
-        if type(other) is not Parameter:
-            return False
-        return self.value.get() < other.value.get()
-
-    def __ge__(self, other):
-        if type(other) is not Parameter:
-            return False
-        return self.value.get() >= other.value.get()
-
-    def __le__(self, other):
-        if type(other) is not Parameter:
-            return False
-        return self.value.get() <= other.value.get()
-
-    @staticmethod
-    def build(composite_key, value):
-        key = None
-        counter = None
-        player = None
-        team = None
-        if type(composite_key) is not tuple:
-            raise ValueError('composite_key must be a tuple')
-        for composite_key_part in composite_key:
-            if type(composite_key_part) is Player:
-                player = composite_key_part
-            elif type(composite_key_part) is Team:
-                team = composite_key_part
-            elif type(composite_key_part) is int:
-                counter = composite_key_part
-            elif type(composite_key_part) is str:
-                key = composite_key_part
-        if key is None and counter is None and counter is None and key is None:
-            raise ValueError('composite_key must contain a string, integer, Player, or Team')
-        parameter_key = ParameterKey(key=key, counter=counter, player=player, team=team)
-        if type(value) is int:
-            parameter_value = ParameterValue(integer=value)
-        elif type(value) is float:
-            parameter_value = ParameterValue(float=value)
-        elif type(value) is bool:
-            parameter_value = ParameterValue(boolean=value)
-        else:
-            raise ValueError('value must be a boolean, integer, or float')
-        parameter_key.save()
-        parameter_value.save()
-        return Parameter(key=parameter_key, value=parameter_value)
-
-
 class StateMachine(TimeStamped, StateMachineAbstract):
     """
     State Machines manage the State and its Transitions.
@@ -155,7 +37,6 @@ class Game(TimeStamped, GameAbstract):
     Games are instances of Game Definitions, that have codes, State Machines, Players, and Teams.
     """
     state_machines = models.ManyToManyField(StateMachine, blank=True)
-    parameters = models.ManyToManyField(Parameter, blank=True)
     players = models.ManyToManyField(Player, blank=True, related_name='games')
     teams = models.ManyToManyField(Team, blank=True, related_name='games')
     code = models.SlugField(_("Code"), max_length=16)
@@ -240,17 +121,30 @@ class Game(TimeStamped, GameAbstract):
     def get_teams(self) -> models.QuerySet:
         return self.teams
 
-    def add_parameter(self, composite_key, value):
+    def get_parameter(self, **kwargs):
+        try:
+            parameter_key = ParameterKey.objects.filter(parameter__game=self, **kwargs).get()
+        except ParameterKey.DoesNotExist:
+            parameter_key = ParameterKey.objects.create(**kwargs)
+        try:
+            parameter = Parameter.objects.filter(game=self, key=parameter_key).get()
+        except Parameter.DoesNotExist:
+            parameter_value = ParameterValue.objects.create()
+            parameter = Parameter(game=self, key=parameter_key, value=parameter_value)
+        return parameter
+
+    def add_parameter(self, key_dict, value):
         """
         Adds a Parameter to the Game object.
-        :param composite_key:
+        :param key_dict:
         :param value:
         :return:
         """
-        parameter = Parameter.build(composite_key, value)
-        parameter.save()
-        self.parameters.add(parameter)
-        self.save()
+        parameter = self.get_parameter(**key_dict)
+        parameter.set_value(value)
+        if self.parameters.filter(id=parameter.id).first() is None:
+            self.parameters.add(parameter)
+            self.save()
 
     def add_state_machine(self, state: State):
         """
@@ -261,6 +155,131 @@ class Game(TimeStamped, GameAbstract):
         state_machine = StateMachine(root_state=state, current_state=state)
         state_machine.save()
         self.state_machines.add(state_machine)
+        self.save()
+
+
+class ParameterKey(TimeStamped):
+    key = models.SlugField(_("Key"), max_length=128, blank=True, null=True, db_index=True)
+    counter = models.IntegerField(_("Counter"), blank=True, null=True, db_index=True)
+    player = models.ForeignKey(Player, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
+    team = models.ForeignKey(Team, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
+
+    def __str__(self):
+        return str(self.get_tuple())
+
+    def get_tuple(self):
+        result = tuple()
+        if self.key is not None:
+            result = result + (self.key,)
+        if self.counter is not None:
+            result = result + (self.counter,)
+        if self.player is not None:
+            result = result + (self.player,)
+        if self.team is not None:
+            result = result + (self.team,)
+        return result
+
+
+class ParameterValue(TimeStamped):
+    boolean = models.NullBooleanField(_("Boolean"), default=None)
+    integer = models.IntegerField(_("Integer"), null=True, default=None)
+    float = models.FloatField(_("Float"), null=True, default=None)
+    player = models.ForeignKey(Player, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
+    team = models.ForeignKey(Team, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
+
+    def __str__(self):
+        return str(self.get())
+
+    def __bool__(self):
+        if self.boolean:
+            return self.boolean
+        return False
+
+    def get(self):
+        if self.boolean is not None:
+            return self.boolean
+        elif self.integer is not None:
+            return self.integer
+        elif self.float is not None:
+            return self.float
+        elif self.player is not None:
+            return self.player
+        elif self.team is not None:
+            return self.team
+        else:
+            return None
+
+
+class Parameter(TimeStamped):
+    """
+    Parameters store all data about a specific game and the state.
+    """
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="parameters")
+    key = models.OneToOneField(ParameterKey, on_delete=models.CASCADE, related_name="parameter")
+    value = models.OneToOneField(ParameterValue, on_delete=models.CASCADE, related_name="parameter")
+
+    class Meta:
+        unique_together = ('game', 'key')
+
+    def __str__(self):
+        return str(self.key)
+
+    def __bool__(self):
+        return bool(self.value)
+
+    def __eq__(self, other):
+        if type(other) is not Parameter:
+            return False
+        return self.value.get() == other.value.get()
+
+    def __ne__(self, other):
+        if type(other) is not Parameter:
+            return False
+        return self.value.get() != other.value.get()
+
+    def __gt__(self, other):
+        if type(other) is not Parameter:
+            return False
+        return self.value.get() > other.value.get()
+
+    def __lt__(self, other):
+        if type(other) is not Parameter:
+            return False
+        return self.value.get() < other.value.get()
+
+    def __ge__(self, other):
+        if type(other) is not Parameter:
+            return False
+        return self.value.get() >= other.value.get()
+
+    def __le__(self, other):
+        if type(other) is not Parameter:
+            return False
+        return self.value.get() <= other.value.get()
+
+    def save(self, *args, **kwargs):
+        if self.value is None:
+            self.value = ParameterValue.objects.create()
+        super(Parameter, self).save(*args, **kwargs)
+
+    def get_value(self):
+        self.value.get()
+
+    def set_value(self, value):
+        if type(value) is int:
+            parameter_value = ParameterValue(integer=value)
+        elif type(value) is float:
+            parameter_value = ParameterValue(float=value)
+        elif type(value) is bool:
+            parameter_value = ParameterValue(boolean=value)
+        elif type(value) is Player:
+            parameter_value = ParameterValue(player=value)
+        elif type(value) is Team:
+            parameter_value = ParameterValue(team=value)
+        else:
+            raise ValueError('value must be a boolean, integer, or float')
+        parameter_value.save()
+        self.value = parameter_value
         self.save()
 
 

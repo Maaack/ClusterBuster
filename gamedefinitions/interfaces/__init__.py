@@ -65,7 +65,10 @@ class GameAbstract(models.Model):
     def get_teams(self) -> models.QuerySet:
         raise NotImplementedError('GameAbstract subclasses must override get_teams()')
 
-    def add_parameter(self, composite_key, value):
+    def get_parameter(self, key):
+        raise NotImplementedError('GameAbstract subclasses must override get_parameter()')
+
+    def add_parameter(self, key, value):
         raise NotImplementedError('GameAbstract subclasses must override add_parameter()')
 
     def add_state_machine(self, state: State):
