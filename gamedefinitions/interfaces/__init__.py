@@ -26,7 +26,7 @@ class StateMachineAbstract(models.Model):
         return self.current_state.rules
 
     def transit(self, state: State, reason: str):
-        raise NotImplementedError('subclasses must override transit()')
+        raise NotImplementedError('StateMachineAbstract subclasses must override transit()')
 
 
 class GameAbstract(models.Model):
@@ -34,7 +34,14 @@ class GameAbstract(models.Model):
     RuleLibraries help map a State's Rules to methods that alter the Game.
     """
     game_definition = models.ForeignKey(GameDefinition, on_delete=models.SET_NULL, null=True, blank=True)
-    condition_query_set = models.QuerySet()
+
+    class Meta:
+        abstract = True
+
+    def __init__(self):
+        self.players = models.QuerySet()
+        self.teams = models.QuerySet()
+        super(GameAbstract, self).__init__()
 
     def __setup_game_definition(self, game_definition_slug: str):
         """
@@ -53,6 +60,12 @@ class GameAbstract(models.Model):
         :return:
         """
         self.condition_query_sets = list(chain(self.condition_query_sets, condition_query_set))
+
+    def add_parameter(self, composite_key, value):
+        raise NotImplementedError('GameAbstract subclasses must override add_parameter()')
+
+    def add_state_machine(self, state: State):
+        raise NotImplementedError('GameAbstract subclasses must override add_state_machine()')
 
 
 class RuleLibrary(ABC):
