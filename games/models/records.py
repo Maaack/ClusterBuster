@@ -6,7 +6,7 @@ from core.basics.utils import CodeGenerator
 
 from rooms.models import Player, Team, Room
 from gamedefinitions.models import State, GameDefinition
-from gamedefinitions.interfaces import StateMachineInterface, GameInterface
+from gamedefinitions.interfaces import StateMachineAbstract, GameAbstract
 
 
 class ParameterKey(TimeStamped):
@@ -113,24 +113,10 @@ class Parameter(TimeStamped):
             return Parameter(key=parameter_key, value=parameter_value)
 
 
-class StateMachine(TimeStamped, StateMachineInterface):
+class StateMachine(TimeStamped, StateMachineAbstract):
     """
     State Machines manage the State and its Transitions.
     """
-    root_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
-    previous_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
-    current_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
-
-    def get_state(self):
-        return self.current_state
-
-    def set_state(self, state: State):
-        self.previous_state = self.current_state
-        self.current_state = state
-        self.save()
-
-    def get_rules(self):
-        return self.current_state.rules
 
     def transit(self, to_state: State, reason=""):
         from_state = self.get_state()
@@ -150,16 +136,15 @@ class Transition(TimeStamped):
     to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_in")
 
 
-class Game(TimeStamped, GameInterface):
+class Game(TimeStamped, GameAbstract):
     """
     Games are instances of Game Definitions, that have codes, State Machines, Players, and Teams.
     """
-    game_definition = models.ForeignKey(GameDefinition, on_delete=models.SET_NULL, null=True, blank=True)
     state_machines = models.ManyToManyField(StateMachine, blank=True)
     parameters = models.ManyToManyField(Parameter, blank=True)
-    code = models.SlugField(_("Code"), max_length=16)
     players = models.ManyToManyField(Player, blank=True, related_name='games')
     teams = models.ManyToManyField(Team, blank=True, related_name='games')
+    code = models.SlugField(_("Code"), max_length=16)
     room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True, related_name='games')
     leader = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
 
@@ -174,13 +159,6 @@ class Game(TimeStamped, GameInterface):
     def __setup_code(self):
         if not self.code:
             self.code = CodeGenerator.game_code()
-
-    def __setup_game_definition(self, game_definition_slug: str):
-        """
-        :param game_definition_slug: str
-        :return:
-        """
-        self.game_definition = GameDefinition.objects.get(slug=game_definition_slug)
 
     def __setup_state_machines(self):
         if self.game_definition:
@@ -231,27 +209,31 @@ class Game(TimeStamped, GameInterface):
         """
         Sets up a Game from a GameDefinition slug and Room.
         :param game_definition_slug:
-        :param room: Room
         :return:
         """
-        self.__setup_game_definition(game_definition_slug)
+        super(Game, self).setup(game_definition_slug, *args, **kwargs)
         self.__setup_state_machines()
         self.__setup_from_room(kwargs['room'])
         self.__setup_code()
 
-    def get_parameters(self):
-        return self.parameters
-
-    def get_state_machines(self):
-        return self.state_machines
-
     def add_parameter(self, composite_key, value):
+        """
+        Adds a Parameter to the Game object.
+        :param composite_key:
+        :param value:
+        :return:
+        """
         parameter = Parameter.build(composite_key, value)
         parameter.save()
         self.parameters.add(parameter)
         self.save()
 
     def add_state_machine(self, state: State):
+        """
+        Adds a StateMachine to the Game object.
+        :param state: State
+        :return:
+        """
         state_machine = StateMachine(root_state=state, current_state=state)
         state_machine.save()
         self.state_machines.add(state_machine)

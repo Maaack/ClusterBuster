@@ -2,81 +2,57 @@ from itertools import chain
 from abc import ABC, abstractmethod
 
 from django.db import models
-from gamedefinitions.models import State
+
+from gamedefinitions.models import State, GameDefinition
 
 
-class StateMachineInterface(ABC):
+class StateMachineAbstract(models.Model):
+    root_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
+    previous_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
+    current_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
 
-    def __init__(self):
-        self.root_state = None
-        self.previous_state = None
-        self.current_state = None
+    class Meta:
+        abstract = True
 
-    @abstractmethod
     def get_state(self):
-        pass
+        return self.current_state
 
-    @abstractmethod
     def set_state(self, state: State):
-        pass
+        self.previous_state = self.current_state
+        self.current_state = state
+        self.save()
 
-    @abstractmethod
     def get_rules(self):
-        pass
+        return self.current_state.rules
 
-    @abstractmethod
     def transit(self, state: State, reason: str):
-        pass
+        raise NotImplementedError('subclasses must override transit()')
 
 
-class GameInterface(ABC):
+class GameAbstract(models.Model):
     """
     RuleLibraries help map a State's Rules to methods that alter the Game.
     """
+    game_definition = models.ForeignKey(GameDefinition, on_delete=models.SET_NULL, null=True, blank=True)
+    condition_query_set = models.QuerySet()
 
-    def __init__(self):
-        self.game_definition = None
-        self.state_machines = None
-        self.parameters = None
-        self.conditions = models.QuerySet()
+    def __setup_game_definition(self, game_definition_slug: str):
+        """
+        :param game_definition_slug: str
+        :return:
+        """
+        self.game_definition = GameDefinition.objects.get(slug=game_definition_slug)
+        self.save()
 
-    @abstractmethod
     def setup(self, game_definition_slug: str, *args, **kwargs):
-        pass
+        self.__setup_game_definition(game_definition_slug)
 
-    @abstractmethod
-    def get_parameters(self):
-        pass
-
-    @abstractmethod
-    def get_state_machines(self):
-        pass
-
-    @abstractmethod
-    def add_parameter(self, key, value):
+    def add_condition(self, condition_query_set: models.QuerySet):
         """
-        Adds a Parameter to the Game object.
-        :param key:
-        :param value:
+        :param condition_query_set: models.QuerySet
         :return:
         """
-        pass
-
-    @abstractmethod
-    def add_state_machine(self, state: State):
-        """
-        Adds a StateMachine to the Game object.
-        :param state: State
-        :return:
-        """
-        pass
-
-    def add_condition(self, conditions: models.QuerySet):
-        """
-        :param conditions: models.QuerySet
-        :return:
-        """
-        self.conditions = list(chain(self.conditions, conditions))
+        self.condition_query_sets = list(chain(self.condition_query_sets, condition_query_set))
 
 
 class RuleLibrary(ABC):
@@ -86,10 +62,10 @@ class RuleLibrary(ABC):
 
     @staticmethod
     @abstractmethod
-    def evaluate(state_machine: StateMachineInterface, game: GameInterface):
+    def evaluate(state_machine: StateMachineAbstract, game: GameAbstract):
         """
-        :param state_machine: StateMachineInterface
-        :param game: GameInterface
+        :param state_machine: StateMachineAbstract
+        :param game: GameAbstract
         :return:
         """
         pass
