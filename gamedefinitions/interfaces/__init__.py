@@ -4,12 +4,150 @@ from abc import ABC, abstractmethod
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from clusterbuster.mixins import TimeStamped
-
 from gamedefinitions.models import State, GameDefinition
 
 
-class StateMachineAbstract(TimeStamped):
+class ConditionAbstractBase(models.Model):
+    HAS_VALUE = 0
+    BOOLEAN = 1
+    COMPARISON = 2
+    CONDITION_TYPE_CHOICES = (
+        (HAS_VALUE, "Has Value"),
+        (BOOLEAN, "Boolean"),
+        (COMPARISON, "Comparison"),
+    )
+    condition_type = models.PositiveSmallIntegerField(_("Condition Operation"), choices=CONDITION_TYPE_CHOICES,
+                                                      default=HAS_VALUE)
+
+    class Meta:
+        abstract = True
+
+    def is_has_value(self):
+        return self.condition_type == ConditionAbstract.HAS_VALUE
+
+    def is_boolean(self):
+        return self.condition_type == ConditionAbstract.BOOLEAN
+
+    def is_comparison(self):
+        return self.condition_type == ConditionAbstract.COMPARISON
+
+    def passes(self):
+        raise NotImplementedError('ConditionAbstract subclasses must override passes()')
+
+
+class ComparisonConditionAbstract(models.Model):
+    EQUAL = 0
+    NOT_EQUAL = 1
+    GREATER_THAN = 2
+    LESS_THAN = 3
+    GREATER_THAN_OR_EQUAL = 4
+    LESS_THAN_OR_EQUAL = 5
+    COMPARISON_TYPE_CHOICES = (
+        (EQUAL, "=="),
+        (NOT_EQUAL, "!="),
+        (GREATER_THAN, ">"),
+        (LESS_THAN, "<"),
+        (GREATER_THAN_OR_EQUAL, ">="),
+        (LESS_THAN_OR_EQUAL, "<="),
+    )
+
+    comparison_type = models.PositiveSmallIntegerField(_("Comparison Operation"), choices=COMPARISON_TYPE_CHOICES,
+                                                       default=EQUAL)
+
+    class Meta:
+        abstract = True
+
+    def __is_equal(self):
+        return self.comparison_type == ComparisonConditionAbstract.EQUAL
+
+    def __is_not_equal(self):
+        return self.comparison_type == ComparisonConditionAbstract.NOT_EQUAL
+
+    def __is_gt(self):
+        return self.comparison_type == ComparisonConditionAbstract.GREATER_THAN
+
+    def __is_lt(self):
+        return self.comparison_type == ComparisonConditionAbstract.LESS_THAN
+
+    def __is_gt_or_equal(self):
+        return self.comparison_type == ComparisonConditionAbstract.GREATER_THAN_OR_EQUAL
+
+    def __is_lt_or_equal(self):
+        return self.comparison_type == ComparisonConditionAbstract.LESS_THAN_OR_EQUAL
+
+    def compare_2_numbers(self, number_1, number_2):
+        if self.__is_equal():
+            return number_1 == number_2
+        if self.__is_not_equal():
+            return number_1 != number_2
+        if self.__is_gt():
+            return number_1 > number_2
+        if self.__is_lt():
+            return number_1 < number_2
+        if self.__is_gt_or_equal():
+            return number_1 >= number_2
+        if self.__is_lt_or_equal():
+            return number_1 <= number_2
+
+    def get_readable_comparison(self):
+        return self.get_comparison_type_display()
+
+
+class ConditionAbstract(ConditionAbstractBase, ComparisonConditionAbstract):
+    class Meta:
+        abstract = True
+
+    def passes(self):
+        raise NotImplementedError('ConditionAbstract subclasses must override passes()')
+
+
+class ConditionalTransitionAbstract(models.Model):
+    OR_OP = 0
+    AND_OP = 1
+    BOOLEAN_OP_CHOICES = (
+        (OR_OP, "OR"),
+        (AND_OP, "AND"),
+    )
+
+    label = models.SlugField(_("Label"), max_length=32)
+    from_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
+    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
+    boolean_op = models.PositiveSmallIntegerField(_("Boolean Operation"), choices=BOOLEAN_OP_CHOICES, default=OR_OP)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return str(self.label)
+
+    def is_or_op(self):
+        return self.boolean_op == ConditionalTransitionAbstract.OR_OP
+
+    def set_to_or_op(self):
+        self.boolean_op = ConditionalTransitionAbstract.OR_OP
+        self.save()
+
+    def is_and_op(self):
+        return self.boolean_op == ConditionalTransitionAbstract.AND_OP
+
+    def set_to_and_op(self):
+        self.boolean_op = ConditionalTransitionAbstract.AND_OP
+        self.save()
+
+    def passes(self):
+        raise NotImplementedError('ConditionalTransitionalAbstract subclasses must override passes()')
+
+    def add_has_value_condition(self, key_dict) -> ConditionAbstract:
+        raise NotImplementedError('ConditionalTransitionAbstract subclasses must override add_boolean_condition()')
+
+    def add_boolean_condition(self, key_dict) -> ConditionAbstract:
+        raise NotImplementedError('ConditionalTransitionAbstract subclasses must override add_boolean_condition()')
+
+    def add_comparison_condition(self, key_dict_1, key_dict_2, comparison) -> ConditionAbstract:
+        raise NotImplementedError('ConditionalTransitionAbstract subclasses must override add_comparison_condition()')
+
+
+class StateMachineAbstract(models.Model):
     root_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
     current_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
     previous_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
@@ -31,92 +169,14 @@ class StateMachineAbstract(TimeStamped):
     def transit(self, state: State, reason: str):
         raise NotImplementedError('StateMachineAbstract subclasses must override transit()')
 
-    def add_comparison_condition(self, key_dict_1, key_dict_2, comparison, to_state):
-        raise NotImplementedError('StateMachineAbstract subclasses must override add_comparison_condition()')
+    def add_conditional_transition(self, label: str, to_state_slug: str) -> ConditionalTransitionAbstract:
+        raise NotImplementedError('StateMachineAbstract subclasses must override add_conditional_transition()')
 
-    def add_boolean_condition(self, key_dict, to_state):
-        raise NotImplementedError('StateMachineAbstract subclasses must override add_boolean_condition()')
-
-
-class ConditionAbstract(TimeStamped):
-    """
-    Condition wraps a parameter.
-    """
-    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
-
-    class Meta:
-        abstract = True
-
-    def passes(self):
-        return False
-
-    def get_next_state(self):
-        return self.to_state
+    def evaluate_conditions(self):
+        raise NotImplementedError('StateMachineAbstract subclasses must override add_conditional_transition()')
 
 
-class BooleanConditionAbstract(ConditionAbstract):
-    class Meta:
-        abstract = True
-
-
-class ComparisonConditionAbstract(ConditionAbstract):
-    NOT_EQUAL = 0
-    EQUAL = 1
-    GREATER_THAN = 2
-    LESS_THAN = 3
-    GREATER_THAN_OR_EQUAL = 4
-    LESS_THAN_OR_EQUAL = 5
-    COMPARISON_OPTIONS = (
-        (NOT_EQUAL, "!="),
-        (EQUAL, "=="),
-        (GREATER_THAN, ">"),
-        (LESS_THAN, "<"),
-        (GREATER_THAN_OR_EQUAL, ">="),
-        (LESS_THAN_OR_EQUAL, "<="),
-    )
-
-    comparison = models.PositiveSmallIntegerField(_("Comparison Operation"), choices=COMPARISON_OPTIONS)
-
-    class Meta:
-        abstract = True
-
-    def __is_not_equal(self):
-        return self.comparison == ComparisonConditionAbstract.NOT_EQUAL
-
-    def __is_equal(self):
-        return self.comparison == ComparisonConditionAbstract.EQUAL
-
-    def __is_gt(self):
-        return self.comparison == ComparisonConditionAbstract.GREATER_THAN
-
-    def __is_lt(self):
-        return self.comparison == ComparisonConditionAbstract.LESS_THAN
-
-    def __is_gt_or_equal(self):
-        return self.comparison == ComparisonConditionAbstract.GREATER_THAN_OR_EQUAL
-
-    def __is_lt_or_equal(self):
-        return self.comparison == ComparisonConditionAbstract.LESS_THAN_OR_EQUAL
-
-    def __compare_2(self, number_1, number_2):
-        if self.__is_not_equal():
-            return number_1 != number_2
-        if self.__is_equal():
-            return number_1 == number_2
-        if self.__is_gt():
-            return number_1 > number_2
-        if self.__is_lt():
-            return number_1 < number_2
-        if self.__is_gt_or_equal():
-            return number_1 >= number_2
-        if self.__is_lt_or_equal():
-            return number_1 <= number_2
-
-    def get_readable_comparison(self):
-        return self.get_comparison_display()
-
-
-class GameAbstract(TimeStamped):
+class GameAbstract(models.Model):
     """
     RuleLibraries help map a State's Rules to methods that alter the Game.
     """

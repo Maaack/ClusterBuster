@@ -7,12 +7,13 @@ from core.basics.utils import CodeGenerator
 from rooms.models import Player, Team, Room
 from gamedefinitions.models import State, GameDefinition
 from gamedefinitions.interfaces import (
-    StateMachineAbstract, GameAbstract,
-    BooleanConditionAbstract, ComparisonConditionAbstract
+    StateMachineAbstract, GameAbstract, ConditionAbstract,
+    ComparisonConditionAbstract,
+    ConditionalTransitionAbstract
 )
 
 
-class Game(GameAbstract):
+class Game(GameAbstract, TimeStamped):
     """
     Games are instances of Game Definitions, that have codes, State Machines, Players, and Teams.
     """
@@ -37,7 +38,7 @@ class Game(GameAbstract):
 
     def __setup_state_machines(self):
         if self.game_definition:
-            self.add_state_machine(self.game_definition.root_state)
+            self.add_state_machine(self.game_definition.root_state.label)
 
     def __setup_from_room(self, room: Room):
         """
@@ -102,14 +103,14 @@ class Game(GameAbstract):
 
     def get_parameter(self, **kwargs):
         try:
-            parameter_key = ParameterKey.objects.filter(parameter__game=self, **kwargs).get()
+            parameter_key = self.parameter_keys.filter(game=self, **kwargs).get()
         except ParameterKey.DoesNotExist:
-            parameter_key = ParameterKey.objects.create(**kwargs)
+            parameter_key = self.parameter_keys.create(**kwargs)
         try:
-            parameter = Parameter.objects.filter(game=self, key=parameter_key).get()
+            parameter = self.parameters.filter(key=parameter_key).get()
         except Parameter.DoesNotExist:
-            parameter_value = ParameterValue.objects.create()
-            parameter = Parameter(game=self, key=parameter_key, value=parameter_value)
+            parameter = Parameter(game=self, key=parameter_key)
+            parameter.save()
         return parameter
 
     def add_parameter(self, key_dict, value):
@@ -136,22 +137,13 @@ class Game(GameAbstract):
         except State.DoesNotExist:
             raise ValueError('state_slug must be a valid existing state')
         try:
-            self.state_machines.filter(root_state=state).get()
+            state_machine = self.state_machines.filter(root_state=state).get()
         except StateMachine.DoesNotExist:
-            state_machine = StateMachine.objects.create(root_state=state, current_state=state)
-            self.state_machines.add(state_machine)
-            self.save()
-
-    def add_condition(self, state_machine, condition_query_set):
-        """
-        :param state_machine: StateMachineAbstract
-        :param condition_query_set: models.QuerySet
-        :return:
-        """
-        pass
+            state_machine = self.state_machines.create(root_state=state, current_state=state)
+        return state_machine
 
 
-class StateMachine(StateMachineAbstract):
+class StateMachine(StateMachineAbstract, TimeStamped):
     """
     State Machines manage the State and its Transitions.
     """
@@ -159,33 +151,30 @@ class StateMachine(StateMachineAbstract):
 
     def transit(self, to_state: State, reason=""):
         from_state = self.get_state()
-        transition = Transition(state_machine=self, from_state=from_state, to_state=to_state, reason="")
+        transition = Transition(state_machine=self, from_state=from_state, to_state=to_state, reason=reason)
         transition.save()
         self.set_state(to_state)
         self.save()
 
     def evaluate_conditions(self):
-        for condition in self.boolean_conditions.all():
-            if condition.passes():
-                next_state = condition.get_next_state()
-                self.transit(next_state, str(condition.parameter.key))
-        for condition in self.comparison_conditions.all():
-            if condition.passes():
-                next_state = condition.get_next_state()
-                self.transit(next_state, str(condition.parameter_1.key))
+        for conditional_transition in self.conditional_transitions.all():
+            if conditional_transition.from_state == self.current_state and conditional_transition.passes():
+                to_state = conditional_transition.to_state
+                self.transit(to_state, str(conditional_transition))
 
     def get_game_parameter(self, **kwargs):
         return self.game.get_parameter(**kwargs)
 
-    def add_comparison_condition(self, key_dict_1, key_dict_2, comparison, to_state):
-        parameter_1 = self.get_game_parameter(**key_dict_1)
-        parameter_2 = self.get_game_parameter(**key_dict_2)
-        self.comparison_conditions.get_or_create(parameter_1=parameter_1, parameter_2=parameter_2,
-                                                 comparison=comparison, to_state=to_state)
+    def get_condition_transition(self):
+        pass
 
-    def add_boolean_condition(self, key_dict, to_state):
-        parameter = self.get_game_parameter(**key_dict)
-        self.boolean_conditions.get_or_create(parameter=parameter, to_state=to_state)
+    def add_conditional_transition(self, label: str, to_state_slug: str):
+        from_state = self.get_state()
+        to_state = State.objects.get(label=to_state_slug)
+        conditional_transition, created = self.conditional_transitions.get_or_create(state_machine=self, label=label,
+                                                                                     from_state=from_state,
+                                                                                     to_state=to_state)
+        return conditional_transition
 
 
 class Transition(TimeStamped):
@@ -199,24 +188,25 @@ class Transition(TimeStamped):
 
 
 class ParameterKey(TimeStamped):
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="parameter_keys")
     key = models.SlugField(_("Key"), max_length=128, blank=True, null=True, db_index=True)
     counter = models.IntegerField(_("Counter"), blank=True, null=True, db_index=True)
     player = models.ForeignKey(Player, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
     team = models.ForeignKey(Team, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
 
     def __str__(self):
-        return str(self.get_tuple())
+        return str(self.get_list())
 
-    def get_tuple(self):
-        result = tuple()
+    def get_list(self):
+        result = list()
         if self.key is not None:
-            result = result + (self.key,)
+            result.append(self.key)
         if self.counter is not None:
-            result = result + (self.counter,)
+            result.append(self.counter)
         if self.player is not None:
-            result = result + (self.player,)
+            result.append(self.player)
         if self.team is not None:
-            result = result + (self.team,)
+            result.append(self.team)
         return result
 
 
@@ -228,7 +218,7 @@ class ParameterValue(TimeStamped):
     team = models.ForeignKey(Team, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
 
     def __str__(self):
-        return str(self.get())
+        return str(self.parameter) + ": " + str(self.get())
 
     def __bool__(self):
         if self.boolean:
@@ -248,6 +238,21 @@ class ParameterValue(TimeStamped):
             return self.team
         else:
             return None
+
+    def set(self, value):
+        if type(value) is int:
+            self.integer=value
+        elif type(value) is float:
+            self.float = value
+        elif type(value) is bool:
+            self.boolean = value
+        elif type(value) is Player:
+            self.player = value
+        elif type(value) is Team:
+            self.team = value
+        else:
+            raise ValueError('value must be a boolean, integer, or float')
+        self.save()
 
 
 class Parameter(TimeStamped):
@@ -298,52 +303,85 @@ class Parameter(TimeStamped):
         return self.value.get() <= other.value.get()
 
     def save(self, *args, **kwargs):
-        if self.value is None:
-            self.value = ParameterValue.objects.create()
+        try:
+            self.value.get()
+        except ParameterValue.DoesNotExist:
+            self.value = ParameterValue.objects.create(parameter=self)
         super(Parameter, self).save(*args, **kwargs)
 
     def get_value(self):
         self.value.get()
 
-    def set_value(self, value):
-        if type(value) is int:
-            parameter_value = ParameterValue(integer=value)
-        elif type(value) is float:
-            parameter_value = ParameterValue(float=value)
-        elif type(value) is bool:
-            parameter_value = ParameterValue(boolean=value)
-        elif type(value) is Player:
-            parameter_value = ParameterValue(player=value)
-        elif type(value) is Team:
-            parameter_value = ParameterValue(team=value)
-        else:
-            raise ValueError('value must be a boolean, integer, or float')
-        parameter_value.save()
-        self.value = parameter_value
+    def set_value(self, value_variable):
+        try:
+            value = self.value
+        except ParameterValue.DoesNotExist:
+            value = ParameterValue()
+            value.set(value_variable)
+            value.save()
+            self.value = value
+            self.save()
+        value.set(value_variable)
+
+
+class Condition(ConditionAbstract, TimeStamped):
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="conditions")
+    parameter_1 = models.ForeignKey(Parameter, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
+    parameter_2 = models.ForeignKey(Parameter, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
+
+    def __str__(self):
+        if self.is_comparison():
+            comparison_str = self.get_readable_comparison()
+            return str(self.parameter_1) + comparison_str + str(self.parameter_2)
+        return str(self.parameter_1.key)
+
+    def passes(self):
+        if self.is_has_value():
+            return self.parameter_1.value.get() is not None
+        elif self.is_boolean():
+            return bool(self.parameter_1.value)
+        elif self.is_comparison():
+            return self.compare_2_numbers(self.parameter_1, self.parameter_2)
+
+
+class ConditionalTransition(ConditionalTransitionAbstract, TimeStamped):
+    state_machine = models.ForeignKey(StateMachine, on_delete=models.CASCADE, related_name="conditional_transitions")
+    conditions = models.ManyToManyField(Condition, related_name="conditional_transitions")
+
+    class Meta:
+        unique_together = ('state_machine', 'label', 'from_state', 'to_state')
+
+    def passes(self):
+        for condition in self.conditions.all():
+            if condition.passes():
+                if self.is_or_op():
+                    return True
+            elif self.is_and_op():
+                return False
+        if self.is_or_op():
+            return False
+        return True
+
+    def add_has_value_condition(self, key_dict) -> ConditionAbstract:
+        parameter = self.state_machine.get_game_parameter(**key_dict)
+        condition, created = self.conditions.get_or_create(condition_type=ConditionAbstract.HAS_VALUE,
+                                                           parameter_1=parameter, )
         self.save()
+        return condition
 
+    def add_boolean_condition(self, key_dict) -> ConditionAbstract:
+        parameter = self.state_machine.get_game_parameter(**key_dict)
+        condition, created = self.conditions.get_or_create(condition_type=ConditionAbstract.BOOLEAN,
+                                                           parameter_1=parameter)
+        self.save()
+        return condition
 
-class BooleanCondition(BooleanConditionAbstract):
-    state_machine = models.ForeignKey(StateMachine, on_delete=models.CASCADE, related_name="boolean_conditions")
-    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
-
-    def __str__(self):
-        return str(self.parameter)
-
-    def passes(self):
-        return bool(self.parameter.value)
-
-
-class ComparisonCondition(ComparisonConditionAbstract):
-    state_machine = models.ForeignKey(StateMachine, on_delete=models.CASCADE, related_name="comparison_conditions")
-    parameter_1 = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
-    parameter_2 = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
-
-    def __str__(self):
-        comparison_str = self.get_comparison_display()
-        return str(self.parameter_1) + comparison_str + str(self.parameter_2)
-
-    def passes(self):
-        return self.__compare_2(self.parameter_1, self.parameter_2)
-
+    def add_comparison_condition(self, key_dict_1, key_dict_2, comparison_type) -> ConditionAbstract:
+        parameter_1 = self.state_machine.get_game_parameter(**key_dict_1)
+        parameter_2 = self.state_machine.get_game_parameter(**key_dict_2)
+        condition, created = self.conditions.get_or_create(game=self.state_machine.game, condition_type=ConditionAbstract.COMPARISON,
+                                                           parameter_1=parameter_1,
+                                                           parameter_2=parameter_2, comparison_type=comparison_type)
+        self.save()
+        return condition
 

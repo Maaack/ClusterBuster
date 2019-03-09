@@ -1,13 +1,15 @@
-from gamedefinitions.interfaces import (StateMachineAbstract, GameAbstract, BooleanConditionAbstract,
+from gamedefinitions.interfaces import (StateMachineAbstract, GameAbstract,
+                                        ConditionAbstractBase, ConditionalTransitionAbstract,
                                         ComparisonConditionAbstract,
                                         RuleLibrary)
 from gamedefinitions.models import State
+from rooms.models import Player, Team
 
 
 class ClusterBuster(RuleLibrary):
     @staticmethod
     def evaluate(game: GameAbstract):
-        for state_machine in game.get_state_machines().all():
+        for state_machine in game.get_state_machines().all():  # type: StateMachineAbstract
             prefix = "cluster_buster_"
             prefix_length = len(prefix)
             current_rules = state_machine.get_rules()
@@ -21,6 +23,7 @@ class ClusterBuster(RuleLibrary):
                     current_method(game, state_machine)
                 except KeyError:
                     print("%s didn't exist" % (current_rule_slug,))
+            state_machine.evaluate_conditions()
 
     @staticmethod
     def start_game(game: GameAbstract, state_machine: StateMachineAbstract):
@@ -31,40 +34,50 @@ class ClusterBuster(RuleLibrary):
         """
         game.add_parameter({'key': "winning_tokens_required_to_win"}, 2)
         game.add_parameter({'key': "losing_tokens_required_to_lose"}, 2)
+        game.add_parameter({'key': "teams_start_tokens"}, 0)
         game.add_state_machine('draw_words_stage')
-        state = State.objects.get(label='game_play')
-        state_machine.transit(state, 'game is ready')
+        conditional_transition = state_machine.add_conditional_transition('game_is_ready', 'game_play')
+        conditional_transition.set_to_and_op()
+        for team in game.get_teams().all():  # type: Team
+            conditional_transition.add_comparison_condition(
+                {'key': "teams_start_tokens"},
+                {'key': "team_losing_tokens", 'team': team},
+                ComparisonConditionAbstract.EQUAL
+            )
+            conditional_transition.add_comparison_condition(
+                {'key': "teams_start_tokens"},
+                {'key': "team_winning_tokens", 'team': team},
+                ComparisonConditionAbstract.EQUAL
+            )
 
     @staticmethod
     def win_tokens(game: GameAbstract, state_machine: StateMachineAbstract):
-        for team in game.get_teams().all():
+        for team in game.get_teams().all():  # type: Team
             game.add_parameter({'key': "team_winning_tokens", 'team': team}, 0)
 
     @staticmethod
     def lose_tokens(game: GameAbstract, state_machine: StateMachineAbstract):
-        for team in game.get_teams().all():
+        for team in game.get_teams().all():  # type: Team
             game.add_parameter({'key': "team_losing_tokens", 'team': team}, 0)
 
     @staticmethod
     def win_condition(game: GameAbstract, state_machine: StateMachineAbstract):
-        to_state = State.objects.get(label='game_over')
-        for team in game.get_teams().all():
-            state_machine.add_comparison_condition(
+        conditional_transition = state_machine.add_conditional_transition('team_won', 'game_over')
+        for team in game.get_teams().all():  # type: Team
+            conditional_transition.add_comparison_condition(
                 {'key': "team_winning_tokens", 'team': team},
                 {'key': "winning_tokens_required_to_win"},
-                ComparisonConditionAbstract.GREATER_THAN_OR_EQUAL,
-                to_state=to_state
+                ComparisonConditionAbstract.GREATER_THAN_OR_EQUAL
             )
 
     @staticmethod
     def lose_condition(game: GameAbstract, state_machine: StateMachineAbstract):
-        to_state = State.objects.get(label='game_over')
+        conditional_transition = state_machine.add_conditional_transition('team_lost', 'game_over')
         for team in game.get_teams().all():
-            state_machine.add_comparison_condition(
+            conditional_transition.add_comparison_condition(
                 {'key': "team_losing_tokens", 'team': team},
                 {'key': "losing_tokens_required_to_lose"},
-                ComparisonConditionAbstract.GREATER_THAN_OR_EQUAL,
-                to_state=to_state
+                ComparisonConditionAbstract.GREATER_THAN_OR_EQUAL
             )
 
     @staticmethod
