@@ -36,6 +36,8 @@ class GameInterface(ABC):
 
     def __init__(self):
         self.game_definition = None
+        self.state_machines = None
+        self.parameters = None
         self.conditions = models.QuerySet()
 
     @abstractmethod
@@ -69,7 +71,6 @@ class GameInterface(ABC):
         """
         pass
 
-    @abstractmethod
     def add_condition(self, conditions: models.QuerySet):
         """
         :param conditions: models.QuerySet

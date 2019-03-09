@@ -156,8 +156,8 @@ class Game(TimeStamped, GameInterface):
     """
     game_definition = models.ForeignKey(GameDefinition, on_delete=models.SET_NULL, null=True, blank=True)
     state_machines = models.ManyToManyField(StateMachine, blank=True)
-    code = models.SlugField(_("Code"), max_length=16)
     parameters = models.ManyToManyField(Parameter, blank=True)
+    code = models.SlugField(_("Code"), max_length=16)
     players = models.ManyToManyField(Player, blank=True, related_name='games')
     teams = models.ManyToManyField(Team, blank=True, related_name='games')
     room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True, related_name='games')
