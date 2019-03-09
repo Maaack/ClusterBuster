@@ -149,7 +149,7 @@ class Game(TimeStamped, GameAbstract):
     def add_state_machine(self, state_slug: str):
         """
         Adds a StateMachine to the Game object.
-        :param state: str
+        :param state_slug: str
         :return:
         """
         try:

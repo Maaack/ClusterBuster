@@ -19,7 +19,6 @@ class ClusterBuster(RuleLibrary):
                 except KeyError:
                     pass
 
-
     @staticmethod
     def start_game(game: GameAbstract, state_machine: StateMachineAbstract):
         """
@@ -35,6 +34,10 @@ class ClusterBuster(RuleLibrary):
         for team in game.get_teams().all():
             game.add_parameter({'key': "team_winning_tokens", 'team': team}, 0)
             game.add_parameter({'key': "team_losing_tokens", 'team': team}, 0)
+
+    @staticmethod
+    def draw_cards():
+        pass
 
     @staticmethod
     def method_map(rule):
