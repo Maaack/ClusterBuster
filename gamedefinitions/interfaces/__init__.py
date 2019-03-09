@@ -71,7 +71,7 @@ class GameAbstract(models.Model):
     def add_parameter(self, key, value):
         raise NotImplementedError('GameAbstract subclasses must override add_parameter()')
 
-    def add_state_machine(self, state: State):
+    def add_state_machine(self, state_slug: str):
         raise NotImplementedError('GameAbstract subclasses must override add_state_machine()')
 
 

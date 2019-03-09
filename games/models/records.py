@@ -146,16 +146,22 @@ class Game(TimeStamped, GameAbstract):
             self.parameters.add(parameter)
             self.save()
 
-    def add_state_machine(self, state: State):
+    def add_state_machine(self, state_slug: str):
         """
         Adds a StateMachine to the Game object.
-        :param state: State
+        :param state: str
         :return:
         """
-        state_machine = StateMachine(root_state=state, current_state=state)
-        state_machine.save()
-        self.state_machines.add(state_machine)
-        self.save()
+        try:
+            state = State.objects.get(label=state_slug)
+        except State.DoesNotExist:
+            raise ValueError('state_slug must be a valid existing state')
+        try:
+            self.state_machines.filter(root_state=state).get()
+        except StateMachine.DoesNotExist:
+            state_machine = StateMachine.objects.create(root_state=state, current_state=state)
+            self.state_machines.add(state_machine)
+            self.save()
 
 
 class ParameterKey(TimeStamped):

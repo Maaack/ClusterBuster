@@ -13,9 +13,12 @@ class ClusterBuster(RuleLibrary):
                 current_rule_slug = current_rule.slug
                 if current_rule_slug.startswith(prefix):
                     current_rule_slug = current_rule_slug[prefix_length:]
+                try:
+                    current_method = ClusterBuster.method_map(current_rule_slug)
+                    current_method(game, state_machine)
+                except KeyError:
+                    pass
 
-                current_method = ClusterBuster.method_map(current_rule_slug)
-                current_method(game, state_machine)
 
     @staticmethod
     def start_game(game: GameAbstract, state_machine: StateMachineAbstract):
@@ -28,6 +31,7 @@ class ClusterBuster(RuleLibrary):
 
         game.add_parameter({'key': "winning_tokens_required_to_win"}, 2)
         game.add_parameter({'key': "losing_tokens_required_to_lose"}, 2)
+        game.add_state_machine('draw_words_stage')
         for team in game.get_teams().all():
             game.add_parameter({'key': "team_winning_tokens", 'team': team}, 0)
             game.add_parameter({'key': "team_losing_tokens", 'team': team}, 0)
