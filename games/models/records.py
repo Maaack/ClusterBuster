@@ -162,6 +162,18 @@ class Game(TimeStamped, GameAbstract):
             state_machine = StateMachine.objects.create(root_state=state, current_state=state)
             self.state_machines.add(state_machine)
             self.save()
+    #
+    # def add_condition(self, condition):
+    #     """
+    #     Adds a Condition to the Game object.
+    #     :param condition:
+    #     :return:
+    #     """
+    #     parameter = self.get_parameter(**key_dict)
+    #     parameter.set_value(value)
+    #     if self.parameters.filter(id=parameter.id).first() is None:
+    #         self.parameters.add(parameter)
+    #         self.save()
 
 
 class ParameterKey(TimeStamped):
@@ -294,6 +306,7 @@ class Condition(TimeStamped):
     Condition wraps a parameter.
     """
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="+")
+    state_machine = models.ForeignKey(StateMachine, on_delete=models.CASCADE, related_name="+")
     to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
 
     class Meta:

@@ -25,7 +25,7 @@ class State(TimeStamped):
     States define sections of the Game, like stages, rounds, and turns.
     """
     label = models.SlugField(_("Label"), max_length=32)
-    name = models.CharField(_("Name"), max_length=64)
+    name = models.CharField(_("Name"), max_length=64, blank=True)
     rules = models.ManyToManyField(Rule, blank=True, related_name="states")
 
     class Meta:
