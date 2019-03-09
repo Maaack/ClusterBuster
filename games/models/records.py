@@ -267,7 +267,7 @@ class BooleanCondition(Condition):
         return bool(self.parameter.value)
 
 
-class AbstractComparisonCondition(Condition):
+class ComparisonConditionAbstract(Condition):
     NOT_EQUAL = 0
     EQUAL = 1
     GREATER_THAN = 2
@@ -289,22 +289,22 @@ class AbstractComparisonCondition(Condition):
         abstract = True
 
     def __is_not_equal(self):
-        return self.comparison == AbstractComparisonCondition.NOT_EQUAL
+        return self.comparison == ComparisonConditionAbstract.NOT_EQUAL
 
     def __is_equal(self):
-        return self.comparison == AbstractComparisonCondition.EQUAL
+        return self.comparison == ComparisonConditionAbstract.EQUAL
 
     def __is_gt(self):
-        return self.comparison == AbstractComparisonCondition.GREATER_THAN
+        return self.comparison == ComparisonConditionAbstract.GREATER_THAN
 
     def __is_lt(self):
-        return self.comparison == AbstractComparisonCondition.LESS_THAN
+        return self.comparison == ComparisonConditionAbstract.LESS_THAN
 
     def __is_gt_or_equal(self):
-        return self.comparison == AbstractComparisonCondition.GREATER_THAN_OR_EQUAL
+        return self.comparison == ComparisonConditionAbstract.GREATER_THAN_OR_EQUAL
 
     def __is_lt_or_equal(self):
-        return self.comparison == AbstractComparisonCondition.LESS_THAN_OR_EQUAL
+        return self.comparison == ComparisonConditionAbstract.LESS_THAN_OR_EQUAL
 
     def __compare_2(self, number_1, number_2):
         if self.__is_not_equal():
@@ -324,7 +324,7 @@ class AbstractComparisonCondition(Condition):
         return self.get_comparison_display()
 
 
-class ComparisonCondition(AbstractComparisonCondition):
+class ComparisonCondition(ComparisonConditionAbstract):
     parameter_1 = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
     parameter_2 = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name="+")
 
