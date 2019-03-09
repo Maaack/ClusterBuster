@@ -1,4 +1,4 @@
-from gamedefinitions.models import StateMachineInterface, GameInterface, RuleLibrary
+from gamedefinitions.interfaces import StateMachineInterface, GameInterface, RuleLibrary
 
 
 class ClusterBuster(RuleLibrary):
@@ -6,7 +6,7 @@ class ClusterBuster(RuleLibrary):
     def evaluate(state_machine: StateMachineInterface, game: GameInterface):
         prefix = "cluster_buster_"
         prefix_length = len(prefix)
-        current_rules = state_machine.get_current_rules()
+        current_rules = state_machine.get_rules()
 
         for current_rule in current_rules:
             if current_rule.startswith(prefix):
@@ -17,6 +17,12 @@ class ClusterBuster(RuleLibrary):
 
     @staticmethod
     def start_game(state_machine: StateMachineInterface, game: GameInterface):
+        """
+
+        :param state_machine:
+        :param game:
+        :return:
+        """
         game.add_parameter(("tokens_required_to_win",), 2)
         game.add_parameter(("tokens_required_to_lose",), 2)
 

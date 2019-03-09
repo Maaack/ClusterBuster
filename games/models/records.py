@@ -1,6 +1,3 @@
-from itertools import chain
-from abc import ABC, abstractmethod
-
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -8,16 +5,8 @@ from clusterbuster.mixins import TimeStamped
 from core.basics.utils import CodeGenerator
 
 from rooms.models import Player, Team, Room
-from gamedefinitions.models import State, GameDefinition, StateMachineInterface, GameInterface
-
-
-class Transition(TimeStamped):
-    """
-    Transitions record a StateMachine moving from one State to another State.
-    """
-    reason = models.SlugField(_("Reason"), max_length=32)
-    from_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_out")
-    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_in")
+from gamedefinitions.models import State, GameDefinition
+from gamedefinitions.interfaces import StateMachineInterface, GameInterface
 
 
 class ParameterKey(TimeStamped):
@@ -226,38 +215,34 @@ class StateMachine(TimeStamped, StateMachineInterface):
     root_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
     previous_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     current_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
-    boolean_conditions = models.ManyToManyField(BooleanCondition, blank=True, related_name="transitions")
-    parameter_comparison_conditions = models.ManyToManyField(ParameterComparisonCondition, blank=True,
-                                                             related_name="transitions")
-
-    def __transit_to_state(self, state: State):
-        self.previous_state = self.current_state
-        self.current_state = state
-        self.save()
 
     def get_state(self):
         return self.current_state
 
-    def get_current_rules(self):
+    def set_state(self, state: State):
+        self.previous_state = self.current_state
+        self.current_state = state
+        self.save()
+
+    def get_rules(self):
         return self.current_state.rules
 
-    def get_conditions(self):
-        return list(chain(self.boolean_conditions.all(),
-                          self.parameter_comparison_conditions.all()))
+    def transit(self, to_state: State, reason=""):
+        from_state = self.get_state()
+        transition = Transition(state_machine=self, from_state=from_state, to_state=to_state, reason="")
+        transition.save()
+        self.set_state(to_state)
+        self.save()
 
-    def can_transit(self):
-        conditions = self.get_conditions()
-        for condition in conditions:
-            if condition.passes():
-                return True
-        return False
 
-    def transition(self):
-        conditions = self.get_conditions()
-        for condition in conditions:
-            if condition.passes():
-                next_state = condition.get_next_state()
-                self.__transit_to_state(next_state)
+class Transition(TimeStamped):
+    """
+    Transitions record a StateMachine moving from one State to another State.
+    """
+    reason = models.SlugField(_("Reason"), max_length=32)
+    state_machine = models.ForeignKey(StateMachine, on_delete=models.CASCADE, related_name="transitions")
+    from_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_out")
+    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_in")
 
 
 class Game(TimeStamped, GameInterface):
@@ -285,9 +270,9 @@ class Game(TimeStamped, GameInterface):
         if not self.code:
             self.code = CodeGenerator.game_code()
 
-    def __setup_game_defintion(self, game_definition_slug):
+    def __setup_game_definition(self, game_definition_slug: str):
         """
-        :param game_definition: GameDefinition
+        :param game_definition_slug: str
         :return:
         """
         self.game_definition = GameDefinition.objects.get(slug=game_definition_slug)
@@ -344,7 +329,7 @@ class Game(TimeStamped, GameInterface):
         :param room: Room
         :return:
         """
-        self.__setup_game_defintion(game_definition_slug)
+        self.__setup_game_definition(game_definition_slug)
         self.__setup_state_machines()
         self.__setup_from_room(kwargs['room'])
         self.__setup_code()
