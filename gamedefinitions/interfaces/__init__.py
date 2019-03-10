@@ -205,7 +205,7 @@ class GameAbstract(models.Model):
     def get_teams(self) -> models.QuerySet:
         raise NotImplementedError('GameAbstract subclasses must override get_teams()')
 
-    def get_parameter(self, key):
+    def get_parameter(self, **kwargs):
         raise NotImplementedError('GameAbstract subclasses must override get_parameter()')
 
     def add_parameter(self, key, value):

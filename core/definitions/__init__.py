@@ -1,8 +1,11 @@
+from django.db import models
+
 from gamedefinitions.interfaces import (StateMachineAbstract, GameAbstract,
                                         ConditionAbstractBase, ConditionalTransitionAbstract,
                                         ComparisonConditionAbstract,
                                         RuleLibrary)
 from rooms.models import Player, Team
+from core.models import Word
 
 
 class ClusterBuster(RuleLibrary):
@@ -84,7 +87,24 @@ class ClusterBuster(RuleLibrary):
 
     @staticmethod
     def draw_words(game: GameAbstract, state_machine: StateMachineAbstract):
-        pass
+        words_per_team = 4
+        teams_set = game.get_teams()
+        team_count = teams_set.count()
+        total_words = words_per_team * team_count
+
+        random_word_set = Word.objects.order_by('?')
+        random_words = random_word_set.all()[:total_words]
+
+        parameter = game.get_parameter(key="word_cards_drawn")
+        if not bool(parameter.value):
+            parameter.value.set(False)
+            for team_i, team in enumerate(teams_set.all()):
+                start_word_i = words_per_team * team_i
+                end_word_i = start_word_i + words_per_team
+                for word_i, random_word in enumerate(random_words[start_word_i:end_word_i]):
+                    word_parameter = game.get_parameter(key="secret_word", counter=word_i+1, team=team)
+                    word_parameter.value.set(str(random_word))
+            parameter.value.set(True)
 
     @staticmethod
     def method_map(rule):
@@ -94,5 +114,6 @@ class ClusterBuster(RuleLibrary):
             'lose_tokens': ClusterBuster.lose_tokens,
             'win_condition': ClusterBuster.win_condition,
             'lose_condition': ClusterBuster.lose_condition,
+            'draw_words': ClusterBuster.draw_words,
 
         }[rule]
