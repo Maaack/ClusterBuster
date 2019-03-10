@@ -1,8 +1,7 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from clusterbuster.mixins import TimeStamped
-from core.basics.utils import CodeGenerator
+from clusterbuster.mixins import TimeStamped, CodeGenerator
 
 from rooms.models import Player, Team, Room
 from gamedefinitions.models import State, GameDefinition

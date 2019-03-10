@@ -1,6 +1,9 @@
 from django.conf import settings
 from enum import Enum
 
+import random
+import string
+
 
 class ChoiceEnum(Enum):
     @classmethod
@@ -21,4 +24,16 @@ def get_user_model_name():
     """
     return getattr(settings, "AUTH_USER_MODEL", "auth.User")
 
+
+class CodeGenerator:
+    ROOM_CODE_LENGTH = 4
+    GAME_CODE_LENGTH = 6
+
+    @staticmethod
+    def room_code(length=ROOM_CODE_LENGTH):
+        return ''.join(random.choice(string.ascii_uppercase) for _ in range(length))
+
+    @staticmethod
+    def game_code(length=GAME_CODE_LENGTH):
+        return ''.join(random.choice(string.ascii_uppercase) for _ in range(length))
 

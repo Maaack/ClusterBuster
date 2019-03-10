@@ -3,8 +3,7 @@ from typing import Optional
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from clusterbuster.mixins import TimeStamped
-from core.basics.utils import CodeGenerator
+from clusterbuster.mixins import TimeStamped, CodeGenerator
 
 from .mixins import SessionOptional
 from .managers import ActiveRoomManager

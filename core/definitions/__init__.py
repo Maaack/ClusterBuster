@@ -2,7 +2,6 @@ from gamedefinitions.interfaces import (StateMachineAbstract, GameAbstract,
                                         ConditionAbstractBase, ConditionalTransitionAbstract,
                                         ComparisonConditionAbstract,
                                         RuleLibrary)
-from gamedefinitions.models import State
 from rooms.models import Player, Team
 
 

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rooms',
     'gamedefinitions',
     'games',
+    'core',
 ]
 
 MIDDLEWARE = [
