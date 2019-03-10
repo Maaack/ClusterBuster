@@ -212,8 +212,8 @@ class ParameterKey(TimeStamped):
 
 class ParameterValue(TimeStamped):
     boolean = models.NullBooleanField(_("Boolean"), default=None)
-    integer = models.IntegerField(_("Integer"), null=True, default=None)
-    float = models.FloatField(_("Float"), null=True, default=None)
+    integer = models.IntegerField(_("Integer"), blank=True, null=True, default=None)
+    float = models.FloatField(_("Float"), blank=True, null=True, default=None)
     player = models.ForeignKey(Player, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
     team = models.ForeignKey(Team, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
 
