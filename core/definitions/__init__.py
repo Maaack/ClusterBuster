@@ -9,16 +9,19 @@ class ClusterBuster(RuleLibrary):
     @staticmethod
     def evaluate(game: GameAbstract):
         for state_machine in game.get_state_machines().all():  # type: StateMachineAbstract
+            print("state_machine %s()" % (state_machine.current_state.label,))
             prefix = "cluster_buster_"
             prefix_length = len(prefix)
             current_rules = state_machine.get_rules()
 
             for current_rule in current_rules.all():
                 current_rule_slug = current_rule.slug
+                print("evaluating rule %s()" % (current_rule_slug,))
                 if current_rule_slug.startswith(prefix):
                     current_rule_slug = current_rule_slug[prefix_length:]
                 try:
                     current_method = ClusterBuster.method_map(current_rule_slug)
+                    print("calling %s()" % (current_rule_slug,))
                     current_method(game, state_machine)
                 except KeyError:
                     print("%s didn't exist" % (current_rule_slug,))
@@ -80,7 +83,7 @@ class ClusterBuster(RuleLibrary):
             )
 
     @staticmethod
-    def draw_cards(game: GameAbstract, state_machine: StateMachineAbstract):
+    def draw_words(game: GameAbstract, state_machine: StateMachineAbstract):
         pass
 
     @staticmethod

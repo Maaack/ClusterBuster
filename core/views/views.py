@@ -27,7 +27,7 @@ class UpdateGame(generic.RedirectView, generic.detail.SingleObjectMixin):
 
     def get_redirect_url(self, *args, **kwargs):
         room = get_object_or_404(Room, code=kwargs['slug'])
-        game = Game.objects.filter(room=room).last()
+        game = Game.objects.filter(room=room).first()
         ClusterBuster.evaluate(game)
 
         return super().get_redirect_url(*args, **kwargs)
