@@ -9,6 +9,8 @@ from core.models import Word
 
 
 class ClusterBuster(RuleLibrary):
+    SECRET_WORDS_PER_TEAM = 4
+
     @staticmethod
     def evaluate(game: GameAbstract):
         for state_machine in game.get_state_machines().all():  # type: StateMachineAbstract
@@ -86,11 +88,20 @@ class ClusterBuster(RuleLibrary):
             )
 
     @staticmethod
+    def secret_words_drawn(game: GameAbstract, state_machine: StateMachineAbstract):
+        conditional_transition = state_machine.add_conditional_transition('secret_words_drawn', 'rounds_stage')
+        conditional_transition.set_to_and_op()
+        for team in game.get_teams().all():
+            for i in range(ClusterBuster.SECRET_WORDS_PER_TEAM):
+                conditional_transition.add_has_value_condition(
+                    {'key': "secret_word", 'counter': i+1, 'team': team},
+                )
+
+    @staticmethod
     def draw_words(game: GameAbstract, state_machine: StateMachineAbstract):
-        words_per_team = 4
         teams_set = game.get_teams()
         team_count = teams_set.count()
-        total_words = words_per_team * team_count
+        total_words = ClusterBuster.SECRET_WORDS_PER_TEAM * team_count
 
         random_word_set = Word.objects.order_by('?')
         random_words = random_word_set.all()[:total_words]
@@ -99,8 +110,8 @@ class ClusterBuster(RuleLibrary):
         if not bool(parameter.value):
             parameter.value.set(False)
             for team_i, team in enumerate(teams_set.all()):
-                start_word_i = words_per_team * team_i
-                end_word_i = start_word_i + words_per_team
+                start_word_i = ClusterBuster.SECRET_WORDS_PER_TEAM * team_i
+                end_word_i = start_word_i + ClusterBuster.SECRET_WORDS_PER_TEAM
                 for word_i, random_word in enumerate(random_words[start_word_i:end_word_i]):
                     word_parameter = game.get_parameter(key="secret_word", counter=word_i+1, team=team)
                     word_parameter.value.set(str(random_word))
@@ -115,5 +126,5 @@ class ClusterBuster(RuleLibrary):
             'win_condition': ClusterBuster.win_condition,
             'lose_condition': ClusterBuster.lose_condition,
             'draw_words': ClusterBuster.draw_words,
-
+            'secret_words_drawn': ClusterBuster.secret_words_drawn,
         }[rule]

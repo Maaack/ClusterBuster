@@ -368,14 +368,16 @@ class ConditionalTransition(ConditionalTransitionAbstract, TimeStamped):
 
     def add_has_value_condition(self, key_dict) -> ConditionAbstract:
         parameter = self.state_machine.get_game_parameter(**key_dict)
-        condition, created = self.conditions.get_or_create(condition_type=ConditionAbstract.HAS_VALUE,
-                                                           parameter_1=parameter, )
+        condition, created = self.conditions.get_or_create(game=self.state_machine.game,
+                                                           condition_type=ConditionAbstract.HAS_VALUE,
+                                                           parameter_1=parameter)
         self.save()
         return condition
 
     def add_boolean_condition(self, key_dict) -> ConditionAbstract:
         parameter = self.state_machine.get_game_parameter(**key_dict)
-        condition, created = self.conditions.get_or_create(condition_type=ConditionAbstract.BOOLEAN,
+        condition, created = self.conditions.get_or_create(game=self.state_machine.game,
+                                                           condition_type=ConditionAbstract.BOOLEAN,
                                                            parameter_1=parameter)
         self.save()
         return condition
@@ -383,7 +385,8 @@ class ConditionalTransition(ConditionalTransitionAbstract, TimeStamped):
     def add_comparison_condition(self, key_dict_1, key_dict_2, comparison_type) -> ConditionAbstract:
         parameter_1 = self.state_machine.get_game_parameter(**key_dict_1)
         parameter_2 = self.state_machine.get_game_parameter(**key_dict_2)
-        condition, created = self.conditions.get_or_create(game=self.state_machine.game, condition_type=ConditionAbstract.COMPARISON,
+        condition, created = self.conditions.get_or_create(game=self.state_machine.game,
+                                                           condition_type=ConditionAbstract.COMPARISON,
                                                            parameter_1=parameter_1,
                                                            parameter_2=parameter_2, comparison_type=comparison_type)
         self.save()
