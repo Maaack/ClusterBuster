@@ -214,6 +214,7 @@ class ParameterValue(TimeStamped):
     boolean = models.NullBooleanField(_("Boolean"), default=None)
     integer = models.IntegerField(_("Integer"), blank=True, null=True, default=None)
     float = models.FloatField(_("Float"), blank=True, null=True, default=None)
+    string = models.CharField(_("String"), max_length=255, blank=True, null=True, default=None)
     player = models.ForeignKey(Player, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
     team = models.ForeignKey(Team, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
 
@@ -232,6 +233,8 @@ class ParameterValue(TimeStamped):
             return self.integer
         elif self.float is not None:
             return self.float
+        elif self.string is not None:
+            return self.string
         elif self.player is not None:
             return self.player
         elif self.team is not None:
@@ -244,6 +247,8 @@ class ParameterValue(TimeStamped):
             self.integer=value
         elif type(value) is float:
             self.float = value
+        elif type(value) is str:
+            self.string = value
         elif type(value) is bool:
             self.boolean = value
         elif type(value) is Player:
