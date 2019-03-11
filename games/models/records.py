@@ -242,17 +242,17 @@ class ParameterValue(TimeStamped):
             return None
 
     def set(self, value):
-        if type(value) is int:
+        if isinstance(value, int):
             self.integer=value
-        elif type(value) is float:
+        elif isinstance(value, float):
             self.float = value
-        elif type(value) is str:
+        elif isinstance(value, str):
             self.string = value
-        elif type(value) is bool:
+        elif isinstance(value, bool):
             self.boolean = value
-        elif type(value) is Player:
+        elif isinstance(value, Player):
             self.player = value
-        elif type(value) is Team:
+        elif isinstance(value, Team):
             self.team = value
         else:
             raise ValueError('value must be a boolean, integer, or float')

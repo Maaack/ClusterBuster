@@ -27,7 +27,7 @@ class AssignPlayerView(generic.edit.FormMixin, View):
         abstract = True
 
     def assign_player(self, player):
-        if type(player) is Player:
+        if isinstance(player, Player):
             self.request.session['player_id'] = player.pk
             self.request.session['player_name'] = player.name
 
@@ -37,7 +37,7 @@ class AssignPlayerView(generic.edit.FormMixin, View):
         return super(AssignPlayerView, self).form_valid(form)
 
     def get_success_url(self):
-        if type(self.object) is Player:
+        if isinstance(self.object, Player):
             player = self.object
             self.assign_player(player)
             return reverse('player_detail', kwargs={'pk': self.object.pk})
