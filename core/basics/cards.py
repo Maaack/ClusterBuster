@@ -12,7 +12,7 @@ class Card(object):
         self.all.append(self)
 
     def __eq__(self, other):
-        if type(other) is not Card:
+        if not isinstance(other, Card):
             return False
         return self.value == other.value
 

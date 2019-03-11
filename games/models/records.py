@@ -277,32 +277,32 @@ class Parameter(TimeStamped):
         return bool(self.value)
 
     def __eq__(self, other):
-        if type(other) is not Parameter:
+        if not isinstance(other, Parameter):
             return False
         return self.value.get() == other.value.get()
 
     def __ne__(self, other):
-        if type(other) is not Parameter:
+        if not isinstance(other, Parameter):
             return False
         return self.value.get() != other.value.get()
 
     def __gt__(self, other):
-        if type(other) is not Parameter:
+        if not isinstance(other, Parameter):
             return False
         return self.value.get() > other.value.get()
 
     def __lt__(self, other):
-        if type(other) is not Parameter:
+        if not isinstance(other, Parameter):
             return False
         return self.value.get() < other.value.get()
 
     def __ge__(self, other):
-        if type(other) is not Parameter:
+        if not isinstance(other, Parameter):
             return False
         return self.value.get() >= other.value.get()
 
     def __le__(self, other):
-        if type(other) is not Parameter:
+        if not isinstance(other, Parameter):
             return False
         return self.value.get() <= other.value.get()
 
