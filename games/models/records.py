@@ -1,13 +1,14 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 from clusterbuster.mixins import TimeStamped, CodeGenerator
 
 from rooms.models import Player, Team, Room
 from gamedefinitions.models import State, GameDefinition
 from gamedefinitions.interfaces import (
-    StateMachineAbstract, GameAbstract, ConditionAbstract,
-    ComparisonConditionAbstract,
+    StateMachineAbstract, GameAbstract, ConditionAbstract, ParameterAbstract,
     ConditionalTransitionAbstract
 )
 
@@ -47,6 +48,34 @@ class Game(GameAbstract, TimeStamped):
         self.room = room
         self.players.set(room.players.all())
         self.teams.set(room.teams.all())
+
+    @staticmethod
+    def __get_value_param_type(raw_value):
+        if isinstance(
+                raw_value, int) or isinstance(
+                raw_value, float) or isinstance(
+                raw_value, str) or isinstance(
+                raw_value, bool):
+            return MixedValue
+        else:
+            return type(raw_value)
+
+    @staticmethod
+    def __get_key_from_args(*args):
+        key_string = "_".join(str(i).lower() for i in args)
+        print("HOW IS THIS!?!??!?!")
+        print(key_string)
+        return key_string
+
+    @staticmethod
+    def __get_model_value(raw_value):
+        value_type = Game.__get_value_param_type(raw_value)
+        if value_type == MixedValue:
+            value = value_type()
+            value.set(raw_value)
+            return value
+        elif isinstance(raw_value, models.Model):
+            return raw_value
 
     def save(self, *args, **kwargs):
         super(Game, self).save(*args, **kwargs)
@@ -100,30 +129,23 @@ class Game(GameAbstract, TimeStamped):
     def get_teams(self) -> models.QuerySet:
         return self.teams
 
-    def get_parameter(self, **kwargs):
-        try:
-            parameter_key = self.parameter_keys.filter(game=self, **kwargs).get()
-        except ParameterKey.DoesNotExist:
-            parameter_key = self.parameter_keys.create(**kwargs)
-        try:
-            parameter = self.parameters.filter(key=parameter_key).get()
-        except Parameter.DoesNotExist:
-            parameter = Parameter(game=self, key=parameter_key)
-            parameter.save()
+    def get_parameter(self, key_args):
+        if isinstance(key_args, str):
+            key_args = (key_args,)
+        key_string = Game.__get_key_from_args(*key_args)
+        parameter, create = Parameter.objects.get_or_create(game=self, key=key_string)
         return parameter
 
-    def add_parameter(self, key_dict, value):
-        """
-        Adds a Parameter to the Game object.
-        :param key_dict:
-        :param value:
-        :return:
-        """
-        parameter = self.get_parameter(**key_dict)
-        parameter.set_value(value)
-        if self.parameters.filter(id=parameter.id).first() is None:
-            self.parameters.add(parameter)
-            self.save()
+    def get_parameter_value(self, key_args):
+        parameter = self.get_parameter(key_args)
+        if isinstance(parameter.value, MixedValue):
+            parameter.value.get()
+        return parameter.value
+
+    def set_parameter_value(self, key_args, value):
+        parameter = self.get_parameter(key_args)
+        parameter.set_value(Game.__get_model_value(value))
+        parameter.save()
 
     def add_state_machine(self, state_slug: str):
         """
@@ -161,8 +183,8 @@ class StateMachine(StateMachineAbstract, TimeStamped):
                 to_state = conditional_transition.to_state
                 self.transit(to_state, str(conditional_transition))
 
-    def get_game_parameter(self, **kwargs):
-        return self.game.get_parameter(**kwargs)
+    def get_game_parameter(self, key_args):
+        return self.game.get_parameter(key_args)
 
     def get_condition_transition(self):
         pass
@@ -186,146 +208,105 @@ class Transition(TimeStamped):
     to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_in")
 
 
-class ParameterKey(TimeStamped):
-    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="parameter_keys")
-    key = models.SlugField(_("Key"), max_length=128, blank=True, null=True, db_index=True)
-    counter = models.IntegerField(_("Counter"), blank=True, null=True, db_index=True)
-    player = models.ForeignKey(Player, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
-    team = models.ForeignKey(Team, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
-
-    def __str__(self):
-        return str(self.get_list())
-
-    def get_list(self):
-        result = list()
-        if self.key is not None:
-            result.append(self.key)
-        if self.counter is not None:
-            result.append(self.counter)
-        if self.player is not None:
-            result.append(self.player)
-        if self.team is not None:
-            result.append(self.team)
-        return result
-
-
-class ParameterValue(TimeStamped):
-    boolean = models.NullBooleanField(_("Boolean"), default=None)
+class MixedValue(TimeStamped):
     integer = models.IntegerField(_("Integer"), blank=True, null=True, default=None)
-    float = models.FloatField(_("Float"), blank=True, null=True, default=None)
     string = models.CharField(_("String"), max_length=255, blank=True, null=True, default=None)
-    player = models.ForeignKey(Player, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
-    team = models.ForeignKey(Team, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
+    boolean = models.NullBooleanField(_("Boolean"), default=None)
+    float = models.FloatField(_("Float"), blank=True, null=True, default=None)
 
     def __str__(self):
-        return str(self.parameter) + ": " + str(self.get())
+        return str(self.get())
 
     def __bool__(self):
         if self.boolean:
             return self.boolean
         return False
 
+    def __eq__(self, other):
+        if not isinstance(other, MixedValue):
+            return False
+        return self.get_number() == other.get_number()
+
+    def __ne__(self, other):
+        if not isinstance(other, MixedValue):
+            return False
+        return self.get_number() != other.get_number()
+
+    def __gt__(self, other):
+        if not isinstance(other, MixedValue):
+            return False
+        return self.get_number() > other.get_number()
+
+    def __lt__(self, other):
+        if not isinstance(other, MixedValue):
+            return False
+        return self.get_number() < other.get_number()
+
+    def __ge__(self, other):
+        if not isinstance(other, MixedValue):
+            return False
+        return self.get_number() >= other.get_number()
+
+    def __le__(self, other):
+        if not isinstance(other, MixedValue):
+            return False
+        return self.get_number() <= other.get_number()
+
     def get(self):
         if self.boolean is not None:
             return self.boolean
-        elif self.integer is not None:
-            return self.integer
         elif self.float is not None:
             return self.float
+        elif self.integer is not None:
+            return self.integer
         elif self.string is not None:
             return self.string
-        elif self.player is not None:
-            return self.player
-        elif self.team is not None:
-            return self.team
         else:
             return None
 
+    def get_number(self):
+        if self.integer is not None:
+            return self.integer
+        elif self.float is not None:
+            return self.float
+        return None
+
     def set(self, value):
-        if isinstance(value, int):
-            self.integer=value
-        elif isinstance(value, float):
+        if isinstance(value, float):
             self.float = value
-        elif isinstance(value, str):
-            self.string = value
         elif isinstance(value, bool):
             self.boolean = value
-        elif isinstance(value, Player):
-            self.player = value
-        elif isinstance(value, Team):
-            self.team = value
+        elif isinstance(value, int):
+            self.integer = value
+        elif isinstance(value, str):
+            self.string = value
         else:
-            raise ValueError('value must be a boolean, integer, or float')
+            raise ValueError('value must be a boolean, integer, float, or string')
         self.save()
 
 
-class Parameter(TimeStamped):
+class Parameter(TimeStamped, ParameterAbstract):
     """
     Parameters store all data about a specific game and the state.
     """
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="parameters")
-    key = models.OneToOneField(ParameterKey, on_delete=models.CASCADE, related_name="parameter")
-    value = models.OneToOneField(ParameterValue, on_delete=models.CASCADE, related_name="parameter")
+    key = models.SlugField(_("Key"), max_length=255, db_index=True)
+    value = GenericForeignKey('content_type', 'object_id')
+    object_id = models.PositiveIntegerField(_('Object ID'), blank=True, null=True,)
+    content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, blank=True, null=True)
 
     class Meta:
         unique_together = ('game', 'key')
 
-    def __str__(self):
-        return str(self.key)
-
-    def __bool__(self):
-        return bool(self.value)
-
-    def __eq__(self, other):
-        if not isinstance(other, Parameter):
-            return False
-        return self.value.get() == other.value.get()
-
-    def __ne__(self, other):
-        if not isinstance(other, Parameter):
-            return False
-        return self.value.get() != other.value.get()
-
-    def __gt__(self, other):
-        if not isinstance(other, Parameter):
-            return False
-        return self.value.get() > other.value.get()
-
-    def __lt__(self, other):
-        if not isinstance(other, Parameter):
-            return False
-        return self.value.get() < other.value.get()
-
-    def __ge__(self, other):
-        if not isinstance(other, Parameter):
-            return False
-        return self.value.get() >= other.value.get()
-
-    def __le__(self, other):
-        if not isinstance(other, Parameter):
-            return False
-        return self.value.get() <= other.value.get()
-
-    def save(self, *args, **kwargs):
-        try:
-            self.value.get()
-        except ParameterValue.DoesNotExist:
-            self.value = ParameterValue.objects.create(parameter=self)
-        super(Parameter, self).save(*args, **kwargs)
+    def get_key(self):
+        return self.key
 
     def get_value(self):
-        self.value.get()
+        return self.value
 
-    def set_value(self, value_variable):
-        try:
-            value = self.value
-        except ParameterValue.DoesNotExist:
-            value = ParameterValue()
-            value.set(value_variable)
-            value.save()
-            self.value = value
-            self.save()
-        value.set(value_variable)
+    def set_value(self, value):
+        self.value = value
+        self.save()
 
 
 class Condition(ConditionAbstract, TimeStamped):
@@ -341,9 +322,9 @@ class Condition(ConditionAbstract, TimeStamped):
 
     def passes(self):
         if self.is_has_value():
-            return self.parameter_1.value.get() is not None
+            return self.parameter_1.get_value() is not None
         elif self.is_boolean():
-            return bool(self.parameter_1.value)
+            return bool(self.parameter_1.get_value())
         elif self.is_comparison():
             return self.compare_2_numbers(self.parameter_1, self.parameter_2)
 
@@ -366,25 +347,25 @@ class ConditionalTransition(ConditionalTransitionAbstract, TimeStamped):
             return False
         return True
 
-    def add_has_value_condition(self, key_dict) -> ConditionAbstract:
-        parameter = self.state_machine.get_game_parameter(**key_dict)
+    def add_has_value_condition(self, key_args) -> ConditionAbstract:
+        parameter = self.state_machine.get_game_parameter(key_args)
         condition, created = self.conditions.get_or_create(game=self.state_machine.game,
                                                            condition_type=ConditionAbstract.HAS_VALUE,
                                                            parameter_1=parameter)
         self.save()
         return condition
 
-    def add_boolean_condition(self, key_dict) -> ConditionAbstract:
-        parameter = self.state_machine.get_game_parameter(**key_dict)
+    def add_boolean_condition(self, key_args) -> ConditionAbstract:
+        parameter = self.state_machine.get_game_parameter(key_args)
         condition, created = self.conditions.get_or_create(game=self.state_machine.game,
                                                            condition_type=ConditionAbstract.BOOLEAN,
                                                            parameter_1=parameter)
         self.save()
         return condition
 
-    def add_comparison_condition(self, key_dict_1, key_dict_2, comparison_type) -> ConditionAbstract:
-        parameter_1 = self.state_machine.get_game_parameter(**key_dict_1)
-        parameter_2 = self.state_machine.get_game_parameter(**key_dict_2)
+    def add_comparison_condition(self, key_args_1, key_args_2, comparison_type) -> ConditionAbstract:
+        parameter_1 = self.state_machine.get_game_parameter(key_args_1)
+        parameter_2 = self.state_machine.get_game_parameter(key_args_2)
         condition, created = self.conditions.get_or_create(game=self.state_machine.game,
                                                            condition_type=ConditionAbstract.COMPARISON,
                                                            parameter_1=parameter_1,
