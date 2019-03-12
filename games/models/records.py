@@ -62,10 +62,7 @@ class Game(GameAbstract, TimeStamped):
 
     @staticmethod
     def __get_key_from_args(*args):
-        key_string = "_".join(str(i).lower() for i in args)
-        print("HOW IS THIS!?!??!?!")
-        print(key_string)
-        return key_string
+        return "_".join(str(i).lower() for i in args)
 
     @staticmethod
     def __get_model_value(raw_value):
@@ -139,7 +136,7 @@ class Game(GameAbstract, TimeStamped):
     def get_parameter_value(self, key_args):
         parameter = self.get_parameter(key_args)
         if isinstance(parameter.value, MixedValue):
-            parameter.value.get()
+            return parameter.value.get()
         return parameter.value
 
     def set_parameter_value(self, key_args, value):
@@ -317,8 +314,8 @@ class Condition(ConditionAbstract, TimeStamped):
     def __str__(self):
         if self.is_comparison():
             comparison_str = self.get_readable_comparison()
-            return str(self.parameter_1) + comparison_str + str(self.parameter_2)
-        return str(self.parameter_1.key)
+            return str(self.parameter_1) + ' ' + comparison_str + ' ' + str(self.parameter_2)
+        return str(self.parameter_1)
 
     def passes(self):
         if self.is_has_value():

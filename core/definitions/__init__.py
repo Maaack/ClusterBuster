@@ -39,20 +39,20 @@ class ClusterBuster(RuleLibrary):
         :param state_machine:
         :return:
         """
-        game.set_parameter_value(('winning_tokens_required_to_win',), 2)
-        game.set_parameter_value(('losing_tokens_required_to_lose',), 2)
-        game.set_parameter_value(('teams_start_tokens',), 0)
+        game.set_parameter_value('winning_tokens_required_to_win', 2)
+        game.set_parameter_value('losing_tokens_required_to_lose', 2)
+        game.set_parameter_value('teams_start_tokens', 0)
         game.add_state_machine('draw_words_stage')
         conditional_transition = state_machine.add_conditional_transition('game_is_ready', 'game_play')
         conditional_transition.set_to_and_op()
         for team in game.get_teams().all():  # type: Team
             conditional_transition.add_comparison_condition(
-                ('teams_start_tokens',),
+                'teams_start_tokens',
                 ('team_losing_tokens', team),
                 ComparisonConditionAbstract.EQUAL
             )
             conditional_transition.add_comparison_condition(
-                ('teams_start_tokens',),
+                'teams_start_tokens',
                 ('team_winning_tokens', team),
                 ComparisonConditionAbstract.EQUAL
             )
@@ -73,7 +73,7 @@ class ClusterBuster(RuleLibrary):
         for team in game.get_teams().all():  # type: Team
             conditional_transition.add_comparison_condition(
                 ('team_winning_tokens', team),
-                ('winning_tokens_required_to_win',),
+                'winning_tokens_required_to_win',
                 ComparisonConditionAbstract.GREATER_THAN_OR_EQUAL
             )
 
@@ -83,7 +83,7 @@ class ClusterBuster(RuleLibrary):
         for team in game.get_teams().all():
             conditional_transition.add_comparison_condition(
                 ('team_losing_tokens', team),
-                ('losing_tokens_required_to_lose',),
+                'losing_tokens_required_to_lose',
                 ComparisonConditionAbstract.GREATER_THAN_OR_EQUAL
             )
 
@@ -115,6 +115,23 @@ class ClusterBuster(RuleLibrary):
             game.set_parameter_value('word_cards_drawn', True)
 
     @staticmethod
+    def rounds_stage(game: GameAbstract, state_machine: StateMachineAbstract):
+        game.add_state_machine('first_round')
+        game.add_state_machine('select_leader_stage')
+        game.set_parameter_value('current_round_count', 1)
+        game.set_parameter_value('last_round_count', 8)
+
+    def assign_team_leader(game: GameAbstract, state_machine: StateMachineAbstract):
+        current_round = game.get_parameter_value('current_round_count')
+        teams_set = game.get_teams()
+        for team_i, team in enumerate(teams_set.all()):
+            player_count = team.players.count()
+            offset = current_round % player_count
+            round_leader = team.players.all()[offset]
+            game.set_parameter_value(('round', current_round, 'team', team, 'leader'), round_leader)
+
+
+    @staticmethod
     def method_map(rule):
         return {
             'start_game': ClusterBuster.start_game,
@@ -124,4 +141,6 @@ class ClusterBuster(RuleLibrary):
             'lose_condition': ClusterBuster.lose_condition,
             'draw_words': ClusterBuster.draw_words,
             'secret_words_drawn': ClusterBuster.secret_words_drawn,
+            'rounds_stage': ClusterBuster.rounds_stage,
+            'assign_team_leader': ClusterBuster.assign_team_leader,
         }[rule]
