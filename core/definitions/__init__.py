@@ -1,11 +1,9 @@
-from django.db import models
-
 from gamedefinitions.interfaces import (StateMachineAbstract, GameAbstract,
-                                        ConditionAbstractBase, ConditionalTransitionAbstract,
                                         ComparisonConditionAbstract,
                                         RuleLibrary)
 from rooms.models import Player, Team
 from core.models import Word
+from core.basics import PatternDeckBuilder
 
 
 class ClusterBuster(RuleLibrary):
@@ -14,19 +12,17 @@ class ClusterBuster(RuleLibrary):
     @staticmethod
     def evaluate(game: GameAbstract):
         for state_machine in game.get_state_machines().all():  # type: StateMachineAbstract
-            print("state_machine %s()" % (state_machine.current_state.label,))
             prefix = "cluster_buster_"
             prefix_length = len(prefix)
             current_rules = state_machine.get_rules()
 
             for current_rule in current_rules.all():
                 current_rule_slug = current_rule.slug
-                print("evaluating rule %s()" % (current_rule_slug,))
                 if current_rule_slug.startswith(prefix):
                     current_rule_slug = current_rule_slug[prefix_length:]
                 try:
+                    print("%s rule lookup" % (current_rule_slug,))
                     current_method = ClusterBuster.method_map(current_rule_slug)
-                    print("calling %s()" % (current_rule_slug,))
                     current_method(game, state_machine)
                 except KeyError:
                     print("%s didn't exist" % (current_rule_slug,))
@@ -123,24 +119,35 @@ class ClusterBuster(RuleLibrary):
 
     @staticmethod
     def assign_team_leader(game: GameAbstract, state_machine: StateMachineAbstract):
-        current_round = game.get_parameter_value('current_round_count')
-        teams_set = game.get_teams()
-        for team_i, team in enumerate(teams_set.all()):
+        round_number = game.get_parameter_value('current_round_count')
+        for team in game.get_teams().all():
             player_count = team.players.count()
-            offset = current_round % player_count
+            offset = round_number % player_count
             round_leader = team.players.all()[offset]
-            game.set_parameter_value(('round', current_round, 'team', team, 'leader'), round_leader)
+            game.set_parameter_value(('round', round_number, 'team', team, 'leader'), round_leader)
 
     @staticmethod
     def team_leaders_assigned(game: GameAbstract, state_machine: StateMachineAbstract):
+        round_number = game.get_parameter_value('current_round_count')
         conditional_transition = state_machine.add_conditional_transition('team_leader_assigned', 'draw_code_card_stage')
-        current_round = game.get_parameter_value('current_round_count')
-        teams_set = game.get_teams()
         conditional_transition.set_to_and_op()
-        for team in teams_set.all():
+        for team in game.get_teams().all():
             conditional_transition.add_has_value_condition(
-                ('round', current_round, 'team', team, 'leader'),
+                ('round', round_number, 'team', team, 'leader'),
             )
+
+    @staticmethod
+    def leaders_draw_code_numbers(game: GameAbstract, state_machine: StateMachineAbstract):
+        round_number = game.get_parameter_value('current_round_count')
+        for team in game.get_teams().all():
+            deck = PatternDeckBuilder.build_deck()
+            # drawn_cards = self.get_drawn_cards()
+            # deck.reduce(drawn_cards)
+            deck.shuffle()
+            card = deck.draw()
+            print(card, card.value)
+            for card_i, value in enumerate(card.value):
+                game.set_parameter_value(('round', round_number, 'team', team, 'code', card_i+1), value)
 
     @staticmethod
     def method_map(rule):
@@ -155,4 +162,5 @@ class ClusterBuster(RuleLibrary):
             'rounds_stage': ClusterBuster.rounds_stage,
             'assign_team_leader': ClusterBuster.assign_team_leader,
             'team_leaders_assigned': ClusterBuster.team_leaders_assigned,
+            'leaders_draw_code_numbers': ClusterBuster.leaders_draw_code_numbers,
         }[rule]
