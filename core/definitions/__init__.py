@@ -94,7 +94,7 @@ class ClusterBuster(RuleLibrary):
         for team in game.get_teams().all():
             for i in range(ClusterBuster.SECRET_WORDS_PER_TEAM):
                 conditional_transition.add_has_value_condition(
-                    ('secret_word', team, i+1),
+                    ('team', team, 'secret_word', i+1),
                 )
 
     @staticmethod
@@ -111,7 +111,7 @@ class ClusterBuster(RuleLibrary):
                 start_word_i = ClusterBuster.SECRET_WORDS_PER_TEAM * team_i
                 end_word_i = start_word_i + ClusterBuster.SECRET_WORDS_PER_TEAM
                 for word_i, random_word in enumerate(random_words[start_word_i:end_word_i]):
-                    game.set_parameter_value(('secret_word', team, word_i+1), str(random_word))
+                    game.set_parameter_value(('team', team, 'secret_word', word_i+1), str(random_word))
             game.set_parameter_value('word_cards_drawn', True)
 
     @staticmethod
@@ -129,7 +129,6 @@ class ClusterBuster(RuleLibrary):
             offset = current_round % player_count
             round_leader = team.players.all()[offset]
             game.set_parameter_value(('round', current_round, 'team', team, 'leader'), round_leader)
-
 
     @staticmethod
     def method_map(rule):
