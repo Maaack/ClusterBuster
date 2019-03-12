@@ -8,6 +8,7 @@ from core.basics import PatternDeckBuilder
 
 class ClusterBuster(RuleLibrary):
     SECRET_WORDS_PER_TEAM = 4
+    CODE_CARD_SLOTS = 3
 
     @staticmethod
     def evaluate(game: GameAbstract):
@@ -150,6 +151,18 @@ class ClusterBuster(RuleLibrary):
                 game.set_parameter_value(('round', round_number, 'team', team, 'code', card_i+1), value)
 
     @staticmethod
+    def code_numbers_drawn(game: GameAbstract, state_machine: StateMachineAbstract):
+        round_number = game.get_parameter_value('current_round_count')
+        conditional_transition = state_machine.add_conditional_transition('code_numbers_drawn',
+                                                                          'leaders_make_hints_stage')
+        conditional_transition.set_to_and_op()
+        for team in game.get_teams().all():
+            for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+                conditional_transition.add_has_value_condition(
+                    ('round', round_number, 'team', team, 'code', card_i+1),
+                )
+
+    @staticmethod
     def method_map(rule):
         return {
             'start_game': ClusterBuster.start_game,
@@ -163,4 +176,5 @@ class ClusterBuster(RuleLibrary):
             'assign_team_leader': ClusterBuster.assign_team_leader,
             'team_leaders_assigned': ClusterBuster.team_leaders_assigned,
             'leaders_draw_code_numbers': ClusterBuster.leaders_draw_code_numbers,
+            'code_numbers_drawn': ClusterBuster.code_numbers_drawn,
         }[rule]
