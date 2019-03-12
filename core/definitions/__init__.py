@@ -121,6 +121,7 @@ class ClusterBuster(RuleLibrary):
         game.set_parameter_value('current_round_count', 1)
         game.set_parameter_value('last_round_count', 8)
 
+    @staticmethod
     def assign_team_leader(game: GameAbstract, state_machine: StateMachineAbstract):
         current_round = game.get_parameter_value('current_round_count')
         teams_set = game.get_teams()
@@ -129,6 +130,17 @@ class ClusterBuster(RuleLibrary):
             offset = current_round % player_count
             round_leader = team.players.all()[offset]
             game.set_parameter_value(('round', current_round, 'team', team, 'leader'), round_leader)
+
+    @staticmethod
+    def team_leaders_assigned(game: GameAbstract, state_machine: StateMachineAbstract):
+        conditional_transition = state_machine.add_conditional_transition('team_leader_assigned', 'draw_code_card_stage')
+        current_round = game.get_parameter_value('current_round_count')
+        teams_set = game.get_teams()
+        conditional_transition.set_to_and_op()
+        for team in teams_set.all():
+            conditional_transition.add_has_value_condition(
+                ('round', current_round, 'team', team, 'leader'),
+            )
 
     @staticmethod
     def method_map(rule):
@@ -142,4 +154,5 @@ class ClusterBuster(RuleLibrary):
             'secret_words_drawn': ClusterBuster.secret_words_drawn,
             'rounds_stage': ClusterBuster.rounds_stage,
             'assign_team_leader': ClusterBuster.assign_team_leader,
+            'team_leaders_assigned': ClusterBuster.team_leaders_assigned,
         }[rule]
