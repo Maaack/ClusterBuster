@@ -130,6 +130,16 @@
     }
 },
 {
+    "model": "gamedefinitions.rule",
+    "pk": 14,
+    "fields": {
+        "created": "2019-03-13T01:25:01.969Z",
+        "updated": "2019-03-13T01:25:01.969Z",
+        "slug": "cluster_buster_leaders_made_hints",
+        "description": "The round proceeds to the next stage when both team leaders have submitted their hints."
+    }
+},
+{
     "model": "gamedefinitions.state",
     "pk": 1,
     "fields": {
@@ -264,10 +274,12 @@
     "pk": 11,
     "fields": {
         "created": "2019-03-03T03:12:40.822Z",
-        "updated": "2019-03-03T03:12:40.822Z",
+        "updated": "2019-03-13T01:25:17.119Z",
         "label": "leaders_make_hints_stage",
         "name": "",
-        "rules": []
+        "rules": [
+            14
+        ]
     }
 },
 {

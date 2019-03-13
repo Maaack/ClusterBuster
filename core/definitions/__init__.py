@@ -159,8 +159,21 @@ class ClusterBuster(RuleLibrary):
         for team in game.get_teams().all():
             for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
                 conditional_transition.add_has_value_condition(
-                    ('round', round_number, 'team', team, 'code', card_i+1),
+                    ('round', round_number, 'team', team, 'code', card_i + 1),
                 )
+
+    @staticmethod
+    def leaders_made_hints(game: GameAbstract, state_machine: StateMachineAbstract):
+        round_number = game.get_parameter_value('current_round_count')
+        conditional_transition = state_machine.add_conditional_transition('hints_submitted',
+                                                                          'players_guess_codes_stage')
+        conditional_transition.set_to_and_op()
+        for team in game.get_teams().all():
+            for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+                conditional_transition.add_has_value_condition(
+                    ('round', round_number, 'team', team, 'hint', card_i + 1),
+                )
+
 
     @staticmethod
     def method_map(rule):
@@ -177,4 +190,5 @@ class ClusterBuster(RuleLibrary):
             'team_leaders_assigned': ClusterBuster.team_leaders_assigned,
             'leaders_draw_code_numbers': ClusterBuster.leaders_draw_code_numbers,
             'code_numbers_drawn': ClusterBuster.code_numbers_drawn,
+            'leaders_made_hints': ClusterBuster.leaders_made_hints,
         }[rule]
