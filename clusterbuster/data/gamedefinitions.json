@@ -110,6 +110,26 @@
     }
 },
 {
+    "model": "gamedefinitions.rule",
+    "pk": 12,
+    "fields": {
+        "created": "2019-03-13T00:54:13.998Z",
+        "updated": "2019-03-13T00:54:13.998Z",
+        "slug": "cluster_buster_team_leaders_assigned",
+        "description": "Once team leaders are assigned, they can proceed to draw the SECRET code numbers."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 13,
+    "fields": {
+        "created": "2019-03-13T00:55:57.514Z",
+        "updated": "2019-03-13T00:55:57.514Z",
+        "slug": "cluster_buster_code_numbers_drawn",
+        "description": "Once team leaders have drawn their code numbers, they come up with their hints."
+    }
+},
+{
     "model": "gamedefinitions.state",
     "pk": 1,
     "fields": {
@@ -216,10 +236,11 @@
     "pk": 9,
     "fields": {
         "created": "2019-03-03T02:45:56.784Z",
-        "updated": "2019-03-12T03:27:50.027Z",
+        "updated": "2019-03-13T00:56:27.700Z",
         "label": "select_leader_stage",
         "name": "",
         "rules": [
+            12,
             8
         ]
     }
@@ -229,10 +250,13 @@
     "pk": 10,
     "fields": {
         "created": "2019-03-03T03:12:34.257Z",
-        "updated": "2019-03-03T03:12:34.257Z",
+        "updated": "2019-03-13T00:56:54.219Z",
         "label": "draw_code_card_stage",
         "name": "",
-        "rules": []
+        "rules": [
+            13,
+            9
+        ]
     }
 },
 {
