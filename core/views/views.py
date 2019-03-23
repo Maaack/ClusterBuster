@@ -57,31 +57,13 @@ class LeaderHintsFormView(generic.FormView, CheckPlayerView):
 
     def get_context_data(self, **kwargs):
         data = super(LeaderHintsFormView, self).get_context_data(**kwargs)
-        room = self.room
-        current_player = self.get_current_player()
-        if current_player:
-            player_data = PlayerContext.load(current_player)
-            data.update(player_data)
-            player_room_data = Player2RoomContext.load(current_player, room)
-            data.update(player_room_data)
-        players = room.players.all()
-        players_data = list()
-        for player in players:
-            player_data = PlayerContext.load(player)
-            player_room_data = Player2RoomContext.load(player, room)
-            player_data.update(player_room_data)
-            player_data['is_player'] = player == current_player
-            players_data.append(player_data)
-        data['players'] = players_data
-        teams = room.teams.all()
-        teams_data = list()
-        for team in teams:
-            team_data = TeamContext.load(team)
-            if current_player:
-                player_team_data = Player2TeamContext.load(current_player, team)
-                team_data.update(player_team_data)
-            teams_data.append(team_data)
-        data['teams'] = teams_data
+        team = self.get_current_player_team()
+        round_number = self.game.get_parameter_value('current_round_count')
+        code_numbers = []
+        for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+            code_number = self.game.get_parameter_value(('round', round_number, 'team', team, 'code', card_i + 1))
+            code_numbers.append(code_number)
+        data['code_numbers'] = code_numbers
         return data
 
     def get_success_url(self):

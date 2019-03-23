@@ -3,6 +3,7 @@
 {% block head_title %}Submit hints{% endblock %}
 {% block content %}
     <h1>Submit Your Hints</h1>
+    {{ code_numbers }}
     <form class="hints" method="post">
         {% csrf_token %}
         {{ form.as_p }}
