@@ -4,6 +4,7 @@
 {% block content %}
     <h1>Submit Your Hints</h1>
     {{ code_numbers }}
+    {{ code_words }}
     <form class="hints" method="post">
         {% csrf_token %}
         {{ form.as_p }}
