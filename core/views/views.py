@@ -71,3 +71,30 @@ class LeaderHintsFormView(generic.FormView, CheckPlayerView):
         self.success_url = reverse_lazy('update_game', kwargs={'slug': room.code})
         return super().get_success_url()
 
+    def is_round_team_leader(self):
+        if self.current_player is None:
+            return False
+        team = self.get_current_player_team()
+        if team is None:
+            return False
+        round_number = self.game.get_parameter_value('current_round_count')
+        round_team_leader = self.game.get_parameter_value(('round', round_number, 'team', team, 'leader'))
+        return round_team_leader == self.current_player
+
+    def get_current_player_team(self):
+        teams = self.game.get_teams().all()
+        for team in teams:
+            if team.has_player(self.current_player):
+                return team
+        return None
+
+    def form_valid(self, form):
+        hints = [form.cleaned_data['hint_1'], form.cleaned_data['hint_2'], form.cleaned_data['hint_3']]
+        round_number = self.game.get_parameter_value('current_round_count')
+        team = self.get_current_player_team()
+        for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+            self.game.set_parameter_value(
+                ('round', round_number, 'team', team, 'hint', card_i + 1),
+                hints[card_i]
+            )
+        return super().form_valid(form)
