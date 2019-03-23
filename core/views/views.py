@@ -1,4 +1,4 @@
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.views import generic
 from django.urls import reverse_lazy
 
@@ -53,6 +53,9 @@ class LeaderHintsFormView(generic.FormView, CheckPlayerView):
         self.room = get_object_or_404(Room, code=kwargs['slug'])
         self.game = Game.objects.filter(room=self.room).first()
         self.current_player = self.get_current_player()
+        if not self.is_round_team_leader():
+            return redirect('room_detail', slug=kwargs['slug'])
+        # TODO: Check if is in leader hint stage
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
