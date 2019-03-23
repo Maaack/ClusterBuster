@@ -46,13 +46,17 @@ class LeaderHintsFormView(generic.FormView, CheckPlayerView):
     def __init__(self):
         self.room = None
         self.game = None
-        self.current_player = None
+        self.player = None
+        self.team = None
+        self.round_number = 0
         super().__init__()
 
     def dispatch(self, request, *args, **kwargs):
         self.room = get_object_or_404(Room, code=kwargs['slug'])
         self.game = Game.objects.filter(room=self.room).first()
-        self.current_player = self.get_current_player()
+        self.player = self.get_current_player()
+        self.team = self.get_current_player_team()
+        self.round_number = self.game.get_parameter_value('current_round_count')
         if not self.is_round_team_leader():
             return redirect('room_detail', slug=kwargs['slug'])
         # TODO: Check if is in leader hint stage
@@ -60,11 +64,9 @@ class LeaderHintsFormView(generic.FormView, CheckPlayerView):
 
     def get_context_data(self, **kwargs):
         data = super(LeaderHintsFormView, self).get_context_data(**kwargs)
-        team = self.get_current_player_team()
-        round_number = self.game.get_parameter_value('current_round_count')
         code_numbers = []
         for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
-            code_number = self.game.get_parameter_value(('round', round_number, 'team', team, 'code', card_i + 1))
+            code_number = self.game.get_parameter_value(('round', self.round_number, 'team', self.team, 'code', card_i + 1))
             code_numbers.append(code_number)
         data['code_numbers'] = code_numbers
         return data
@@ -75,19 +77,19 @@ class LeaderHintsFormView(generic.FormView, CheckPlayerView):
         return super().get_success_url()
 
     def is_round_team_leader(self):
-        if self.current_player is None:
+        if self.player is None:
             return False
         team = self.get_current_player_team()
         if team is None:
             return False
         round_number = self.game.get_parameter_value('current_round_count')
         round_team_leader = self.game.get_parameter_value(('round', round_number, 'team', team, 'leader'))
-        return round_team_leader == self.current_player
+        return round_team_leader == self.player
 
     def get_current_player_team(self):
         teams = self.game.get_teams().all()
         for team in teams:
-            if team.has_player(self.current_player):
+            if team.has_player(self.player):
                 return team
         return None
 
