@@ -38,7 +38,7 @@ class UpdateGame(generic.RedirectView, generic.detail.SingleObjectMixin):
         return super().get_redirect_url(*args, **kwargs)
 
 
-class GameFormAbstractView(generic.FormView, CheckPlayerView):
+class GameViewAbstract(CheckPlayerView):
     class Meta:
         abstract = True
 
@@ -64,6 +64,11 @@ class GameFormAbstractView(generic.FormView, CheckPlayerView):
             if team.has_player(self.player):
                 return team
         return None
+
+
+class GameFormAbstractView(generic.FormView, GameViewAbstract):
+    class Meta:
+        abstract = True
 
     def get_success_url(self):
         return reverse('room_detail', kwargs={'slug': self.room.code})
