@@ -140,6 +140,16 @@
     }
 },
 {
+    "model": "gamedefinitions.rule",
+    "pk": 15,
+    "fields": {
+        "created": "2019-03-24T21:33:56.193Z",
+        "updated": "2019-03-24T22:15:49.283Z",
+        "slug": "cluster_buster_teams_made_guesses",
+        "description": "The round proceeds to the next stage when teams have submitted their guesses for the hints given of both teams."
+    }
+},
+{
     "model": "gamedefinitions.state",
     "pk": 1,
     "fields": {
@@ -298,10 +308,12 @@
     "pk": 13,
     "fields": {
         "created": "2019-03-03T03:12:58.252Z",
-        "updated": "2019-03-03T03:12:58.252Z",
-        "label": "players_guess_codes_stage",
+        "updated": "2019-03-24T22:15:15.667Z",
+        "label": "teams_guess_codes_stage",
         "name": "",
-        "rules": []
+        "rules": [
+            15
+        ]
     }
 },
 {

@@ -166,7 +166,7 @@ class ClusterBuster(RuleLibrary):
     def leaders_made_hints(game: GameAbstract, state_machine: StateMachineAbstract):
         round_number = game.get_parameter_value('current_round_count')
         conditional_transition = state_machine.add_conditional_transition('hints_submitted',
-                                                                          'players_guess_codes_stage')
+                                                                          'teams_share_guesses_stage')
         conditional_transition.set_to_and_op()
         for team in game.get_teams().all():
             for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
@@ -174,6 +174,18 @@ class ClusterBuster(RuleLibrary):
                     ('round', round_number, 'team', team, 'hint', card_i + 1),
                 )
 
+    @staticmethod
+    def teams_made_guesses(game: GameAbstract, state_machine: StateMachineAbstract):
+        round_number = game.get_parameter_value('current_round_count')
+        conditional_transition = state_machine.add_conditional_transition('guesses_submitted',
+                                                                          'teams_share_guesses_stage')
+        conditional_transition.set_to_and_op()
+        for guessing_team in game.get_teams().all():
+            for hinting_team in game.get_teams().all():
+                for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+                    conditional_transition.add_has_value_condition(
+                        ('round', round_number, 'guessing_team', guessing_team, 'hinting_team', hinting_team, 'guess', card_i + 1),
+                    )
 
     @staticmethod
     def method_map(rule):
@@ -191,4 +203,5 @@ class ClusterBuster(RuleLibrary):
             'leaders_draw_code_numbers': ClusterBuster.leaders_draw_code_numbers,
             'code_numbers_drawn': ClusterBuster.code_numbers_drawn,
             'leaders_made_hints': ClusterBuster.leaders_made_hints,
+            'teams_made_guesses': ClusterBuster.teams_made_guesses,
         }[rule]

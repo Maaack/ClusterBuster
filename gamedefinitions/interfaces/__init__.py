@@ -202,6 +202,9 @@ class StateMachineAbstract(models.Model):
     class Meta:
         abstract = True
 
+    def __str__(self):
+        return "FSM: " + str(self.current_state)
+
     def get_state(self):
         return self.current_state
 
