@@ -1,7 +1,5 @@
-from gamedefinitions.interfaces import (StateMachineAbstract, GameAbstract,
-                                        ComparisonConditionAbstract,
-                                        RuleLibrary)
-from rooms.models import Player, Team
+from gamedefinitions.interfaces import ComparisonConditionAbstract, RuleLibrary
+from games.models import Game, StateMachine
 from core.models import Word
 from core.basics import PatternDeckBuilder
 
@@ -11,8 +9,8 @@ class ClusterBuster(RuleLibrary):
     CODE_CARD_SLOTS = 3
 
     @staticmethod
-    def evaluate(game: GameAbstract):
-        for state_machine in game.get_state_machines().all():  # type: StateMachineAbstract
+    def evaluate(game: Game):
+        for state_machine in game.state_machines.all():
             prefix = "cluster_buster_"
             prefix_length = len(prefix)
             current_rules = state_machine.get_rules()
@@ -30,7 +28,7 @@ class ClusterBuster(RuleLibrary):
             state_machine.evaluate_conditions()
 
     @staticmethod
-    def start_game(game: GameAbstract, state_machine: StateMachineAbstract):
+    def start_game(game: Game, state_machine: StateMachine):
         """
         :param game:
         :param state_machine:
@@ -42,7 +40,7 @@ class ClusterBuster(RuleLibrary):
         game.add_state_machine('draw_words_stage')
         conditional_transition = state_machine.add_conditional_transition('game_is_ready', 'game_play')
         conditional_transition.set_to_and_op()
-        for team in game.get_teams().all():  # type: Team
+        for team in game.get_teams().all():
             conditional_transition.add_comparison_condition(
                 'teams_start_tokens',
                 ('team_losing_tokens', team),
@@ -55,19 +53,19 @@ class ClusterBuster(RuleLibrary):
             )
 
     @staticmethod
-    def win_tokens(game: GameAbstract, state_machine: StateMachineAbstract):
-        for team in game.get_teams().all():  # type: Team
+    def win_tokens(game: Game, state_machine: StateMachine):
+        for team in game.teams.all():
             game.set_parameter_value(('team_winning_tokens', team), 0)
 
     @staticmethod
-    def lose_tokens(game: GameAbstract, state_machine: StateMachineAbstract):
-        for team in game.get_teams().all():  # type: Team
+    def lose_tokens(game: Game, state_machine: StateMachine):
+        for team in game.teams.all():
             game.set_parameter_value(('team_losing_tokens', team), 0)
 
     @staticmethod
-    def win_condition(game: GameAbstract, state_machine: StateMachineAbstract):
+    def win_condition(game: Game, state_machine: StateMachine):
         conditional_transition = state_machine.add_conditional_transition('team_won', 'game_over')
-        for team in game.get_teams().all():  # type: Team
+        for team in game.teams.all():
             conditional_transition.add_comparison_condition(
                 ('team_winning_tokens', team),
                 'winning_tokens_required_to_win',
@@ -75,9 +73,9 @@ class ClusterBuster(RuleLibrary):
             )
 
     @staticmethod
-    def lose_condition(game: GameAbstract, state_machine: StateMachineAbstract):
+    def lose_condition(game: Game, state_machine: StateMachine):
         conditional_transition = state_machine.add_conditional_transition('team_lost', 'game_over')
-        for team in game.get_teams().all():
+        for team in game.teams.all():
             conditional_transition.add_comparison_condition(
                 ('team_losing_tokens', team),
                 'losing_tokens_required_to_lose',
@@ -85,18 +83,18 @@ class ClusterBuster(RuleLibrary):
             )
 
     @staticmethod
-    def secret_words_drawn(game: GameAbstract, state_machine: StateMachineAbstract):
+    def secret_words_drawn(game: Game, state_machine: StateMachine):
         conditional_transition = state_machine.add_conditional_transition('secret_words_drawn', 'rounds_stage')
         conditional_transition.set_to_and_op()
-        for team in game.get_teams().all():
+        for team in game.teams.all():
             for i in range(ClusterBuster.SECRET_WORDS_PER_TEAM):
                 conditional_transition.add_has_value_condition(
                     ('team', team, 'secret_word', i+1),
                 )
 
     @staticmethod
-    def draw_words(game: GameAbstract, state_machine: StateMachineAbstract):
-        teams_set = game.get_teams()
+    def draw_words(game: Game, state_machine: StateMachine):
+        teams_set = game.teams
         team_count = teams_set.count()
         total_words = ClusterBuster.SECRET_WORDS_PER_TEAM * team_count
 
@@ -112,35 +110,35 @@ class ClusterBuster(RuleLibrary):
             game.set_parameter_value('word_cards_drawn', True)
 
     @staticmethod
-    def rounds_stage(game: GameAbstract, state_machine: StateMachineAbstract):
+    def rounds_stage(game: Game, state_machine: StateMachine):
         game.add_state_machine('first_round')
         game.add_state_machine('select_leader_stage')
         game.set_parameter_value('current_round_count', 1)
         game.set_parameter_value('last_round_count', 8)
 
     @staticmethod
-    def assign_team_leader(game: GameAbstract, state_machine: StateMachineAbstract):
+    def assign_team_leader(game: Game, state_machine: StateMachine):
         round_number = game.get_parameter_value('current_round_count')
-        for team in game.get_teams().all():
+        for team in game.teams.all():
             player_count = team.players.count()
             offset = round_number % player_count
             round_leader = team.players.all()[offset]
             game.set_parameter_value(('round', round_number, 'team', team, 'leader'), round_leader)
 
     @staticmethod
-    def team_leaders_assigned(game: GameAbstract, state_machine: StateMachineAbstract):
+    def team_leaders_assigned(game: Game, state_machine: StateMachine):
         round_number = game.get_parameter_value('current_round_count')
         conditional_transition = state_machine.add_conditional_transition('team_leader_assigned', 'draw_code_card_stage')
         conditional_transition.set_to_and_op()
-        for team in game.get_teams().all():
+        for team in game.teams.all():
             conditional_transition.add_has_value_condition(
                 ('round', round_number, 'team', team, 'leader'),
             )
 
     @staticmethod
-    def leaders_draw_code_numbers(game: GameAbstract, state_machine: StateMachineAbstract):
+    def leaders_draw_code_numbers(game: Game, state_machine: StateMachine):
         round_number = game.get_parameter_value('current_round_count')
-        for team in game.get_teams().all():
+        for team in game.teams.all():
             deck = PatternDeckBuilder.build_deck()
             # drawn_cards = self.get_drawn_cards()
             # deck.reduce(drawn_cards)
@@ -151,37 +149,37 @@ class ClusterBuster(RuleLibrary):
                 game.set_parameter_value(('round', round_number, 'team', team, 'code', card_i+1), value)
 
     @staticmethod
-    def code_numbers_drawn(game: GameAbstract, state_machine: StateMachineAbstract):
+    def code_numbers_drawn(game: Game, state_machine: StateMachine):
         round_number = game.get_parameter_value('current_round_count')
         conditional_transition = state_machine.add_conditional_transition('code_numbers_drawn',
                                                                           'leaders_make_hints_stage')
         conditional_transition.set_to_and_op()
-        for team in game.get_teams().all():
+        for team in game.teams.all():
             for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
                 conditional_transition.add_has_value_condition(
                     ('round', round_number, 'team', team, 'code', card_i + 1),
                 )
 
     @staticmethod
-    def leaders_made_hints(game: GameAbstract, state_machine: StateMachineAbstract):
+    def leaders_made_hints(game: Game, state_machine: StateMachine):
         round_number = game.get_parameter_value('current_round_count')
         conditional_transition = state_machine.add_conditional_transition('hints_submitted',
                                                                           'teams_share_guesses_stage')
         conditional_transition.set_to_and_op()
-        for team in game.get_teams().all():
+        for team in game.teams.all():
             for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
                 conditional_transition.add_has_value_condition(
                     ('round', round_number, 'team', team, 'hint', card_i + 1),
                 )
 
     @staticmethod
-    def teams_made_guesses(game: GameAbstract, state_machine: StateMachineAbstract):
+    def teams_made_guesses(game: Game, state_machine: StateMachine):
         round_number = game.get_parameter_value('current_round_count')
         conditional_transition = state_machine.add_conditional_transition('guesses_submitted',
                                                                           'teams_share_guesses_stage')
         conditional_transition.set_to_and_op()
-        for guessing_team in game.get_teams().all():
-            for hinting_team in game.get_teams().all():
+        for guessing_team in game.teams.all():
+            for hinting_team in game.teams.all():
                 for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
                     conditional_transition.add_has_value_condition(
                         ('round', round_number, 'guessing_team', guessing_team, 'hinting_team', hinting_team, 'guess', card_i + 1),
