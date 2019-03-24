@@ -183,9 +183,6 @@ class StateMachine(StateMachineAbstract, TimeStamped):
     def get_game_parameter(self, key_args):
         return self.game.get_parameter(key_args)
 
-    def get_condition_transition(self):
-        pass
-
     def add_conditional_transition(self, label: str, to_state_slug: str):
         from_state = self.get_state()
         to_state = State.objects.get(label=to_state_slug)

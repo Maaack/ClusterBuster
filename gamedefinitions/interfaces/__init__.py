@@ -170,12 +170,12 @@ class ConditionalTransitionAbstract(models.Model):
     def is_or_op(self):
         return self.boolean_op == ConditionalTransitionAbstract.OR_OP
 
+    def is_and_op(self):
+        return self.boolean_op == ConditionalTransitionAbstract.AND_OP
+
     def set_to_or_op(self):
         self.boolean_op = ConditionalTransitionAbstract.OR_OP
         self.save()
-
-    def is_and_op(self):
-        return self.boolean_op == ConditionalTransitionAbstract.AND_OP
 
     def set_to_and_op(self):
         self.boolean_op = ConditionalTransitionAbstract.AND_OP
