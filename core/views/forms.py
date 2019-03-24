@@ -12,3 +12,4 @@ class PlayerGuessForm(forms.Form):
     guess_1 = forms.ChoiceField(choices=NUMBER_CHOICES)
     guess_2 = forms.ChoiceField(choices=NUMBER_CHOICES)
     guess_3 = forms.ChoiceField(choices=NUMBER_CHOICES)
+
