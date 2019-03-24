@@ -7,9 +7,8 @@ from games.models import Game
 from core.definitions import ClusterBuster
 
 from rooms.views.mixins import CheckPlayerView
-from rooms.views.contexts import PlayerContext, TeamContext, Player2RoomContext, Player2TeamContext
 
-from .forms import LeaderHintsForm
+from .forms import LeaderHintsForm, PlayerGuessForm
 
 
 class StartGame(generic.RedirectView, generic.detail.SingleObjectMixin):
@@ -118,3 +117,50 @@ class LeaderHintsFormView(generic.FormView, CheckPlayerView):
                 hints[card_i]
             )
         return super().form_valid(form)
+
+
+class PlayerGuessesFormView(generic.FormView, CheckPlayerView):
+    template_name = 'core/player_guess_form.html'
+    form_class = PlayerGuessForm
+
+    def __init__(self):
+        self.room = None
+        self.game = None
+        self.player = None
+        self.team = None
+        self.round_number = 0
+        super().__init__()
+
+    def dispatch(self, request, *args, **kwargs):
+        self.room = get_object_or_404(Room, code=kwargs['slug'])
+        self.game = Game.objects.filter(room=self.room).first()
+        self.player = self.get_current_player()
+        self.team = self.get_current_player_team()
+        self.round_number = self.game.get_parameter_value('current_round_count')
+        if self.is_round_team_leader():
+            return redirect('room_detail', slug=kwargs['slug'])
+        # TODO: Check if is in leader hint stage
+        return super().dispatch(request, *args, **kwargs)
+
+    def is_round_team_leader(self):
+        if self.player is None:
+            return False
+        team = self.get_current_player_team()
+        if team is None:
+            return False
+        round_number = self.game.get_parameter_value('current_round_count')
+        round_team_leader = self.game.get_parameter_value(('round', round_number, 'team', team, 'leader'))
+        return round_team_leader == self.player
+
+    def get_current_player_team(self):
+        teams = self.game.get_teams().all()
+        for team in teams:
+            if team.has_player(self.player):
+                return team
+        return None
+
+    def get_success_url(self):
+        room = self.room
+        self.success_url = reverse_lazy('update_game', kwargs={'slug': room.code})
+        return super().get_success_url()
+
