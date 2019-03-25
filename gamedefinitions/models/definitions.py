@@ -26,11 +26,27 @@ class State(TimeStamped):
     """
     label = models.SlugField(_("Label"), max_length=32)
     name = models.CharField(_("Name"), max_length=64, blank=True)
-    rules = models.ManyToManyField(Rule, blank=True, related_name="states")
+    rules = models.ManyToManyField(Rule, blank=True)
+    enter_rules = models.ManyToManyField(Rule, blank=True)
+    exit_rules = models.ManyToManyField(Rule, blank=True)
 
     class Meta:
         verbose_name = _("State")
         verbose_name_plural = _("States")
+
+    def __str__(self):
+        return str(self.label)
+
+
+class Transition(models.Model):
+    label = models.SlugField(_("Label"), max_length=32)
+    from_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_out")
+    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_in")
+    rules = models.ManyToManyField(Rule, blank=True, related_name="+")
+
+    class Meta:
+        verbose_name = _("Transition")
+        verbose_name_plural = _("Transitions")
 
     def __str__(self):
         return str(self.label)
