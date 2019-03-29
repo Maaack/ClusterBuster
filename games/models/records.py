@@ -198,8 +198,8 @@ class Transition(TimeStamped):
     """
     reason = models.SlugField(_("Reason"), max_length=32)
     state_machine = models.ForeignKey(StateMachine, on_delete=models.CASCADE, related_name="transitions")
-    from_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_out")
-    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_in")
+    from_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
+    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
 
 
 class MixedValue(TimeStamped):
