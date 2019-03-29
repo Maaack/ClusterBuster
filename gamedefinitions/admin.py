@@ -4,4 +4,5 @@ from .models import *
 
 admin.site.register(Rule)
 admin.site.register(State)
+admin.site.register(Transition)
 admin.site.register(GameDefinition)
