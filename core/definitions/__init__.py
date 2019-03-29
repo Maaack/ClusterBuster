@@ -9,25 +9,6 @@ class ClusterBuster(RuleLibrary):
     CODE_CARD_SLOTS = 3
 
     @staticmethod
-    def evaluate(game: Game):
-        for state_machine in game.state_machines.all():
-            prefix = "cluster_buster_"
-            prefix_length = len(prefix)
-            current_rules = state_machine.get_rules()
-
-            for current_rule in current_rules.all():
-                current_rule_slug = current_rule.slug
-                if current_rule_slug.startswith(prefix):
-                    current_rule_slug = current_rule_slug[prefix_length:]
-                try:
-                    print("%s rule lookup" % (current_rule_slug,))
-                    current_method = ClusterBuster.method_map(current_rule_slug)
-                    current_method(game, state_machine)
-                except KeyError:
-                    print("%s didn't exist" % (current_rule_slug,))
-            state_machine.evaluate_conditions()
-
-    @staticmethod
     def start_game(game: Game, state_machine: StateMachine):
         """
         :param game:

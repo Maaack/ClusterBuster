@@ -9,7 +9,7 @@ from rooms.models import Player, Team, Room
 from gamedefinitions.models import State, GameDefinition
 from gamedefinitions.interfaces import (
     StateMachineAbstract, GameAbstract, ConditionAbstract, ParameterAbstract,
-    ConditionalTransitionAbstract
+    ConditionalTransitionAbstract, RuleLibrary
 )
 
 
@@ -116,6 +116,24 @@ class Game(GameAbstract, TimeStamped):
         self.__setup_from_room(kwargs['room'])
         self.__setup_code()
         self.save()
+
+    def update(self, rule_library: RuleLibrary):
+        for state_machine in self.state_machines.all():
+            prefix = self.game_definition.slug + "_"
+            prefix_length = len(prefix)
+            current_rules = state_machine.get_rules()
+
+            for current_rule in current_rules.all():
+                current_rule_slug = current_rule.slug
+                if current_rule_slug.startswith(prefix):
+                    current_rule_slug = current_rule_slug[prefix_length:]
+                try:
+                    print("%s rule lookup" % (current_rule_slug,))
+                    rule_method = rule_library.method_map(current_rule_slug)
+                    rule_method(self, state_machine)
+                except KeyError:
+                    print("%s didn't exist" % (current_rule_slug,))
+            state_machine.evaluate_conditions()
 
     def get_state_machines(self) -> models.QuerySet:
         return self.state_machines

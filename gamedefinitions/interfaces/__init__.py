@@ -1,4 +1,3 @@
-from itertools import chain
 from abc import ABC, abstractmethod
 
 from django.db import models
@@ -226,6 +225,21 @@ class StateMachineAbstract(models.Model):
         raise NotImplementedError('StateMachineAbstract subclasses must override add_conditional_transition()')
 
 
+class RuleLibrary(ABC):
+    """
+    RuleLibraries help map a State's Rules to methods that alter the Game.
+    """
+
+    @staticmethod
+    @abstractmethod
+    def method_map(rule: str):
+        """
+        :param rule: str
+        :return:
+        """
+        pass
+
+
 class GameAbstract(models.Model):
     """
     RuleLibraries help map a State's Rules to methods that alter the Game.
@@ -245,6 +259,9 @@ class GameAbstract(models.Model):
 
     def setup(self, game_definition_slug: str, *args, **kwargs):
         self.__setup_game_definition(game_definition_slug)
+
+    def update(self, rule_library: RuleLibrary):
+        raise NotImplementedError('GameAbstract subclasses must override update()')
 
     def get_state_machines(self) -> models.QuerySet:
         raise NotImplementedError('GameAbstract subclasses must override get_state_machines()')
@@ -267,17 +284,3 @@ class GameAbstract(models.Model):
     def add_state_machine(self, state_slug: str):
         raise NotImplementedError('GameAbstract subclasses must override add_state_machine()')
 
-
-class RuleLibrary(ABC):
-    """
-    RuleLibraries help map a State's Rules to methods that alter the Game.
-    """
-
-    @staticmethod
-    @abstractmethod
-    def evaluate(game: GameAbstract):
-        """
-        :param game: GameAbstract
-        :return:
-        """
-        pass
