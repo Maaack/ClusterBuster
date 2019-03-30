@@ -6,7 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from clusterbuster.mixins import TimeStamped, CodeGenerator
 
 from rooms.models import Player, Team, Room
-from gamedefinitions.models import State, GameDefinition
+from gamedefinitions.models import State, Rule
 from gamedefinitions.interfaces import (
     StateMachineAbstract, GameAbstract, ConditionAbstract, ParameterAbstract,
     ConditionalTransitionAbstract, RuleLibrary
@@ -119,21 +119,27 @@ class Game(GameAbstract, TimeStamped):
 
     def update(self, rule_library: RuleLibrary):
         for state_machine in self.state_machines.all():
-            prefix = self.game_definition.slug + "_"
-            prefix_length = len(prefix)
-            current_rules = state_machine.get_rules()
+            rules = state_machine.get_rules()
+            for rule in rules.all():
+                self.evaluate_rule(rule, rule_library, state_machine)
 
-            for current_rule in current_rules.all():
-                current_rule_slug = current_rule.slug
-                if current_rule_slug.startswith(prefix):
-                    current_rule_slug = current_rule_slug[prefix_length:]
-                try:
-                    print("%s rule lookup" % (current_rule_slug,))
-                    rule_method = rule_library.method_map(current_rule_slug)
-                    rule_method(self, state_machine)
-                except KeyError:
-                    print("%s didn't exist" % (current_rule_slug,))
-            state_machine.evaluate_conditions()
+    def evaluate_rule(self, rule: Rule, rule_library: RuleLibrary, state_machine: StateMachineAbstract):
+        rule_method = self.get_rule_method(rule, rule_library)
+        if rule_method is not None:
+            rule_method(self, state_machine)
+
+    def get_rule_method(self, rule: Rule, rule_library: RuleLibrary):
+        prefix = self.game_definition.slug + "_"
+        prefix_length = len(prefix)
+        rule_slug = rule.slug
+        if rule_slug.startswith(prefix):
+            rule_slug = rule_slug[prefix_length:]
+        print("%s rule lookup" % (rule_slug,))
+        try:
+            return rule_library.method_map(rule_slug)
+        except KeyError:
+            print("%s didn't exist" % (rule_slug,))
+            return None
 
     def get_state_machines(self) -> models.QuerySet:
         return self.state_machines
