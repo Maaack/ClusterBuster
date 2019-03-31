@@ -5,76 +5,101 @@ from core.basics import PatternDeckBuilder
 
 
 class ClusterBuster(RuleLibrary):
+    WINNING_TOKENS_REQUIRED_TO_WIN = 2
+    LOSING_TOKENS_REQUIRED_TO_LOSE = 2
+    STARTING_WIN_TOKENS_PER_TEAM = 0
+    STARTING_LOSE_TOKENS_PER_TEAM = 0
     SECRET_WORDS_PER_TEAM = 4
     CODE_CARD_SLOTS = 3
 
     @staticmethod
-    def start_game(game: Game, state_machine: StateMachine):
+    def start_game(game: Game):
         """
         :param game:
-        :param state_machine:
         :return:
         """
-        game.set_parameter_value('winning_tokens_required_to_win', 2)
-        game.set_parameter_value('losing_tokens_required_to_lose', 2)
+        game.set_parameter_value('winning_tokens_required_to_win', ClusterBuster.WINNING_TOKENS_REQUIRED_TO_WIN)
+        game.set_parameter_value('losing_tokens_required_to_lose', ClusterBuster.LOSING_TOKENS_REQUIRED_TO_LOSE)
         game.set_parameter_value('teams_start_tokens', 0)
-        game.add_state_machine('draw_words_stage')
-        conditional_transition = state_machine.add_conditional_transition('game_is_ready', 'game_play')
-        conditional_transition.set_to_and_op()
+        game.add_state_machine('draw_words_stage', 'fsm1')
+        ClusterBuster.assign_team_win_tokens(game)
+        ClusterBuster.assign_team_lose_tokens(game)
+        ClusterBuster.set_win_condition(game)
+        ClusterBuster.set_lose_condition(game)
+        # game.transit_state_machine('fsm0', 'game_play', 'game_ready')
+        trigger = game.add_trigger('draw_words')
+        condition_group = trigger.condition_group
+        condition_group.set_to_and_op()
         for team in game.get_teams().all():
-            conditional_transition.add_comparison_condition(
+            condition_group.add_comparison_condition(
                 'teams_start_tokens',
                 ('team_losing_tokens', team),
                 ComparisonConditionAbstract.EQUAL
             )
-            conditional_transition.add_comparison_condition(
+            condition_group.add_comparison_condition(
                 'teams_start_tokens',
                 ('team_winning_tokens', team),
                 ComparisonConditionAbstract.EQUAL
             )
 
     @staticmethod
-    def win_tokens(game: Game, state_machine: StateMachine):
+    def assign_team_win_tokens(game: Game):
         for team in game.teams.all():
-            game.set_parameter_value(('team_winning_tokens', team), 0)
+            game.set_parameter_value(('team_winning_tokens', team), ClusterBuster.STARTING_WIN_TOKENS_PER_TEAM)
 
     @staticmethod
-    def lose_tokens(game: Game, state_machine: StateMachine):
+    def assign_team_lose_tokens(game: Game):
         for team in game.teams.all():
-            game.set_parameter_value(('team_losing_tokens', team), 0)
+            game.set_parameter_value(('team_losing_tokens', team), ClusterBuster.STARTING_LOSE_TOKENS_PER_TEAM)
 
     @staticmethod
-    def win_condition(game: Game, state_machine: StateMachine):
-        conditional_transition = state_machine.add_conditional_transition('team_won', 'game_over')
+    def set_win_condition(game: Game):
+        trigger = game.add_trigger('team_won')
+        condition_group = trigger.condition_group
         for team in game.teams.all():
-            conditional_transition.add_comparison_condition(
+            condition_group.add_comparison_condition(
                 ('team_winning_tokens', team),
                 'winning_tokens_required_to_win',
                 ComparisonConditionAbstract.GREATER_THAN_OR_EQUAL
             )
 
     @staticmethod
-    def lose_condition(game: Game, state_machine: StateMachine):
-        conditional_transition = state_machine.add_conditional_transition('team_lost', 'game_over')
+    def set_lose_condition(game: Game):
+        trigger = game.add_trigger('team_lost')
+        condition_group = trigger.condition_group
         for team in game.teams.all():
-            conditional_transition.add_comparison_condition(
+            condition_group.add_comparison_condition(
                 ('team_losing_tokens', team),
                 'losing_tokens_required_to_lose',
                 ComparisonConditionAbstract.GREATER_THAN_OR_EQUAL
             )
 
     @staticmethod
-    def secret_words_drawn(game: Game, state_machine: StateMachine):
-        conditional_transition = state_machine.add_conditional_transition('secret_words_drawn', 'rounds_stage')
-        conditional_transition.set_to_and_op()
-        for team in game.teams.all():
-            for i in range(ClusterBuster.SECRET_WORDS_PER_TEAM):
-                conditional_transition.add_has_value_condition(
-                    ('team', team, 'secret_word', i+1),
-                )
+    def game_ready(game: Game):
+        """
+        :param game:
+        :return:
+        """
+        game.transit_state_machine('fsm0', 'game_play', 'game_ready')
 
     @staticmethod
-    def draw_words(game: Game, state_machine: StateMachine):
+    def team_won(game: Game):
+        """
+        :param game:
+        :return:
+        """
+        game.transit_state_machine('fsm0', 'game_play', 'team_won')
+
+    @staticmethod
+    def team_lost(game: Game):
+        """
+        :param game:
+        :return:
+        """
+        game.transit_state_machine('fsm0', 'game_over', 'team_lost')
+
+    @staticmethod
+    def draw_words(game: Game):
         teams_set = game.teams
         team_count = teams_set.count()
         total_words = ClusterBuster.SECRET_WORDS_PER_TEAM * team_count
@@ -89,6 +114,17 @@ class ClusterBuster(RuleLibrary):
                 for word_i, random_word in enumerate(random_words[start_word_i:end_word_i]):
                     game.set_parameter_value(('team', team, 'secret_word', word_i+1), str(random_word))
             game.set_parameter_value('word_cards_drawn', True)
+
+    @staticmethod
+    def secret_words_drawn(game: Game, state_machine: StateMachine):
+        conditional_transition = state_machine.add_conditional_transition('secret_words_drawn', 'rounds_stage')
+        conditional_transition.set_to_and_op()
+        for team in game.teams.all():
+            for i in range(ClusterBuster.SECRET_WORDS_PER_TEAM):
+                conditional_transition.add_has_value_condition(
+                    ('team', team, 'secret_word', i+1),
+                )
+
 
     @staticmethod
     def rounds_stage(game: Game, state_machine: StateMachine):
@@ -170,10 +206,10 @@ class ClusterBuster(RuleLibrary):
     def method_map(rule):
         return {
             'start_game': ClusterBuster.start_game,
-            'win_tokens': ClusterBuster.win_tokens,
-            'lose_tokens': ClusterBuster.lose_tokens,
-            'win_condition': ClusterBuster.win_condition,
-            'lose_condition': ClusterBuster.lose_condition,
+            'win_tokens': ClusterBuster.assign_team_win_tokens,
+            'lose_tokens': ClusterBuster.assign_team_lose_tokens,
+            'win_condition': ClusterBuster.set_win_condition,
+            'lose_condition': ClusterBuster.set_lose_condition,
             'draw_words': ClusterBuster.draw_words,
             'secret_words_drawn': ClusterBuster.secret_words_drawn,
             'rounds_stage': ClusterBuster.rounds_stage,

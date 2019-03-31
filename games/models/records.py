@@ -8,7 +8,7 @@ from clusterbuster.mixins import TimeStamped, CodeGenerator
 from rooms.models import Player, Team, Room
 from gamedefinitions.models import State, Rule
 from gamedefinitions.interfaces import (
-    StateMachineAbstract, GameAbstract, ConditionAbstract, ParameterAbstract,
+    StateMachineAbstract, GameAbstract, ConditionAbstract, ParameterAbstract, ConditionGroupAbstract,
     ConditionalTransitionAbstract, RuleLibrary
 )
 
@@ -35,10 +35,6 @@ class Game(GameAbstract, TimeStamped):
         if not self.code:
             self.code = CodeGenerator.game_code()
             self.save()
-
-    def __setup_state_machines(self):
-        if self.game_definition:
-            self.add_state_machine(self.game_definition.root_state.label)
 
     def __setup_from_room(self, room: Room):
         """
@@ -112,21 +108,23 @@ class Game(GameAbstract, TimeStamped):
         :return:
         """
         super(Game, self).setup(game_definition_slug, *args, **kwargs)
-        self.__setup_state_machines()
         self.__setup_from_room(kwargs['room'])
         self.__setup_code()
         self.save()
 
-    def update(self, rule_library: RuleLibrary):
-        for state_machine in self.state_machines.all():
-            rules = state_machine.get_rules()
-            for rule in rules.all():
-                self.evaluate_rule(rule, rule_library, state_machine)
+    def start(self, rule_library: RuleLibrary):
+        if self.game_definition:
+            first_rule = self.game_definition.first_rule
+            self.evaluate_rule(first_rule, rule_library)
 
-    def evaluate_rule(self, rule: Rule, rule_library: RuleLibrary, state_machine: StateMachineAbstract):
+    def update(self, rule_library: RuleLibrary):
+        for trigger in self.triggers.all():
+            trigger.evaluate(rule_library)
+
+    def evaluate_rule(self, rule: Rule, rule_library: RuleLibrary):
         rule_method = self.get_rule_method(rule, rule_library)
         if rule_method is not None:
-            rule_method(self, state_machine)
+            rule_method(self)
 
     def get_rule_method(self, rule: Rule, rule_library: RuleLibrary):
         prefix = self.game_definition.slug + "_"
@@ -168,21 +166,47 @@ class Game(GameAbstract, TimeStamped):
         parameter.set_value(Game.__get_model_value(value))
         parameter.save()
 
-    def add_state_machine(self, state_slug: str):
+    def prepend_game_slug(self, slug):
+        game_definition_slug = self.game_definition.slug
+        return game_definition_slug + "_" + slug
+
+    def add_state_machine(self, state_slug: str, key_args):
         """
         Adds a StateMachine to the Game object.
         :param state_slug: str
+        :param key_args: mixed
         :return:
         """
         try:
-            state = State.objects.get(label=state_slug)
+            state = State.objects.get(slug=state_slug)
         except State.DoesNotExist:
-            raise ValueError('state_slug must be a valid existing state')
-        try:
-            state_machine = self.state_machines.filter(root_state=state).get()
-        except StateMachine.DoesNotExist:
-            state_machine = self.state_machines.create(root_state=state, current_state=state)
+            raise ValueError('state_slug must match the label of an existing State')
+        state_machine = self.state_machines.create(root_state=state, current_state=state)
+        self.set_parameter_value(key_args, state_machine)
         return state_machine
+
+    def add_trigger(self, rule_slug: str):
+        """
+        Adds a Trigger to the Game object.
+        :param rule_slug:
+        :return:
+        """
+        rule_slug = self.prepend_game_slug(rule_slug)
+        condition_group = self.condition_groups.create()
+        try:
+            rule = Rule.objects.get(slug=rule_slug)
+        except Rule.DoesNotExist:
+            raise ValueError('rule_slug must match the label of an existing Rule')
+        trigger = self.triggers.create(condition_group=condition_group, rule=rule)
+        return trigger
+
+    def transit_state_machine(self, key_args, state_slug: str, reason: str):
+        state_machine = self.get_parameter_value(key_args)  # type: StateMachine
+        try:
+            state = State.objects.get(slug=state_slug)
+        except State.DoesNotExist:
+            raise ValueError('state_slug must match the label of an existing State')
+        state_machine.transit(state, reason)
 
 
 class StateMachine(StateMachineAbstract, TimeStamped):
@@ -345,6 +369,67 @@ class Condition(ConditionAbstract, TimeStamped):
             return bool(self.parameter_1.get_value())
         elif self.is_comparison():
             return self.compare_2_numbers(self.parameter_1, self.parameter_2)
+
+
+class ConditionGroup(ConditionGroupAbstract, TimeStamped):
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="condition_groups")
+    conditions = models.ManyToManyField(Condition, related_name="condition_groups")
+
+    def passes(self):
+        for condition in self.conditions.all():
+            if condition.passes():
+                if self.is_or_op():
+                    return True
+            elif self.is_and_op():
+                return False
+        if self.is_or_op():
+            return False
+        return True
+
+    def add_has_value_condition(self, key_args) -> ConditionAbstract:
+        parameter = self.game.get_parameter(key_args)
+        condition, created = self.conditions.get_or_create(game=self.game,
+                                                           condition_type=ConditionAbstract.HAS_VALUE,
+                                                           parameter_1=parameter)
+        self.save()
+        return condition
+
+    def add_boolean_condition(self, key_args) -> ConditionAbstract:
+        parameter = self.game.get_parameter(key_args)
+        condition, created = self.conditions.get_or_create(game=self.game,
+                                                           condition_type=ConditionAbstract.BOOLEAN,
+                                                           parameter_1=parameter)
+        self.save()
+        return condition
+
+    def add_comparison_condition(self, key_args_1, key_args_2, comparison_type) -> ConditionAbstract:
+        parameter_1 = self.game.get_parameter(key_args_1)
+        parameter_2 = self.game.get_parameter(key_args_2)
+        condition, created = self.conditions.get_or_create(game=self.game,
+                                                           condition_type=ConditionAbstract.COMPARISON,
+                                                           parameter_1=parameter_1,
+                                                           parameter_2=parameter_2, comparison_type=comparison_type)
+        self.save()
+        return condition
+
+
+class Trigger(TimeStamped):
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="triggers")
+    condition_group = models.ForeignKey(ConditionGroup, on_delete=models.CASCADE, related_name="triggers")
+    rule = models.ForeignKey(Rule, on_delete=models.CASCADE, related_name="+")
+    active = models.BooleanField(_("Active"), default=True)
+    repeats = models.BooleanField(_("Repeats"), default=False)
+    trigger_count = models.PositiveSmallIntegerField(_("Trigger Count"), default=0)
+
+    def evaluate(self, rule_library: RuleLibrary):
+        if self.active is False:
+            return
+        if self.condition_group.passes():
+            self.trigger_count += 1
+            self.game.evaluate_rule(self.rule, rule_library)
+            if self.repeats is False:
+                self.active = False
+            self.save()
 
 
 class ConditionalTransition(ConditionalTransitionAbstract, TimeStamped):

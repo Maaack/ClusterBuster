@@ -8,7 +8,7 @@ class Rule(TimeStamped):
     """
     Rules define how the game is played.
     """
-    slug = models.SlugField(_("Label"), max_length=64)
+    slug = models.SlugField(_("Slug"), max_length=64)
     description = models.TextField(_("Description"), default='')
 
     class Meta:
@@ -24,7 +24,7 @@ class State(TimeStamped):
     """
     States define sections of the Game, like stages, rounds, and turns.
     """
-    label = models.SlugField(_("Label"), max_length=32)
+    slug = models.SlugField(_("Slug"), max_length=32)
     name = models.CharField(_("Name"), max_length=64, blank=True)
     rules = models.ManyToManyField(Rule, blank=True, related_name="states")
     enter_rules = models.ManyToManyField(Rule, blank=True, related_name="enter_states")
@@ -35,7 +35,7 @@ class State(TimeStamped):
         verbose_name_plural = _("States")
 
     def __str__(self):
-        return str(self.label)
+        return str(self.slug)
 
 
 class Transition(models.Model):
@@ -53,11 +53,10 @@ class Transition(models.Model):
 
 
 class GameDefinition(TimeStamped):
-
     slug = models.SlugField(_("Slug"), max_length=64)
     title = models.CharField(_("Title"), max_length=128, default='')
     description = models.TextField(_("Description"), default='')
-    root_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name='game_definition')
+    first_rule = models.ForeignKey(Rule, on_delete=models.CASCADE, related_name='game_definition')
 
     class Meta:
         verbose_name = _("Game Definition")
