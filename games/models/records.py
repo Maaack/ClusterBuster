@@ -222,6 +222,9 @@ class StateMachine(StateMachineAbstract, TimeStamped):
     """
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="state_machines")
 
+    def __str__(self):
+        return str(self.game) + " - " + str(self.current_state)
+
     def transit(self, to_state: State, reason=""):
         from_state = self.get_state()
         transition = Transition(state_machine=self, from_state=from_state, to_state=to_state, reason=reason)
@@ -347,6 +350,9 @@ class Parameter(TimeStamped, ParameterAbstract):
     class Meta:
         unique_together = ('game', 'key')
 
+    def __str__(self):
+        return str(self.game) + " - " + str(self.get_key()) + ": " + str(self.get_value())
+
     def get_key(self):
         return self.key
 
@@ -427,6 +433,9 @@ class Trigger(TimeStamped):
     active = models.BooleanField(_("Active"), default=True)
     repeats = models.BooleanField(_("Repeats"), default=False)
     trigger_count = models.PositiveSmallIntegerField(_("Trigger Count"), default=0)
+
+    def __str__(self):
+        return str(self.game) + " - " + str(self.rule)
 
     def evaluate(self, rule_library: RuleLibrary):
         if self.active is False:

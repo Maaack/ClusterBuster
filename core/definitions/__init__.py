@@ -125,7 +125,6 @@ class ClusterBuster(RuleLibrary):
                     ('team', team, 'secret_word', i+1),
                 )
 
-
     @staticmethod
     def rounds_stage(game: Game, state_machine: StateMachine):
         game.add_state_machine('first_round')
