@@ -31,6 +31,10 @@ class Game(GameAbstract, TimeStamped):
     def __str__(self):
         return str(self.code)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.trigger_list = []
+
     def __setup_code(self):
         if not self.code:
             self.code = CodeGenerator.game_code()
@@ -118,7 +122,9 @@ class Game(GameAbstract, TimeStamped):
             self.evaluate_rule(first_rule, rule_library)
 
     def update(self, rule_library: RuleLibrary):
-        for trigger in self.triggers.all():
+        self.trigger_list = list(self.triggers.all())
+        while len(self.trigger_list) > 0:
+            trigger = self.trigger_list.pop()
             trigger.evaluate(rule_library)
 
     def evaluate_rule(self, rule: Rule, rule_library: RuleLibrary):
@@ -198,6 +204,7 @@ class Game(GameAbstract, TimeStamped):
         except Rule.DoesNotExist:
             raise ValueError('rule_slug must match the label of an existing Rule')
         trigger = self.triggers.create(condition_group=condition_group, rule=rule)
+        self.trigger_list.append(trigger)
         return trigger
 
     def transit_state_machine(self, key_args, state_slug: str, reason: str):
