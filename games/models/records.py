@@ -145,15 +145,6 @@ class Game(GameAbstract, TimeStamped):
             print("%s didn't exist" % (rule_slug,))
             return None
 
-    def get_state_machines(self) -> models.QuerySet:
-        return self.state_machines
-
-    def get_players(self) -> models.QuerySet:
-        return self.players
-
-    def get_teams(self) -> models.QuerySet:
-        return self.teams
-
     def get_parameter(self, key_args):
         if isinstance(key_args, str):
             key_args = (key_args,)

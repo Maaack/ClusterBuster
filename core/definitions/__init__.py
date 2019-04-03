@@ -30,7 +30,7 @@ class ClusterBuster(RuleLibrary):
         trigger = game.add_trigger('draw_words')
         condition_group = trigger.condition_group
         condition_group.set_to_and_op()
-        for team in game.get_teams().all():
+        for team in game.teams.all():
             condition_group.add_comparison_condition(
                 'teams_start_tokens',
                 ('team_losing_tokens', team),

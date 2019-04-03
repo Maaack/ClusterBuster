@@ -60,7 +60,7 @@ class GameViewAbstract(CheckPlayerView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_current_player_team(self):
-        teams = self.game.get_teams().all()
+        teams = self.game.teams.all()
         for team in teams:
             if team.has_player(self.player):
                 return team

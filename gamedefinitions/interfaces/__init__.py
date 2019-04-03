@@ -269,15 +269,6 @@ class GameAbstract(models.Model):
     def update(self, rule_library: RuleLibrary):
         raise NotImplementedError('GameAbstract subclasses must override update()')
 
-    def get_state_machines(self) -> models.QuerySet:
-        raise NotImplementedError('GameAbstract subclasses must override get_state_machines()')
-
-    def get_players(self) -> models.QuerySet:
-        raise NotImplementedError('GameAbstract subclasses must override get_players()')
-
-    def get_teams(self) -> models.QuerySet:
-        raise NotImplementedError('GameAbstract subclasses must override get_teams()')
-
     def get_parameter(self, *args):
         raise NotImplementedError('GameAbstract subclasses must override get_parameter()')
 
