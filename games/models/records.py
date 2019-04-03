@@ -167,11 +167,11 @@ class Game(GameAbstract, TimeStamped):
         game_definition_slug = self.game_definition.slug
         return game_definition_slug + "_" + slug
 
-    def add_state_machine(self, state_slug: str, key_args):
+    def add_state_machine(self, key_args, state_slug: str):
         """
         Adds a StateMachine to the Game object.
-        :param state_slug: str
         :param key_args: mixed
+        :param state_slug: str
         :return:
         """
         try:
@@ -373,6 +373,9 @@ class Condition(ConditionAbstract, TimeStamped):
             return bool(self.parameter_1.get_value())
         elif self.is_comparison():
             return self.compare_2_numbers(self.parameter_1, self.parameter_2)
+        elif self.is_fsm_state():
+            state_machine = self.parameter_1.get_value()  # type: StateMachine
+            return state_machine.current_state == self.parameter_2.get_value()
 
 
 class ConditionGroup(ConditionGroupAbstract, TimeStamped):
@@ -413,6 +416,20 @@ class ConditionGroup(ConditionGroupAbstract, TimeStamped):
                                                            condition_type=ConditionAbstract.COMPARISON,
                                                            parameter_1=parameter_1,
                                                            parameter_2=parameter_2, comparison_type=comparison_type)
+        self.save()
+        return condition
+
+    def add_fsm_state_condition(self, key_args_1, key_args_2) -> ConditionAbstract:
+        parameter_1 = self.game.get_parameter(key_args_1)
+        parameter_2 = self.game.get_parameter(key_args_2)
+        if not isinstance(parameter_1.get_value(), StateMachine):
+            raise ValueError('parameter_1 must be an instance of StateMachine')
+        if not isinstance(parameter_2.get_value(), State):
+            raise ValueError('parameter_2 must be an instance of State')
+        condition, created = self.conditions.get_or_create(game=self.game,
+                                                           condition_type=ConditionAbstract.FSM_STATE,
+                                                           parameter_1=parameter_1,
+                                                           parameter_2=parameter_2)
         self.save()
         return condition
 

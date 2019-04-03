@@ -1,11 +1,11 @@
 from gamedefinitions.interfaces import ComparisonConditionAbstract, RuleLibrary
-from games.models import Game, StateMachine
+from games.models import Game, StateMachine, State
 from core.models import Word
 from core.basics import PatternDeckBuilder
 
 
 class ClusterBuster(RuleLibrary):
-    WINNING_TOKENS_REQUIRED_TO_WIN = 2
+    WINNING_TOKENS_REQUIRED_TO_WIN = {'key': 'winning_tokens_required_to_win', 'value': 2}
     LOSING_TOKENS_REQUIRED_TO_LOSE = 2
     STARTING_WIN_TOKENS_PER_TEAM = 0
     STARTING_LOSE_TOKENS_PER_TEAM = 0
@@ -18,29 +18,15 @@ class ClusterBuster(RuleLibrary):
         :param game:
         :return:
         """
+        game.add_state_machine('fsm0', 'game_init')
         game.set_parameter_value('winning_tokens_required_to_win', ClusterBuster.WINNING_TOKENS_REQUIRED_TO_WIN)
         game.set_parameter_value('losing_tokens_required_to_lose', ClusterBuster.LOSING_TOKENS_REQUIRED_TO_LOSE)
-        game.set_parameter_value('teams_start_tokens', 0)
-        game.add_state_machine('draw_words_stage', 'fsm1')
         ClusterBuster.assign_team_win_tokens(game)
         ClusterBuster.assign_team_lose_tokens(game)
         ClusterBuster.set_win_condition(game)
         ClusterBuster.set_lose_condition(game)
-        # game.transit_state_machine('fsm0', 'game_play', 'game_ready')
-        trigger = game.add_trigger('draw_words')
-        condition_group = trigger.condition_group
-        condition_group.set_to_and_op()
-        for team in game.teams.all():
-            condition_group.add_comparison_condition(
-                'teams_start_tokens',
-                ('team_losing_tokens', team),
-                ComparisonConditionAbstract.EQUAL
-            )
-            condition_group.add_comparison_condition(
-                'teams_start_tokens',
-                ('team_winning_tokens', team),
-                ComparisonConditionAbstract.EQUAL
-            )
+        game.add_state_machine('fsm1', 'draw_words_stage')
+        ClusterBuster.game_ready(game)
 
     @staticmethod
     def assign_team_win_tokens(game: Game):
@@ -80,6 +66,15 @@ class ClusterBuster(RuleLibrary):
         :param game:
         :return:
         """
+        game_ready_state = State.objects.get(slug='game_play')
+        draw_words_stage_state = State.objects.get(slug='draw_words_stage')
+        game.set_parameter_value('game_ready_state', game_ready_state)
+        game.set_parameter_value('draw_words_stage_state', draw_words_stage_state)
+        trigger = game.add_trigger('draw_words')
+        condition_group = trigger.condition_group
+        condition_group.set_to_and_op()
+        condition_group.add_fsm_state_condition('fsm0', 'game_ready_state')
+        condition_group.add_fsm_state_condition('fsm1', 'draw_words_stage_state')
         game.transit_state_machine('fsm0', 'game_play', 'game_ready')
 
     @staticmethod

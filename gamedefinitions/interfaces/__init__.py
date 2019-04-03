@@ -10,10 +10,12 @@ class ConditionAbstractBase(models.Model):
     HAS_VALUE = 0
     BOOLEAN = 1
     COMPARISON = 2
+    FSM_STATE = 3
     CONDITION_TYPE_CHOICES = (
         (HAS_VALUE, "Has Value"),
         (BOOLEAN, "Boolean"),
         (COMPARISON, "Comparison"),
+        (FSM_STATE, "FSM State"),
     )
     condition_type = models.PositiveSmallIntegerField(_("Condition Operation"), choices=CONDITION_TYPE_CHOICES,
                                                       default=HAS_VALUE)
@@ -29,6 +31,9 @@ class ConditionAbstractBase(models.Model):
 
     def is_comparison(self):
         return self.condition_type == ConditionAbstract.COMPARISON
+
+    def is_fsm_state(self):
+        return self.condition_type == ConditionAbstract.FSM_STATE
 
     def passes(self):
         raise NotImplementedError('ConditionAbstract subclasses must override passes()')
