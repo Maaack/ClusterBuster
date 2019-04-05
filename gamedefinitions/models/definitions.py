@@ -35,6 +35,18 @@ class State(TimeStamped):
         return str(self.slug)
 
 
+class StateMachine(models.Model):
+    slug = models.SlugField(_("Slug"), max_length=32)
+    root_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
+
+    class Meta:
+        verbose_name = _("State Machine")
+        verbose_name_plural = _("State Machines")
+
+    def __str__(self):
+        return str(self.slug)
+
+
 class Transition(models.Model):
     label = models.SlugField(_("Label"), max_length=32)
     from_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="transitions_out")
@@ -52,8 +64,9 @@ class GameDefinition(TimeStamped):
     slug = models.SlugField(_("Slug"), max_length=64)
     title = models.CharField(_("Title"), max_length=128, default='')
     description = models.TextField(_("Description"), default='')
-    rules = models.ManyToManyField(Rule, blank=True, related_name="game_definitions")
     states = models.ManyToManyField(State, blank=True, related_name="game_definitions")
+    state_machines = models.ManyToManyField(StateMachine, blank=True, related_name="game_definitions")
+    rules = models.ManyToManyField(Rule, blank=True, related_name="game_definitions")
     first_rule = models.ForeignKey(Rule, on_delete=models.CASCADE, related_name='+')
 
     class Meta:
