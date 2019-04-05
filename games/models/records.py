@@ -35,6 +35,12 @@ class Game(GameAbstract, TimeStamped):
         super().__init__(*args, **kwargs)
         self.trigger_list = []
 
+    def __setup_state_parameters(self):
+        if self.game_definition:
+            for state in self.game_definition.states.all():
+                parameter_key = state.slug + "_state"
+                self.set_parameter_value(parameter_key, state)
+
     def __setup_code(self):
         if not self.code:
             self.code = CodeGenerator.game_code()
@@ -112,6 +118,7 @@ class Game(GameAbstract, TimeStamped):
         :return:
         """
         super(Game, self).setup(game_definition_slug, *args, **kwargs)
+        self.__setup_state_parameters()
         self.__setup_from_room(kwargs['room'])
         self.__setup_code()
         self.save()

@@ -56,7 +56,9 @@ class GameDefinition(TimeStamped):
     slug = models.SlugField(_("Slug"), max_length=64)
     title = models.CharField(_("Title"), max_length=128, default='')
     description = models.TextField(_("Description"), default='')
-    first_rule = models.ForeignKey(Rule, on_delete=models.CASCADE, related_name='game_definition')
+    rules = models.ManyToManyField(Rule, blank=True, related_name="game_definitions")
+    states = models.ManyToManyField(State, blank=True, related_name="game_definitions")
+    first_rule = models.ForeignKey(Rule, on_delete=models.CASCADE, related_name='+')
 
     class Meta:
         verbose_name = _("Game Definition")
@@ -68,6 +70,3 @@ class GameDefinition(TimeStamped):
 
     def __init__(self, *args, **kwargs):
         super(GameDefinition, self).__init__(*args, **kwargs)
-        self.state_rules = []
-        self.transition_rules = []
-

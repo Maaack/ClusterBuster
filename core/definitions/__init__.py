@@ -66,19 +66,11 @@ class ClusterBuster(RuleLibrary):
         :param game:
         :return:
         """
-        game_ready_state = State.objects.get(slug='game_play')
-        game.set_parameter_value('game_ready_state', game_ready_state)
-        draw_words_stage_state = State.objects.get(slug='draw_words_stage')
-        game.set_parameter_value('draw_words_stage_state', draw_words_stage_state)
-        rounds_stage_state = State.objects.get(slug='rounds_stage')
-        game.set_parameter_value('rounds_stage_state', rounds_stage_state)
-        draw_code_card_stage_state = State.objects.get(slug='draw_code_card_stage')
-        game.set_parameter_value('draw_code_card_stage_state', draw_code_card_stage_state)
         # Draw Words Trigger
         trigger = game.add_trigger('draw_words')
         condition_group = trigger.condition_group
         condition_group.set_to_and_op()
-        condition_group.add_fsm_state_condition('fsm0', 'game_ready_state')
+        condition_group.add_fsm_state_condition('fsm0', 'game_play_state')
         condition_group.add_fsm_state_condition('fsm1', 'draw_words_stage_state')
         # Rounds Trigger
         trigger = game.add_trigger('rounds_stage')
