@@ -148,8 +148,8 @@ class ClusterBuster(RuleLibrary):
             print(card, card.value)
             for card_i, value in enumerate(card.value):
                 game.set_parameter_value(('round', round_number, 'team', team, 'code', card_i + 1), value)
-        trigger = game.add_trigger('leaders_made_hints')
         # Team Leader Made Hints Trigger
+        trigger = game.add_trigger('leaders_made_hints')
         condition_group = trigger.condition_group
         condition_group.set_to_and_op()
         for team in game.teams.all():
@@ -162,20 +162,26 @@ class ClusterBuster(RuleLibrary):
     @staticmethod
     def leaders_made_hints(game: Game):
         game.transit_state_machine('fsm3', 'teams_guess_codes_stage', 'Leaders made hints')
-
-    @staticmethod
-    def teams_made_guesses(game: Game, state_machine: StateMachine):
         round_number = game.get_parameter_value('current_round_count')
-        conditional_transition = state_machine.add_conditional_transition('guesses_submitted',
-                                                                          'teams_share_guesses_stage')
-        conditional_transition.set_to_and_op()
+        fsm2 = game.get_parameter_value('fsm2')  # type: StateMachine
+        is_first_round = fsm2.current_state.slug == 'first_round'
+        # Team Players Made Guesses Trigger
+        trigger = game.add_trigger('teams_made_guesses')
+        condition_group = trigger.condition_group
+        condition_group.set_to_and_op()
         for guessing_team in game.teams.all():
             for hinting_team in game.teams.all():
+                if guessing_team != hinting_team and is_first_round:
+                    continue
                 for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
-                    conditional_transition.add_has_value_condition(
+                    condition_group.add_has_value_condition(
                         ('round', round_number, 'guessing_team', guessing_team, 'hinting_team', hinting_team, 'guess',
                          card_i + 1),
                     )
+
+    @staticmethod
+    def teams_made_guesses(game: Game):
+        game.transit_state_machine('fsm3', 'teams_share_guesses_stage', 'Players made guesses')
 
     @staticmethod
     def method_map(rule):
