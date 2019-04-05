@@ -226,12 +226,6 @@ class StateMachineAbstract(models.Model):
         self.current_state = state
         self.save()
 
-    def get_rules(self):
-        return self.current_state.rules
-
-    def get_transitions(self):
-        return self.current_state.transitions_out
-
     def transit(self, state: State, reason: str):
         raise NotImplementedError('StateMachineAbstract subclasses must override transit()')
 
