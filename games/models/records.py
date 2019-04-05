@@ -41,6 +41,12 @@ class Game(GameAbstract, TimeStamped):
                 parameter_key = state.slug + "_state"
                 self.set_parameter_value(parameter_key, state)
 
+    def __setup_state_machines(self):
+        if self.game_definition:
+            for state_machine in self.game_definition.state_machines.all():
+                parameter_key = state_machine.slug
+                self.add_state_machine(parameter_key, state_machine.root_state)
+
     def __setup_code(self):
         if not self.code:
             self.code = CodeGenerator.game_code()
@@ -119,6 +125,7 @@ class Game(GameAbstract, TimeStamped):
         """
         super(Game, self).setup(game_definition_slug, *args, **kwargs)
         self.__setup_state_parameters()
+        self.__setup_state_machines()
         self.__setup_from_room(kwargs['room'])
         self.__setup_code()
         self.save()
@@ -174,17 +181,13 @@ class Game(GameAbstract, TimeStamped):
         game_definition_slug = self.game_definition.slug
         return game_definition_slug + "_" + slug
 
-    def add_state_machine(self, key_args, state_slug: str):
+    def add_state_machine(self, key_args, state: State):
         """
         Adds a StateMachine to the Game object.
         :param key_args: mixed
-        :param state_slug: str
+        :param state: State
         :return:
         """
-        try:
-            state = State.objects.get(slug=state_slug)
-        except State.DoesNotExist:
-            raise ValueError('state_slug must match the label of an existing State')
         state_machine = self.state_machines.create(root_state=state, current_state=state)
         self.set_parameter_value(key_args, state_machine)
         return state_machine
@@ -445,7 +448,7 @@ class Trigger(TimeStamped):
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="triggers")
     condition_group = models.ForeignKey(ConditionGroup, on_delete=models.CASCADE, related_name="triggers")
     rule = models.ForeignKey(Rule, on_delete=models.CASCADE, related_name="+")
-    active = models.BooleanField(_("Active"), default=True)
+    active = models.BooleanField(_("Active"), db_index=True, default=True)
     repeats = models.BooleanField(_("Repeats"), default=False)
     trigger_count = models.PositiveSmallIntegerField(_("Trigger Count"), default=0)
 

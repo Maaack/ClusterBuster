@@ -18,15 +18,14 @@ class ClusterBuster(RuleLibrary):
         :param game:
         :return:
         """
-        game.add_state_machine('fsm0', 'game_init')
         game.set_parameter_value('winning_tokens_required_to_win', ClusterBuster.WINNING_TOKENS_REQUIRED_TO_WIN)
         game.set_parameter_value('losing_tokens_required_to_lose', ClusterBuster.LOSING_TOKENS_REQUIRED_TO_LOSE)
         ClusterBuster.assign_team_win_tokens(game)
         ClusterBuster.assign_team_lose_tokens(game)
         ClusterBuster.set_win_condition(game)
         ClusterBuster.set_lose_condition(game)
-        game.add_state_machine('fsm1', 'draw_words_stage')
         ClusterBuster.game_ready(game)
+        game.transit_state_machine('fsm1', 'draw_words_stage', 'Game ready')
 
     @staticmethod
     def assign_team_win_tokens(game: Game):
@@ -76,6 +75,10 @@ class ClusterBuster(RuleLibrary):
         trigger = game.add_trigger('rounds_stage')
         condition_group = trigger.condition_group
         condition_group.add_fsm_state_condition('fsm1', 'rounds_stage_state')
+        # Assign Team Leader Trigger
+        trigger = game.add_trigger('assign_team_leader')
+        condition_group = trigger.condition_group
+        condition_group.add_fsm_state_condition('fsm3', 'select_leader_stage_state')
         # Game Ready Transition
         game.transit_state_machine('fsm0', 'game_play', 'game ready')
 
@@ -110,19 +113,14 @@ class ClusterBuster(RuleLibrary):
                 for word_i, random_word in enumerate(random_words[start_word_i:end_word_i]):
                     game.set_parameter_value(('team', team, 'secret_word', word_i+1), str(random_word))
             game.set_parameter_value('word_cards_drawn', True)
-        # Rounds Stage Transition
-        game.transit_state_machine('fsm1', 'rounds_stage', 'secret words drawn')
+        game.transit_state_machine('fsm1', 'rounds_stage', 'Secret words drawn')
 
     @staticmethod
     def rounds_stage(game: Game):
         game.set_parameter_value('current_round_count', 1)
         game.set_parameter_value('last_round_count', 8)
-        game.add_state_machine('fsm2', 'first_round')
-        game.add_state_machine('fsm3', 'select_leader_stage')
-        # Assign Team Leader Trigger
-        trigger = game.add_trigger('assign_team_leader')
-        condition_group = trigger.condition_group
-        condition_group.add_fsm_state_condition('fsm3', 'select_leader_stage')
+        game.transit_state_machine('fsm2', 'first_round', 'Starting first round')
+        game.transit_state_machine('fsm3', 'select_leader_stage', 'Starting first round')
 
     @staticmethod
     def assign_team_leader(game: Game):
