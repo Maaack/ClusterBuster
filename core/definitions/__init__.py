@@ -148,30 +148,20 @@ class ClusterBuster(RuleLibrary):
             print(card, card.value)
             for card_i, value in enumerate(card.value):
                 game.set_parameter_value(('round', round_number, 'team', team, 'code', card_i+1), value)
-
-    @staticmethod
-    def code_numbers_drawn(game: Game, state_machine: StateMachine):
-        round_number = game.get_parameter_value('current_round_count')
-        conditional_transition = state_machine.add_conditional_transition('code_numbers_drawn',
-                                                                          'leaders_make_hints_stage')
-        conditional_transition.set_to_and_op()
+        trigger = game.add_trigger('leaders_made_hints')
+        # Team Leader Made Hints Trigger
+        condition_group = trigger.condition_group
+        condition_group.set_to_and_op()
         for team in game.teams.all():
             for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
-                conditional_transition.add_has_value_condition(
-                    ('round', round_number, 'team', team, 'code', card_i + 1),
-                )
-
-    @staticmethod
-    def leaders_made_hints(game: Game, state_machine: StateMachine):
-        round_number = game.get_parameter_value('current_round_count')
-        conditional_transition = state_machine.add_conditional_transition('hints_submitted',
-                                                                          'teams_share_guesses_stage')
-        conditional_transition.set_to_and_op()
-        for team in game.teams.all():
-            for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
-                conditional_transition.add_has_value_condition(
+                condition_group.add_has_value_condition(
                     ('round', round_number, 'team', team, 'hint', card_i + 1),
                 )
+        game.transit_state_machine('fsm3', 'leaders_make_hints_stage', 'Code numbers drawn')
+
+    @staticmethod
+    def leaders_made_hints(game: Game):
+        game.transit_state_machine('fsm3', 'teams_guess_codes_stage', 'Leaders made hints')
 
     @staticmethod
     def teams_made_guesses(game: Game, state_machine: StateMachine):
@@ -198,7 +188,6 @@ class ClusterBuster(RuleLibrary):
             'rounds_stage': ClusterBuster.rounds_stage,
             'assign_team_leader': ClusterBuster.assign_team_leader,
             'leaders_draw_code_numbers': ClusterBuster.leaders_draw_code_numbers,
-            'code_numbers_drawn': ClusterBuster.code_numbers_drawn,
             'leaders_made_hints': ClusterBuster.leaders_made_hints,
             'teams_made_guesses': ClusterBuster.teams_made_guesses,
         }[rule]
