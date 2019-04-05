@@ -115,7 +115,7 @@ class ClusterBuster(RuleLibrary):
                 start_word_i = ClusterBuster.SECRET_WORDS_PER_TEAM * team_i
                 end_word_i = start_word_i + ClusterBuster.SECRET_WORDS_PER_TEAM
                 for word_i, random_word in enumerate(random_words[start_word_i:end_word_i]):
-                    game.set_parameter_value(('team', team, 'secret_word', word_i+1), str(random_word))
+                    game.set_parameter_value(('team', team, 'secret_word', word_i + 1), str(random_word))
             game.set_parameter_value('word_cards_drawn', True)
         game.transit_state_machine('fsm1', 'rounds_stage', 'Secret words drawn')
 
@@ -147,7 +147,7 @@ class ClusterBuster(RuleLibrary):
             card = deck.draw()
             print(card, card.value)
             for card_i, value in enumerate(card.value):
-                game.set_parameter_value(('round', round_number, 'team', team, 'code', card_i+1), value)
+                game.set_parameter_value(('round', round_number, 'team', team, 'code', card_i + 1), value)
         trigger = game.add_trigger('leaders_made_hints')
         # Team Leader Made Hints Trigger
         condition_group = trigger.condition_group
@@ -173,7 +173,8 @@ class ClusterBuster(RuleLibrary):
             for hinting_team in game.teams.all():
                 for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
                     conditional_transition.add_has_value_condition(
-                        ('round', round_number, 'guessing_team', guessing_team, 'hinting_team', hinting_team, 'guess', card_i + 1),
+                        ('round', round_number, 'guessing_team', guessing_team, 'hinting_team', hinting_team, 'guess',
+                         card_i + 1),
                     )
 
     @staticmethod
