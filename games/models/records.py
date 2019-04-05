@@ -34,6 +34,7 @@ class Game(GameAbstract, TimeStamped):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.trigger_list = []
+        self.parameters_updated = False
 
     def __setup_state_parameters(self):
         if self.game_definition:
@@ -136,10 +137,13 @@ class Game(GameAbstract, TimeStamped):
             self.evaluate_rule(first_rule, rule_library)
 
     def update(self, rule_library: RuleLibrary):
-        self.trigger_list = list(self.triggers.all())
-        while len(self.trigger_list) > 0:
-            trigger = self.trigger_list.pop()
-            trigger.evaluate(rule_library)
+        self.parameters_updated = True
+        while self.parameters_updated:
+            self.parameters_updated = False
+            self.trigger_list = list(self.triggers.filter(active=True).all())
+            while len(self.trigger_list) > 0:
+                trigger = self.trigger_list.pop()
+                trigger.evaluate(rule_library)
 
     def evaluate_rule(self, rule: Rule, rule_library: RuleLibrary):
         rule_method = self.get_rule_method(rule, rule_library)
@@ -176,6 +180,7 @@ class Game(GameAbstract, TimeStamped):
         parameter = self.get_parameter(key_args)
         parameter.set_value(Game.__get_model_value(value))
         parameter.save()
+        self.parameters_updated = True
 
     def prepend_game_slug(self, slug):
         game_definition_slug = self.game_definition.slug
@@ -215,6 +220,7 @@ class Game(GameAbstract, TimeStamped):
         except State.DoesNotExist:
             raise ValueError('state_slug must match the label of an existing State')
         state_machine.transit(state, reason)
+        self.parameters_updated = True
 
 
 class StateMachine(StateMachineAbstract, TimeStamped):
