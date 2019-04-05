@@ -4,8 +4,8 @@
     "pk": 1,
     "fields": {
         "created": "2019-03-05T02:41:59.328Z",
-        "updated": "2019-03-05T02:42:51.528Z",
-        "slug": "cluster_buster_win_condition",
+        "updated": "2019-03-31T11:18:55.048Z",
+        "slug": "cluster_buster_team_won",
         "description": "If any team gets 2 winning tokens, they win the game. The opposing team loses."
     }
 },
@@ -14,8 +14,8 @@
     "pk": 2,
     "fields": {
         "created": "2019-03-05T02:42:22.021Z",
-        "updated": "2019-03-05T02:43:34.711Z",
-        "slug": "cluster_buster_lose_condition",
+        "updated": "2019-03-31T11:19:04.938Z",
+        "slug": "cluster_buster_team_lost",
         "description": "If any team gets 2 losing tokens, they lose the game."
     }
 },
@@ -134,7 +134,7 @@
     "pk": 14,
     "fields": {
         "created": "2019-03-13T01:25:01.969Z",
-        "updated": "2019-03-13T01:25:01.969Z",
+        "updated": "2019-03-24T21:31:52.491Z",
         "slug": "cluster_buster_leaders_made_hints",
         "description": "The round proceeds to the next stage when both team leaders have submitted their hints."
     }
@@ -154,14 +154,9 @@
     "pk": 1,
     "fields": {
         "created": "2019-03-03T02:43:13.979Z",
-        "updated": "2019-03-09T07:18:04.754Z",
-        "label": "game_init",
-        "name": "Game Initialization",
-        "rules": [
-            6,
-            4,
-            3
-        ]
+        "updated": "2019-03-29T08:36:18.734Z",
+        "slug": "game_init",
+        "name": "Game Initialization"
     }
 },
 {
@@ -170,12 +165,8 @@
     "fields": {
         "created": "2019-03-03T02:43:24.958Z",
         "updated": "2019-03-09T07:23:50.526Z",
-        "label": "game_play",
-        "name": "Game is in play",
-        "rules": [
-            2,
-            1
-        ]
+        "slug": "game_play",
+        "name": "Game is in play"
     }
 },
 {
@@ -184,9 +175,8 @@
     "fields": {
         "created": "2019-03-03T02:43:28.883Z",
         "updated": "2019-03-03T02:43:28.883Z",
-        "label": "game_over",
-        "name": "",
-        "rules": []
+        "slug": "game_over",
+        "name": ""
     }
 },
 {
@@ -195,12 +185,8 @@
     "fields": {
         "created": "2019-03-03T02:43:37.652Z",
         "updated": "2019-03-10T06:02:51.932Z",
-        "label": "draw_words_stage",
-        "name": "Teams Draw Secret Words",
-        "rules": [
-            10,
-            7
-        ]
+        "slug": "draw_words_stage",
+        "name": "Teams Draw Secret Words"
     }
 },
 {
@@ -209,11 +195,8 @@
     "fields": {
         "created": "2019-03-03T02:44:21.251Z",
         "updated": "2019-03-12T03:03:22.050Z",
-        "label": "rounds_stage",
-        "name": "",
-        "rules": [
-            11
-        ]
+        "slug": "rounds_stage",
+        "name": ""
     }
 },
 {
@@ -222,11 +205,8 @@
     "fields": {
         "created": "2019-03-03T02:45:37.564Z",
         "updated": "2019-03-12T03:18:25.205Z",
-        "label": "first_round",
-        "name": "",
-        "rules": [
-            5
-        ]
+        "slug": "first_round",
+        "name": ""
     }
 },
 {
@@ -235,9 +215,8 @@
     "fields": {
         "created": "2019-03-03T02:45:44.294Z",
         "updated": "2019-03-03T02:45:44.294Z",
-        "label": "middle_rounds",
-        "name": "",
-        "rules": []
+        "slug": "middle_rounds",
+        "name": ""
     }
 },
 {
@@ -246,9 +225,8 @@
     "fields": {
         "created": "2019-03-03T02:45:50.421Z",
         "updated": "2019-03-03T02:45:50.421Z",
-        "label": "last_round",
-        "name": "",
-        "rules": []
+        "slug": "last_round",
+        "name": ""
     }
 },
 {
@@ -257,12 +235,8 @@
     "fields": {
         "created": "2019-03-03T02:45:56.784Z",
         "updated": "2019-03-13T00:56:27.700Z",
-        "label": "select_leader_stage",
-        "name": "",
-        "rules": [
-            12,
-            8
-        ]
+        "slug": "select_leader_stage",
+        "name": ""
     }
 },
 {
@@ -271,12 +245,8 @@
     "fields": {
         "created": "2019-03-03T03:12:34.257Z",
         "updated": "2019-03-13T00:56:54.219Z",
-        "label": "draw_code_card_stage",
-        "name": "",
-        "rules": [
-            13,
-            9
-        ]
+        "slug": "draw_code_card_stage",
+        "name": ""
     }
 },
 {
@@ -285,11 +255,8 @@
     "fields": {
         "created": "2019-03-03T03:12:40.822Z",
         "updated": "2019-03-13T01:25:17.119Z",
-        "label": "leaders_make_hints_stage",
-        "name": "",
-        "rules": [
-            14
-        ]
+        "slug": "leaders_make_hints_stage",
+        "name": ""
     }
 },
 {
@@ -298,9 +265,8 @@
     "fields": {
         "created": "2019-03-03T03:12:50.372Z",
         "updated": "2019-03-03T03:12:50.372Z",
-        "label": "teams_share_hints_stage",
-        "name": "",
-        "rules": []
+        "slug": "teams_share_hints_stage",
+        "name": ""
     }
 },
 {
@@ -309,11 +275,8 @@
     "fields": {
         "created": "2019-03-03T03:12:58.252Z",
         "updated": "2019-03-24T22:15:15.667Z",
-        "label": "teams_guess_codes_stage",
-        "name": "",
-        "rules": [
-            15
-        ]
+        "slug": "teams_guess_codes_stage",
+        "name": ""
     }
 },
 {
@@ -322,9 +285,8 @@
     "fields": {
         "created": "2019-03-03T03:13:07.564Z",
         "updated": "2019-03-03T03:13:07.564Z",
-        "label": "teams_share_guesses_stage",
-        "name": "",
-        "rules": []
+        "slug": "teams_share_guesses_stage",
+        "name": ""
     }
 },
 {
@@ -333,9 +295,112 @@
     "fields": {
         "created": "2019-03-03T03:13:15.371Z",
         "updated": "2019-03-03T03:13:15.371Z",
-        "label": "score_teams_stage",
-        "name": "",
-        "rules": []
+        "slug": "score_teams_stage",
+        "name": ""
+    }
+},
+{
+    "model": "gamedefinitions.statemachine",
+    "pk": 1,
+    "fields": {
+        "slug": "fsm0",
+        "root_state": 1
+    }
+},
+{
+    "model": "gamedefinitions.statemachine",
+    "pk": 2,
+    "fields": {
+        "slug": "fsm1",
+        "root_state": 4
+    }
+},
+{
+    "model": "gamedefinitions.statemachine",
+    "pk": 3,
+    "fields": {
+        "slug": "fsm2",
+        "root_state": 6
+    }
+},
+{
+    "model": "gamedefinitions.statemachine",
+    "pk": 4,
+    "fields": {
+        "slug": "fsm3",
+        "root_state": 9
+    }
+},
+{
+    "model": "gamedefinitions.transition",
+    "pk": 1,
+    "fields": {
+        "label": "game_is_ready",
+        "from_state": 1,
+        "to_state": 2
+    }
+},
+{
+    "model": "gamedefinitions.transition",
+    "pk": 2,
+    "fields": {
+        "label": "team_lost",
+        "from_state": 2,
+        "to_state": 3
+    }
+},
+{
+    "model": "gamedefinitions.transition",
+    "pk": 3,
+    "fields": {
+        "label": "team_won",
+        "from_state": 2,
+        "to_state": 3
+    }
+},
+{
+    "model": "gamedefinitions.transition",
+    "pk": 4,
+    "fields": {
+        "label": "secret_words_drawn",
+        "from_state": 4,
+        "to_state": 5
+    }
+},
+{
+    "model": "gamedefinitions.transition",
+    "pk": 5,
+    "fields": {
+        "label": "code_numbers_drawn",
+        "from_state": 10,
+        "to_state": 11
+    }
+},
+{
+    "model": "gamedefinitions.transition",
+    "pk": 6,
+    "fields": {
+        "label": "guesses_submitted",
+        "from_state": 13,
+        "to_state": 14
+    }
+},
+{
+    "model": "gamedefinitions.transition",
+    "pk": 7,
+    "fields": {
+        "label": "hints_submitted",
+        "from_state": 11,
+        "to_state": 13
+    }
+},
+{
+    "model": "gamedefinitions.transition",
+    "pk": 9,
+    "fields": {
+        "label": "team_leader_assigned",
+        "from_state": 9,
+        "to_state": 10
     }
 },
 {
@@ -343,11 +408,51 @@
     "pk": 1,
     "fields": {
         "created": "2019-03-05T01:16:17.756Z",
-        "updated": "2019-03-05T05:28:29.773Z",
+        "updated": "2019-04-05T02:05:47.734Z",
         "slug": "cluster_buster",
         "title": "Cluster Buster v 0.1.0",
         "description": "Cluster Buster is based on Decrypto board game. Made for web.",
-        "root_state": 1
+        "first_rule": 6,
+        "states": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+        ],
+        "state_machines": [
+            1,
+            2,
+            3,
+            4
+        ],
+        "rules": [
+            15,
+            14,
+            13,
+            12,
+            11,
+            10,
+            9,
+            8,
+            7,
+            6,
+            5,
+            4,
+            3,
+            2,
+            1
+        ]
     }
 }
 ]
