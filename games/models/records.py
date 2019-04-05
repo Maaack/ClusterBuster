@@ -137,12 +137,13 @@ class Game(GameAbstract, TimeStamped):
             self.evaluate_rule(first_rule, rule_library)
 
     def update(self, rule_library: RuleLibrary):
+        self.trigger_list = list(self.triggers.filter(active=True).all())
         self.parameters_updated = True
         while self.parameters_updated:
+            active_trigger_list = self.trigger_list.copy()
             self.parameters_updated = False
-            self.trigger_list = list(self.triggers.filter(active=True).all())
-            while len(self.trigger_list) > 0:
-                trigger = self.trigger_list.pop()
+            while len(active_trigger_list) > 0:
+                trigger = active_trigger_list.pop()
                 trigger.evaluate(rule_library)
 
     def evaluate_rule(self, rule: Rule, rule_library: RuleLibrary):
@@ -211,6 +212,7 @@ class Game(GameAbstract, TimeStamped):
             raise ValueError('rule_slug must match the label of an existing Rule')
         trigger = self.triggers.create(condition_group=condition_group, rule=rule)
         self.trigger_list.append(trigger)
+        self.parameters_updated = True
         return trigger
 
     def transit_state_machine(self, key_args, state_slug: str, reason: str):
