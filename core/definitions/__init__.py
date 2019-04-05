@@ -79,6 +79,10 @@ class ClusterBuster(RuleLibrary):
         trigger = game.add_trigger('assign_team_leader')
         condition_group = trigger.condition_group
         condition_group.add_fsm_state_condition('fsm3', 'select_leader_stage_state')
+        # Assign Team Leader Trigger
+        trigger = game.add_trigger('leaders_draw_code_numbers')
+        condition_group = trigger.condition_group
+        condition_group.add_fsm_state_condition('fsm3', 'draw_code_card_stage_state')
         # Game Ready Transition
         game.transit_state_machine('fsm0', 'game_play', 'game ready')
 
@@ -127,14 +131,10 @@ class ClusterBuster(RuleLibrary):
         round_number = game.get_parameter_value('current_round_count')
         for team in game.teams.all():
             player_count = team.players.count()
-            offset = round_number % player_count
+            offset = (round_number - 1) % player_count
             round_leader = team.players.all()[offset]
             game.set_parameter_value(('round', round_number, 'team', team, 'leader'), round_leader)
         game.transit_state_machine('fsm3', 'draw_code_card_stage', 'team leaders assigned')
-        # Assign Team Leader Trigger
-        trigger = game.add_trigger('leaders_draw_code_numbers')
-        condition_group = trigger.condition_group
-        condition_group.add_fsm_state_condition('fsm3', 'draw_code_card_stage_state')
 
     @staticmethod
     def leaders_draw_code_numbers(game: Game):
