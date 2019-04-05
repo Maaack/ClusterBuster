@@ -3,7 +3,7 @@ from django.views import generic
 from django.urls import reverse_lazy
 
 from rooms.models import Room
-from games.models import Game
+from games.models import Game, StateMachine
 from core.definitions import ClusterBuster
 
 from rooms.views.mixins import CheckPlayerView
@@ -83,7 +83,9 @@ class LeaderHintsFormView(GameFormAbstractView):
         response = super().dispatch(request, *args, **kwargs)
         if not self.is_round_team_leader():
             return redirect('room_detail', slug=kwargs['slug'])
-        # TODO: Check if is in leader hint stage
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
+        if fsm3.current_state.slug != 'leaders_make_hints_stage':
+            return redirect('room_detail', slug=kwargs['slug'])
         return response
 
     def get_context_data(self, **kwargs):
@@ -125,6 +127,7 @@ class LeaderHintsFormView(GameFormAbstractView):
                 ('round', round_number, 'team', team, 'hint', card_i + 1),
                 hints[card_i]
             )
+        self.game.update(ClusterBuster)
         return super().form_valid(form)
 
 
@@ -134,10 +137,12 @@ class PlayerGuessesFormView(GameFormAbstractView):
 
     def dispatch(self, request, *args, **kwargs):
         response = super().dispatch(request, *args, **kwargs)
-        # TODO: Check if player is leader guessing own hints
+        # TODO: Check if player is leader guessing own hints. Currently not letting leaders guess on any hints
         if self.is_round_team_leader():
             return redirect('room_detail', slug=kwargs['slug'])
-        # TODO: Check if is in player guess stage
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
+        if fsm3.current_state.slug != 'teams_guess_codes_stage':
+            return redirect('room_detail', slug=kwargs['slug'])
         return response
 
     def is_round_team_leader(self):
