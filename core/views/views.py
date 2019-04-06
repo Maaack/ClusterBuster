@@ -145,9 +145,37 @@ class PlayerGuessesFormView(GameFormAbstractView):
             return redirect('room_detail', slug=kwargs['slug'])
         return response
 
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        hints = []
+        secret_words = []
+        for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+            hint = self.game.get_parameter_value(
+                ('round', self.round_number, 'team', self.team, 'hint', card_i + 1)
+            )
+            hints.append(hint)
+        for word_i in range(ClusterBuster.SECRET_WORDS_PER_TEAM):
+            secret_word_num = word_i + 1
+            secret_word = self.game.get_parameter_value(('team', self.team, 'secret_word', secret_word_num))
+            secret_words.append({secret_word_num: secret_word})
+        data['hints'] = hints
+        data['secret_words'] = secret_words
+        return data
+
     def is_round_team_leader(self):
         if self.player is None or self.team is None:
             return False
         round_team_leader = self.game.get_parameter_value(('round', self.round_number, 'team', self.team, 'leader'))
         return round_team_leader == self.player
 
+    def form_valid(self, form):
+        guesses = [form.cleaned_data['guess_1'], form.cleaned_data['guess_2'], form.cleaned_data['guess_3']]
+        for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+            self.game.set_parameter_value(
+                (
+                    'round', self.round_number, 'guessing_team', self.team, 'hinting_team', self.team, 'guess',
+                    card_i + 1),
+                guesses[card_i]
+            )
+        self.game.update(ClusterBuster)
+        return super().form_valid(form)

@@ -3,6 +3,8 @@
 {% block head_title %}Submit guesses{% endblock %}
 {% block content %}
     <h1>Submit Your Guesses</h1>
+        {{ secret_words }}
+        {{ hints }}
     <form class="hints" method="post">
         {% csrf_token %}
         {{ form.as_p }}
