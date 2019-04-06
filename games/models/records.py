@@ -64,10 +64,7 @@ class Game(GameAbstract, TimeStamped):
 
     @staticmethod
     def __get_value_param_type(raw_value):
-        if isinstance(
-                raw_value, int) or isinstance(
-                raw_value, float) or isinstance(
-                raw_value, str) or isinstance(
+        if isinstance(raw_value, int) or isinstance(raw_value, float) or isinstance(raw_value, str) or isinstance(
                 raw_value, bool):
             return MixedValue
         else:
@@ -336,7 +333,7 @@ class Parameter(TimeStamped, ParameterAbstract):
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="parameters")
     key = models.SlugField(_("Key"), max_length=255, db_index=True)
     value = GenericForeignKey('content_type', 'object_id')
-    object_id = models.PositiveIntegerField(_('Object ID'), blank=True, null=True,)
+    object_id = models.PositiveIntegerField(_('Object ID'), blank=True, null=True)
     content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, blank=True, null=True)
 
     class Meta:
