@@ -1,6 +1,5 @@
 from django.shortcuts import get_object_or_404, redirect, reverse
 from django.views import generic
-from django.urls import reverse_lazy
 
 from rooms.models import Room
 from games.models import Game, StateMachine
@@ -44,7 +43,6 @@ class GameViewAbstract(CheckPlayerView):
         abstract = True
 
     def __init__(self):
-        self.room = None
         self.game = None
         self.player = None
         self.team = None
@@ -52,10 +50,13 @@ class GameViewAbstract(CheckPlayerView):
         super().__init__()
 
     def dispatch(self, request, *args, **kwargs):
-        self.room = get_object_or_404(Room, code=kwargs['slug'])
-        self.game = Game.objects.filter(room=self.room).first()
+        self.game = get_object_or_404(Game, code=kwargs['slug'])
         self.player = self.get_current_player()
+        if self.player is None:
+            return redirect('room_detail', slug=self.game.room.code)
         self.team = self.get_current_player_team()
+        if self.team is None:
+            return redirect('room_detail', slug=self.game.room.code)
         self.round_number = self.game.get_parameter_value('current_round_count')
         return super().dispatch(request, *args, **kwargs)
 
@@ -67,7 +68,7 @@ class GameViewAbstract(CheckPlayerView):
         return None
 
 
-class GameDetail(generic.DetailView):
+class GameDetail(generic.DetailView, GameViewAbstract):
     model = Game
     slug_field = 'code'
     template_name = 'core/game_detail.html'
