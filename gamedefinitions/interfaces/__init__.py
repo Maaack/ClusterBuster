@@ -163,51 +163,30 @@ class ConditionGroupAbstract(models.Model):
         abstract = True
 
     def is_or_op(self):
-        return self.boolean_op == ConditionalTransitionAbstract.OR_OP
+        return self.boolean_op == ConditionGroupAbstract.OR_OP
 
     def is_and_op(self):
-        return self.boolean_op == ConditionalTransitionAbstract.AND_OP
+        return self.boolean_op == ConditionGroupAbstract.AND_OP
 
     def set_to_or_op(self):
-        self.boolean_op = ConditionalTransitionAbstract.OR_OP
+        self.boolean_op = ConditionGroupAbstract.OR_OP
         self.save()
 
     def set_to_and_op(self):
-        self.boolean_op = ConditionalTransitionAbstract.AND_OP
+        self.boolean_op = ConditionGroupAbstract.AND_OP
         self.save()
 
     def passes(self):
-        raise NotImplementedError('ConditionalTransitionalAbstract subclasses must override passes()')
+        raise NotImplementedError('ConditionGroupAbstract subclasses must override passes()')
 
     def add_has_value_condition(self, key_dict) -> ConditionAbstract:
-        raise NotImplementedError('ConditionalTransitionAbstract subclasses must override add_boolean_condition()')
+        raise NotImplementedError('ConditionGroupAbstract subclasses must override add_boolean_condition()')
 
     def add_boolean_condition(self, key_dict) -> ConditionAbstract:
-        raise NotImplementedError('ConditionalTransitionAbstract subclasses must override add_boolean_condition()')
+        raise NotImplementedError('ConditionGroupAbstract subclasses must override add_boolean_condition()')
 
     def add_comparison_condition(self, key_dict_1, key_dict_2, comparison) -> ConditionAbstract:
-        raise NotImplementedError('ConditionalTransitionAbstract subclasses must override add_comparison_condition()')
-
-
-class ConditionalTransitionAbstract(ConditionGroupAbstract):
-    label = models.SlugField(_("Label"), max_length=32)
-    from_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
-    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
-
-    class Meta:
-        abstract = True
-
-    def passes(self):
-        raise NotImplementedError('ConditionalTransitionalAbstract subclasses must override passes()')
-
-    def add_has_value_condition(self, key_dict) -> ConditionAbstract:
-        raise NotImplementedError('ConditionalTransitionAbstract subclasses must override add_boolean_condition()')
-
-    def add_boolean_condition(self, key_dict) -> ConditionAbstract:
-        raise NotImplementedError('ConditionalTransitionAbstract subclasses must override add_boolean_condition()')
-
-    def add_comparison_condition(self, key_dict_1, key_dict_2, comparison) -> ConditionAbstract:
-        raise NotImplementedError('ConditionalTransitionAbstract subclasses must override add_comparison_condition()')
+        raise NotImplementedError('ConditionGroupAbstract subclasses must override add_comparison_condition()')
 
 
 class StateMachineAbstract(models.Model):

@@ -8,8 +8,7 @@ from clusterbuster.mixins import TimeStamped, CodeGenerator
 from rooms.models import Player, Team, Room
 from gamedefinitions.models import State, Rule
 from gamedefinitions.interfaces import (
-    StateMachineAbstract, GameAbstract, ConditionAbstract, ParameterAbstract, ConditionGroupAbstract,
-    ConditionalTransitionAbstract, RuleLibrary
+    StateMachineAbstract, GameAbstract, ConditionAbstract, ParameterAbstract, ConditionGroupAbstract, RuleLibrary
 )
 
 
@@ -241,23 +240,6 @@ class StateMachine(StateMachineAbstract, TimeStamped):
         self.set_state(to_state)
         self.save()
 
-    def evaluate_conditions(self):
-        for conditional_transition in self.conditional_transitions.all():
-            if conditional_transition.from_state == self.current_state and conditional_transition.passes():
-                to_state = conditional_transition.to_state
-                self.transit(to_state, str(conditional_transition))
-
-    def get_game_parameter(self, key_args):
-        return self.game.get_parameter(key_args)
-
-    def add_conditional_transition(self, label: str, to_state_slug: str):
-        from_state = self.get_state()
-        to_state = State.objects.get(label=to_state_slug)
-        conditional_transition, created = self.conditional_transitions.get_or_create(state_machine=self, label=label,
-                                                                                     from_state=from_state,
-                                                                                     to_state=to_state)
-        return conditional_transition
-
 
 class Transition(TimeStamped):
     """
@@ -472,49 +454,3 @@ class Trigger(TimeStamped):
             if self.repeats is False:
                 self.active = False
             self.save()
-
-
-class ConditionalTransition(ConditionalTransitionAbstract, TimeStamped):
-    state_machine = models.ForeignKey(StateMachine, on_delete=models.CASCADE, related_name="conditional_transitions")
-    conditions = models.ManyToManyField(Condition, related_name="conditional_transitions")
-
-    class Meta:
-        unique_together = ('state_machine', 'label', 'from_state', 'to_state')
-
-    def passes(self):
-        for condition in self.conditions.all():
-            if condition.passes():
-                if self.is_or_op():
-                    return True
-            elif self.is_and_op():
-                return False
-        if self.is_or_op():
-            return False
-        return True
-
-    def add_has_value_condition(self, key_args) -> ConditionAbstract:
-        parameter = self.state_machine.get_game_parameter(key_args)
-        condition, created = self.conditions.get_or_create(game=self.state_machine.game,
-                                                           condition_type=ConditionAbstract.HAS_VALUE,
-                                                           parameter_1=parameter)
-        self.save()
-        return condition
-
-    def add_boolean_condition(self, key_args) -> ConditionAbstract:
-        parameter = self.state_machine.get_game_parameter(key_args)
-        condition, created = self.conditions.get_or_create(game=self.state_machine.game,
-                                                           condition_type=ConditionAbstract.BOOLEAN,
-                                                           parameter_1=parameter)
-        self.save()
-        return condition
-
-    def add_comparison_condition(self, key_args_1, key_args_2, comparison_type) -> ConditionAbstract:
-        parameter_1 = self.state_machine.get_game_parameter(key_args_1)
-        parameter_2 = self.state_machine.get_game_parameter(key_args_2)
-        condition, created = self.conditions.get_or_create(game=self.state_machine.game,
-                                                           condition_type=ConditionAbstract.COMPARISON,
-                                                           parameter_1=parameter_1,
-                                                           parameter_2=parameter_2, comparison_type=comparison_type)
-        self.save()
-        return condition
-
