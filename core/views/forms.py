@@ -8,8 +8,7 @@ class LeaderHintsForm(forms.Form):
 
 
 class PlayerGuessForm(forms.Form):
-    NUMBER_CHOICES = ((1, "1"),(2, "2"),(3, "3"),(4, "4"))
+    NUMBER_CHOICES = ((1, "1"), (2, "2"), (3, "3"), (4, "4"))
     guess_1 = forms.ChoiceField(choices=NUMBER_CHOICES)
     guess_2 = forms.ChoiceField(choices=NUMBER_CHOICES)
     guess_3 = forms.ChoiceField(choices=NUMBER_CHOICES)
-

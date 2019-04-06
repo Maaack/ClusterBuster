@@ -93,7 +93,8 @@ class LeaderHintsFormView(GameFormAbstractView):
         code_numbers = []
         code_words = []
         for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
-            code_number = self.game.get_parameter_value(('round', self.round_number, 'team', self.team, 'code', card_i + 1))
+            code_number = self.game.get_parameter_value(
+                ('round', self.round_number, 'team', self.team, 'code', card_i + 1))
             code_numbers.append(code_number)
             secret_word = self.game.get_parameter_value(('team', self.team, 'secret_word', code_number))
             code_words.append(str(secret_word))
@@ -105,9 +106,11 @@ class LeaderHintsFormView(GameFormAbstractView):
         initial_data = super().get_initial()
         hint_keys = ['hint_1', 'hint_2', 'hint_3']
         for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
-            current_hint = self.game.get_parameter_value(('round', self.round_number, 'team', self.team, 'hint', card_i + 1))
+            current_hint = self.game.get_parameter_value(
+                ('round', self.round_number, 'team', self.team, 'hint', card_i + 1))
             if current_hint is None:
-                code_number = self.game.get_parameter_value(('round', self.round_number, 'team', self.team, 'code', card_i + 1))
+                code_number = self.game.get_parameter_value(
+                    ('round', self.round_number, 'team', self.team, 'code', card_i + 1))
                 current_hint = self.game.get_parameter_value(('team', self.team, 'secret_word', code_number))
             initial_data[hint_keys[card_i]] = str(current_hint)
         return initial_data
@@ -120,11 +123,9 @@ class LeaderHintsFormView(GameFormAbstractView):
 
     def form_valid(self, form):
         hints = [form.cleaned_data['hint_1'], form.cleaned_data['hint_2'], form.cleaned_data['hint_3']]
-        round_number = self.game.get_parameter_value('current_round_count')
-        team = self.get_current_player_team()
         for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
             self.game.set_parameter_value(
-                ('round', round_number, 'team', team, 'hint', card_i + 1),
+                ('round', self.round_number, 'team', self.team, 'hint', card_i + 1),
                 hints[card_i]
             )
         self.game.update(ClusterBuster)
