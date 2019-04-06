@@ -37,6 +37,14 @@
         {% endif %}
     </div>
     <div id="room-details">
+        <div id="room-current-activity">
+            {% if room.current_activity %}
+                <h2>Current Activity</h2>
+                <a href="{{ room.current_activity.link }}">{{ room.current_activity.name }}</a>
+            {% else %}
+                <h2>No Current Activity</h2>
+            {% endif %}
+        </div>
         <h2>Players</h2>
         <ul>
             {% for player_extra in players %}
@@ -48,7 +56,7 @@
                         (You)
                     {% endif %}
                 </li>
-                {% empty %}
+            {% empty %}
                 <p>No players yet...</p>
             {% endfor %}
         </ul>
@@ -63,7 +71,7 @@
                     <p>No players yet...</p>
                 {% endfor %}
             </ul>
-            {% empty %}
+        {% empty %}
             <p>No teams yet...</p>
         {% endfor %}
         {% block room_details %}{% endblock %}

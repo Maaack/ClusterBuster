@@ -93,6 +93,7 @@ class Room(TimeStamped, SessionOptional):
     code = models.SlugField(_("Code"), max_length=16)
     players = models.ManyToManyField(Player, blank=True)
     teams = models.ManyToManyField(Team, blank=True)
+    current_activity = models.ForeignKey("Activity", on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
 
     objects = models.Manager()
     active_rooms = ActiveRoomManager()
@@ -229,3 +230,27 @@ class Room(TimeStamped, SessionOptional):
             team = self.get_default_team()
         team.join(player)
         self.save()
+
+    def start_activity(self, name: str, link: str):
+        activity = self.activities.create(name=name, link=link)
+        self.current_activity = activity
+        self.save()
+
+
+class Activity(TimeStamped):
+    """
+    Activities tie Rooms to something else.
+    """
+
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='activities')
+    name = models.CharField(_("Name"), max_length=64)
+    link = models.URLField(_("Link"))
+
+    class Meta:
+        verbose_name = _("Activity")
+        verbose_name_plural = _("Activities")
+        ordering = ["-created"]
+
+    def __str__(self):
+        return str(self.name) + " (" + str(self.link) + ")"
+

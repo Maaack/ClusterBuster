@@ -60,6 +60,7 @@ class Game(GameAbstract, TimeStamped):
         self.room = room
         self.players.set(room.players.all())
         self.teams.set(room.teams.all())
+        self.room.start_activity('Cluster Buster', '/')
 
     @staticmethod
     def __get_value_param_type(raw_value):
@@ -126,8 +127,8 @@ class Game(GameAbstract, TimeStamped):
         super(Game, self).setup(game_definition_slug, *args, **kwargs)
         self.__setup_state_parameters()
         self.__setup_state_machines()
-        self.__setup_from_room(kwargs['room'])
         self.__setup_code()
+        self.__setup_from_room(kwargs['room'])
         self.save()
 
     def start(self, rule_library: RuleLibrary):
