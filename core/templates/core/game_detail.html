@@ -2,15 +2,8 @@
 
 {% block head_title %}Game {{ game.pk }}{% endblock %}
 {% block content %}
-<h1>Game {{ game.pk }}</h1>
-<a href="{% url 'gameroom_detail' game.room.code %}">Room {{ game.room.code }}</a>
+<h1>Game {{ game.code }}</h1>
 
-<h3>Players</h3>
-<ul>
-    {% for player in game.players.all %}
-        <li>{{ player.name }}</li>
-    {% endfor %}
-</ul>
 <h3>Teams</h3>
 {% for team in game.teams.all %}
     Team {{ forloop.counter }}
@@ -29,5 +22,3 @@
     {% endfor %}
 </ul>
 {% endblock %}
-</body>
-</html>

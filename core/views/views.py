@@ -67,6 +67,12 @@ class GameViewAbstract(CheckPlayerView):
         return None
 
 
+class GameDetail(generic.DetailView):
+    model = Game
+    slug_field = 'code'
+    template_name = 'core/game_detail.html'
+
+
 class GameFormAbstractView(generic.FormView, GameViewAbstract):
     class Meta:
         abstract = True

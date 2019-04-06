@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.urls import reverse
 
 from clusterbuster.mixins import TimeStamped, CodeGenerator
 
@@ -60,7 +61,8 @@ class Game(GameAbstract, TimeStamped):
         self.room = room
         self.players.set(room.players.all())
         self.teams.set(room.teams.all())
-        self.room.start_activity('Cluster Buster', '/')
+        game_url = reverse('game_detail', kwargs={'slug': self.code})
+        self.room.start_activity('Cluster Buster', game_url)
 
     @staticmethod
     def __get_value_param_type(raw_value):
