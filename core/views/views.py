@@ -73,13 +73,18 @@ class GameDetail(generic.DetailView, GameViewAbstract):
     slug_field = 'code'
     template_name = 'core/game_detail.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        self.game.update(ClusterBuster)
+        return response
+
 
 class GameFormAbstractView(generic.FormView, GameViewAbstract):
     class Meta:
         abstract = True
 
     def get_success_url(self):
-        return reverse('room_detail', kwargs={'slug': self.room.code})
+        return reverse('game_detail', kwargs={'slug': self.game.code})
 
 
 class LeaderHintsFormView(GameFormAbstractView):
