@@ -3,7 +3,17 @@
 {% block head_title %}Game {{ game.pk }}{% endblock %}
 {% block content %}
 <h1>Game {{ game.code }}</h1>
-
+        <div id="game-options">
+        {% if show_leader_hints_form_link %}
+            <div id="round-leader-options">
+                <a href="{% url 'leader_hints' game.code %}">Submit Leader Hints</a>
+            </div>
+            {% elif show_player_guesses_form_link %}
+            <div id="round-player-options">
+                <a href="{% url 'player_guesses' game.code %}">Submit Guesses</a>
+            </div>
+        {% endif %}
+    </div>
 <h3>Teams</h3>
 {% for team in game.teams.all %}
     Team {{ forloop.counter }}

@@ -67,6 +67,12 @@ class GameViewAbstract(CheckPlayerView):
                 return team
         return None
 
+    def is_round_team_leader(self):
+        if self.player is None or self.team is None:
+            return False
+        round_team_leader = self.game.get_parameter_value(('round', self.round_number, 'team', self.team, 'leader'))
+        return round_team_leader == self.player
+
 
 class GameDetail(generic.DetailView, GameViewAbstract):
     model = Game
@@ -77,6 +83,19 @@ class GameDetail(generic.DetailView, GameViewAbstract):
         response = super().dispatch(request, *args, **kwargs)
         self.game.update(ClusterBuster)
         return response
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        show_leader_hints_form_link = False
+        show_player_guesses_form_link = False
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
+        if fsm3.current_state.slug == 'leaders_make_hints_stage' and self.is_round_team_leader():
+            show_leader_hints_form_link = True
+        elif fsm3.current_state.slug == 'teams_guess_codes_stage' and not self.is_round_team_leader():
+            show_player_guesses_form_link = True
+        data['show_leader_hints_form_link'] = show_leader_hints_form_link
+        data['show_player_guesses_form_link'] = show_player_guesses_form_link
+        return data
 
 
 class GameFormAbstractView(generic.FormView, GameViewAbstract):
@@ -127,12 +146,6 @@ class LeaderHintsFormView(GameFormAbstractView):
             initial_data[hint_keys[card_i]] = str(current_hint)
         return initial_data
 
-    def is_round_team_leader(self):
-        if self.player is None or self.team is None:
-            return False
-        round_team_leader = self.game.get_parameter_value(('round', self.round_number, 'team', self.team, 'leader'))
-        return round_team_leader == self.player
-
     def form_valid(self, form):
         hints = [form.cleaned_data['hint_1'], form.cleaned_data['hint_2'], form.cleaned_data['hint_3']]
         for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
@@ -174,12 +187,6 @@ class PlayerGuessesFormView(GameFormAbstractView):
         data['hints'] = hints
         data['secret_words'] = secret_words
         return data
-
-    def is_round_team_leader(self):
-        if self.player is None or self.team is None:
-            return False
-        round_team_leader = self.game.get_parameter_value(('round', self.round_number, 'team', self.team, 'leader'))
-        return round_team_leader == self.player
 
     def form_valid(self, form):
         guesses = [form.cleaned_data['guess_1'], form.cleaned_data['guess_2'], form.cleaned_data['guess_3']]
