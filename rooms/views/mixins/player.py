@@ -9,6 +9,11 @@ class CheckPlayerView(View):
 
     model = Player
 
+    def save_player_to_session(self, player):
+        if isinstance(player, Player):
+            self.request.session['player_id'] = player.pk
+            self.request.session['player_name'] = player.name
+
     def is_current_player(self, player):
         return self.get_current_player() == player
 
@@ -19,17 +24,21 @@ class CheckPlayerView(View):
                 return Player.objects.get(pk=player_id)
             except Player.DoesNotExist:
                 return None
-        return None
+        else:
+            if self.request.session.session_key is None:
+                self.request.session.save()
+            session_key = self.request.session.session_key
+            try:
+                player = Player.objects.get(session_id=session_key)
+                self.save_player_to_session(player)
+                return player
+            except Player.DoesNotExist:
+                return None
 
 
-class AssignPlayerView(generic.edit.FormMixin, View):
+class AssignPlayerView(generic.edit.FormMixin, CheckPlayerView):
     class Meta:
         abstract = True
-
-    def assign_player(self, player):
-        if isinstance(player, Player):
-            self.request.session['player_id'] = player.pk
-            self.request.session['player_name'] = player.name
 
     def form_valid(self, form):
         self.request.session.save()
@@ -39,7 +48,7 @@ class AssignPlayerView(generic.edit.FormMixin, View):
     def get_success_url(self):
         if isinstance(self.object, Player):
             player = self.object
-            self.assign_player(player)
+            self.save_player_to_session(player)
             return reverse('player_detail', kwargs={'pk': self.object.pk})
         return reverse('player_list')
 
