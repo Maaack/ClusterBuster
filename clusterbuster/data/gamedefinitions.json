@@ -254,9 +254,9 @@
     "pk": 11,
     "fields": {
         "created": "2019-03-03T03:12:40.822Z",
-        "updated": "2019-03-13T01:25:17.119Z",
+        "updated": "2019-04-10T22:40:44.826Z",
         "slug": "leaders_make_hints_stage",
-        "name": ""
+        "name": "Hint Making"
     }
 },
 {
@@ -264,9 +264,9 @@
     "pk": 12,
     "fields": {
         "created": "2019-03-03T03:12:50.372Z",
-        "updated": "2019-03-03T03:12:50.372Z",
+        "updated": "2019-04-10T22:40:56.246Z",
         "slug": "teams_share_hints_stage",
-        "name": ""
+        "name": "Teams Share Hints"
     }
 },
 {
@@ -274,9 +274,9 @@
     "pk": 13,
     "fields": {
         "created": "2019-03-03T03:12:58.252Z",
-        "updated": "2019-03-24T22:15:15.667Z",
+        "updated": "2019-04-10T22:41:06.270Z",
         "slug": "teams_guess_codes_stage",
-        "name": ""
+        "name": "Teams Guess Codes"
     }
 },
 {
@@ -284,9 +284,9 @@
     "pk": 14,
     "fields": {
         "created": "2019-03-03T03:13:07.564Z",
-        "updated": "2019-03-03T03:13:07.564Z",
+        "updated": "2019-04-10T22:41:19.525Z",
         "slug": "teams_share_guesses_stage",
-        "name": ""
+        "name": "Teams Share Guesses"
     }
 },
 {
@@ -294,9 +294,9 @@
     "pk": 15,
     "fields": {
         "created": "2019-03-03T03:13:15.371Z",
-        "updated": "2019-03-03T03:13:15.371Z",
+        "updated": "2019-04-10T22:41:31.309Z",
         "slug": "score_teams_stage",
-        "name": ""
+        "name": "Teams Getting Scored"
     }
 },
 {
@@ -312,7 +312,7 @@
     "pk": 2,
     "fields": {
         "slug": "fsm1",
-        "root_state": 4
+        "root_state": 1
     }
 },
 {
@@ -320,7 +320,7 @@
     "pk": 3,
     "fields": {
         "slug": "fsm2",
-        "root_state": 6
+        "root_state": 1
     }
 },
 {
@@ -328,7 +328,7 @@
     "pk": 4,
     "fields": {
         "slug": "fsm3",
-        "root_state": 9
+        "root_state": 1
     }
 },
 {
