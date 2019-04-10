@@ -59,6 +59,6 @@ class CreatePlayerAndJoinRoom(AssignPlayerView, generic.CreateView):
     def get_success_url(self):
         if isinstance(self.object, Player):
             player = self.object
-            self.assign_player(player)
+            self.save_player_to_session(player)
             return reverse('join_room', kwargs={'slug': self.code})
         return reverse('room_detail', kwargs={'slug': self.code})
