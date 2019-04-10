@@ -19,7 +19,7 @@ class PlayerCreate(AssignPlayerView, generic.CreateView):
         return super(PlayerCreate, self).dispatch(request, *args, **kwargs)
 
 
-class PlayerUpdate(AssignPlayerView, CheckPlayerView, generic.UpdateView):
+class PlayerUpdate(AssignPlayerView, generic.UpdateView):
     model = Player
     fields = ['name']
 
@@ -40,7 +40,7 @@ class PlayerDetail(generic.DetailView, CheckPlayerView):
         return data
 
 
-class CreatePlayerAndJoinRoom(AssignPlayerView, CheckPlayerView, generic.CreateView):
+class CreatePlayerAndJoinRoom(AssignPlayerView, generic.CreateView):
     model = Player
     fields = ['name']
 
