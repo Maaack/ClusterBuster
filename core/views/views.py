@@ -67,6 +67,14 @@ class GameViewAbstract(CheckPlayerView):
                 return team
         return None
 
+    def get_secret_words_data(self):
+        secret_words = []
+        for word_i in range(ClusterBuster.SECRET_WORDS_PER_TEAM):
+            secret_word_number = word_i + 1
+            secret_word = self.game.get_parameter_value(('team', self.team, 'secret_word', secret_word_number))
+            secret_words.append(str(secret_word))
+        return secret_words
+
     def is_round_team_leader(self):
         if self.player is None or self.team is None:
             return False
@@ -95,6 +103,10 @@ class GameDetail(generic.DetailView, GameViewAbstract):
             show_player_guesses_form_link = True
         data['show_leader_hints_form_link'] = show_leader_hints_form_link
         data['show_player_guesses_form_link'] = show_player_guesses_form_link
+        data['secret_words'] = self.get_secret_words_data()
+        data['round_number'] = self.round_number
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
+        data['round_stage'] = fsm3.current_state.name
         return data
 
 
