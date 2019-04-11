@@ -170,6 +170,16 @@
     }
 },
 {
+    "model": "gamedefinitions.rule",
+    "pk": 18,
+    "fields": {
+        "created": "2019-04-11T05:46:09.958Z",
+        "updated": "2019-04-11T05:46:09.958Z",
+        "slug": "cluster_buster_final_scoring",
+        "description": "When either team has reached the required number of tokens for winning or losing, or the final round is concluded, then the game is scored to get the winning and losing teams. Two winning tokens result in a team winning the game, while two losing tokens result in a team losing the game. Otherwise, the team with the most winning tokens wins the game, or the team with most losing tokens loses the game."
+    }
+},
+{
     "model": "gamedefinitions.state",
     "pk": 1,
     "fields": {
@@ -320,6 +330,16 @@
     }
 },
 {
+    "model": "gamedefinitions.state",
+    "pk": 16,
+    "fields": {
+        "created": "2019-04-11T05:15:38.106Z",
+        "updated": "2019-04-11T05:15:38.106Z",
+        "slug": "final_scoring_stage",
+        "name": "Final Scoring Stage"
+    }
+},
+{
     "model": "gamedefinitions.statemachine",
     "pk": 1,
     "fields": {
@@ -428,7 +448,7 @@
     "pk": 1,
     "fields": {
         "created": "2019-03-05T01:16:17.756Z",
-        "updated": "2019-04-05T02:05:47.734Z",
+        "updated": "2019-04-11T05:17:04.485Z",
         "slug": "cluster_buster",
         "title": "Cluster Buster v 0.1.0",
         "description": "Cluster Buster is based on Decrypto board game. Made for web.",
@@ -448,7 +468,8 @@
             12,
             13,
             14,
-            15
+            15,
+            16
         ],
         "state_machines": [
             1,
@@ -457,6 +478,8 @@
             4
         ],
         "rules": [
+            17,
+            16,
             15,
             14,
             13,
