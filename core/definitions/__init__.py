@@ -196,6 +196,30 @@ class ClusterBuster(RuleLibrary):
         game.transit_state_machine('fsm3', 'teams_share_guesses_stage', 'Players made guesses')
 
     @staticmethod
+    def teams_shared_guesses(game: Game):
+        game.transit_state_machine('fsm3', 'score_teams_stage', 'Teams shared guesses')
+
+    @staticmethod
+    def start_next_round(game: Game):
+        fsm3 = game.get_parameter_value('fsm3')  # type: StateMachine
+        fsm3_state = fsm3.current_state.slug
+        if fsm3_state != 'score_teams_stage':
+            return
+        fsm2 = game.get_parameter_value('fsm2')  # type: StateMachine
+        fsm2_state = fsm2.current_state.slug
+        if fsm2_state == 'last_round':
+            ClusterBuster.last_round_over(game)
+            return
+        round_number = game.get_parameter_value('current_round_number')
+        round_number += 1
+        game.set_parameter_value('current_round_number', round_number)
+        if round_number == ClusterBuster.LAST_ROUND_NUMBER:
+            game.transit_state_machine('fsm2', 'last_round', 'round == last round')
+        elif fsm2_state == 'first_round' and round_number > ClusterBuster.FIRST_ROUND_NUMBER:
+            game.transit_state_machine('fsm2', 'middle_rounds', 'first round < round < last round')
+        game.transit_state_machine('fsm3', 'select_leader_stage', 'Starting next round')
+
+    @staticmethod
     def method_map(rule):
         return {
             'start_game': ClusterBuster.start_game,
@@ -209,4 +233,6 @@ class ClusterBuster(RuleLibrary):
             'leaders_draw_code_numbers': ClusterBuster.leaders_draw_code_numbers,
             'leaders_made_hints': ClusterBuster.leaders_made_hints,
             'teams_made_guesses': ClusterBuster.teams_made_guesses,
+            'teams_shared_guesses': ClusterBuster.teams_shared_guesses,
+            'start_next_round': ClusterBuster.start_next_round,
         }[rule]
