@@ -143,7 +143,7 @@ class Game(GameAbstract, TimeStamped):
             self.parameters_updated = False
             while len(active_trigger_list) > 0:
                 trigger = active_trigger_list.pop()
-                trigger.evaluate(rule_library)
+                trigger.squeeze(rule_library)
 
     def evaluate_rule(self, rule: Rule, rule_library: RuleLibrary):
         rule_method = self.get_rule_method(rule, rule_library)
@@ -445,12 +445,15 @@ class Trigger(TimeStamped):
     def __str__(self):
         return str(self.game) + " - " + str(self.rule)
 
-    def evaluate(self, rule_library: RuleLibrary):
+    def squeeze(self, rule_library: RuleLibrary):
         if self.active is False:
             return
         if self.condition_group.passes():
-            self.trigger_count += 1
-            self.game.evaluate_rule(self.rule, rule_library)
-            if self.repeats is False:
-                self.active = False
-            self.save()
+            self.pull(rule_library)
+
+    def pull(self, rule_library: RuleLibrary):
+        self.trigger_count += 1
+        self.game.evaluate_rule(self.rule, rule_library)
+        if self.repeats is False:
+            self.active = False
+        self.save()
