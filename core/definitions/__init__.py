@@ -98,7 +98,7 @@ class ClusterBuster(RuleLibrary):
         :param game:
         :return:
         """
-        game.transit_state_machine('fsm0', 'game_play', 'Team won')
+        game.transit_state_machine('fsm0', 'game_over', 'Team won')
 
     @staticmethod
     def team_lost(game: Game):
@@ -268,4 +268,7 @@ class ClusterBuster(RuleLibrary):
             'teams_made_guesses': ClusterBuster.teams_made_guesses,
             'score_teams': ClusterBuster.score_teams,
             'start_next_round': ClusterBuster.start_next_round,
+            'team_lost': ClusterBuster.team_lost,
+            'team_won': ClusterBuster.team_won,
+            'last_round_over': ClusterBuster.last_round_over,
         }[rule]
