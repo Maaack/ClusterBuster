@@ -93,12 +93,48 @@ class ClusterBuster(RuleLibrary):
         game.transit_state_machine('fsm0', 'game_play', 'game ready')
 
     @staticmethod
+    def set_winning_team(game: Game):
+        winning_team = None
+        losing_team = None
+        team_1 = game.teams.all()[0]
+        team_2 = game.teams.all()[1]
+        team_1_winning_tokens = game.get_parameter_value(('team_winning_tokens', team_1))
+        team_2_winning_tokens = game.get_parameter_value(('team_winning_tokens', team_2))
+        if team_1_winning_tokens > team_2_winning_tokens:
+            winning_team = team_1
+            losing_team = team_2
+        elif team_2_winning_tokens > team_1_winning_tokens:
+            winning_team = team_2
+            losing_team = team_1
+        game.set_parameter_value('game_winning_team', winning_team)
+        game.set_parameter_value('game_losing_team', losing_team)
+
+    @staticmethod
+    def set_losing_team(game: Game):
+        winning_team = None
+        losing_team = None
+        team_1 = game.teams.all()[0]
+        team_2 = game.teams.all()[1]
+        team_1_losing_tokens = game.get_parameter_value(('team_losing_tokens', team_1))
+        team_2_losing_tokens = game.get_parameter_value(('team_losing_tokens', team_2))
+        if team_1_losing_tokens > team_2_losing_tokens:
+            losing_team = team_1
+            winning_team = team_2
+        elif team_2_losing_tokens > team_1_losing_tokens:
+            losing_team = team_2
+            winning_team = team_1
+        game.set_parameter_value('game_winning_team', winning_team)
+        game.set_parameter_value('game_losing_team', losing_team)
+
+    @staticmethod
     def team_won(game: Game):
         """
         :param game:
         :return:
         """
-        game.transit_state_machine('fsm0', 'game_play', 'Team won')
+        game.transit_state_machine('fsm1', 'final_scoring_stage', 'Team won')
+        ClusterBuster.set_winning_team(game)
+        game.transit_state_machine('fsm0', 'game_over', 'Game over')
 
     @staticmethod
     def team_lost(game: Game):
@@ -106,7 +142,9 @@ class ClusterBuster(RuleLibrary):
         :param game:
         :return:
         """
-        game.transit_state_machine('fsm0', 'game_over', 'Team lost')
+        game.transit_state_machine('fsm1', 'final_scoring_stage', 'Team lost')
+        ClusterBuster.set_losing_team(game)
+        game.transit_state_machine('fsm0', 'game_over', 'Game over')
 
     @staticmethod
     def last_round_over(game: Game):
@@ -114,7 +152,12 @@ class ClusterBuster(RuleLibrary):
         :param game:
         :return:
         """
-        game.transit_state_machine('fsm0', 'game_over', 'Last round over')
+        game.transit_state_machine('fsm1', 'final_scoring_stage', 'Last round over')
+        ClusterBuster.set_winning_team(game)
+        winning_team = game.get_parameter_value('game_winning_team')
+        if winning_team is None:
+            ClusterBuster.set_losing_team(game)
+        game.transit_state_machine('fsm0', 'game_over', 'Game over')
 
     @staticmethod
     def draw_words(game: Game):
@@ -268,4 +311,7 @@ class ClusterBuster(RuleLibrary):
             'teams_made_guesses': ClusterBuster.teams_made_guesses,
             'score_teams': ClusterBuster.score_teams,
             'start_next_round': ClusterBuster.start_next_round,
+            'team_lost': ClusterBuster.team_lost,
+            'team_won': ClusterBuster.team_won,
+            'last_round_over': ClusterBuster.last_round_over,
         }[rule]
