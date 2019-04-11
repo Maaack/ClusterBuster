@@ -104,9 +104,9 @@
     "pk": 11,
     "fields": {
         "created": "2019-03-12T03:03:11.552Z",
-        "updated": "2019-03-12T03:03:11.552Z",
-        "slug": "cluster_buster_rounds_stage",
-        "description": "The rounds stage continues for a total of maximum of 8 rounds."
+        "updated": "2019-04-10T23:56:56.198Z",
+        "slug": "cluster_buster_start_first_round",
+        "description": "Sets the current round to the first round (1) of the game, and defines the last round (8) as the limit."
     }
 },
 {
@@ -147,6 +147,26 @@
         "updated": "2019-03-24T22:15:49.283Z",
         "slug": "cluster_buster_teams_made_guesses",
         "description": "The round proceeds to the next stage when teams have submitted their guesses for the hints given of both teams."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 16,
+    "fields": {
+        "created": "2019-04-10T23:58:13.960Z",
+        "updated": "2019-04-11T02:18:43.367Z",
+        "slug": "cluster_buster_start_next_round",
+        "description": "If this is not the last round of the game, then increment the current round by one (1). Set the round stage back to the selecting leaders stage."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 17,
+    "fields": {
+        "created": "2019-04-11T02:52:08.860Z",
+        "updated": "2019-04-11T02:52:08.860Z",
+        "slug": "cluster_buster_score_teams",
+        "description": "Teams are scored together. When a team guesses correctly their opponent's code, they collect one (1) winning token. When a team guesses incorrectly their team's code, they collect one (1) losing token."
     }
 },
 {
