@@ -80,11 +80,13 @@ class ClusterBuster(RuleLibrary):
         # Assign Team Leader Trigger
         trigger = game.add_trigger('assign_team_leader')
         trigger.repeats = True
+        trigger.save()
         condition_group = trigger.condition_group
         condition_group.add_fsm_state_condition('fsm3', 'select_leader_stage_state')
         # Assign Team Leader Trigger
         trigger = game.add_trigger('leaders_draw_code_numbers')
         trigger.repeats = True
+        trigger.save()
         condition_group = trigger.condition_group
         condition_group.add_fsm_state_condition('fsm3', 'draw_code_card_stage_state')
         # Game Ready Transition
@@ -196,8 +198,39 @@ class ClusterBuster(RuleLibrary):
         game.transit_state_machine('fsm3', 'teams_share_guesses_stage', 'Players made guesses')
 
     @staticmethod
-    def teams_shared_guesses(game: Game):
+    def score_teams(game: Game):
+        round_number = game.get_parameter_value('current_round_number')
+        fsm2 = game.get_parameter_value('fsm2')  # type: StateMachine
+        is_first_round = fsm2.current_state.slug == 'first_round'
         game.transit_state_machine('fsm3', 'score_teams_stage', 'Teams shared guesses')
+        for guessing_team in game.teams.all():
+            for hinting_team in game.teams.all():
+                if guessing_team != hinting_team and is_first_round:
+                    continue
+                correct_guesses = 0
+                for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+                    card_slot = card_i + 1
+                    guess = game.get_parameter_value(
+                        ('round', round_number, 'guessing_team', guessing_team, 'hinting_team', hinting_team, 'guess',
+                         card_slot),
+                    )
+                    actual = game.get_parameter_value(
+                        ('round', round_number, 'team', hinting_team, 'code',
+                         card_slot),
+                    )
+                    if int(guess) == int(actual):
+                        correct_guesses += 1
+
+                if correct_guesses == ClusterBuster.CODE_CARD_SLOTS and guessing_team != hinting_team:
+                    # Guessed Opponent's Code Correctly
+                    winning_tokens = game.get_parameter_value(('team_winning_tokens', guessing_team))
+                    winning_tokens += 1
+                    game.set_parameter_value(('team_winning_tokens', guessing_team), winning_tokens)
+                if correct_guesses < ClusterBuster.CODE_CARD_SLOTS and guessing_team == hinting_team:
+                    # Guessed Team's Code Incorrectly
+                    losing_tokens = game.get_parameter_value(('team_losing_tokens', guessing_team))
+                    losing_tokens += 1
+                    game.set_parameter_value(('team_losing_tokens', guessing_team), losing_tokens)
 
     @staticmethod
     def start_next_round(game: Game):
@@ -233,6 +266,6 @@ class ClusterBuster(RuleLibrary):
             'leaders_draw_code_numbers': ClusterBuster.leaders_draw_code_numbers,
             'leaders_made_hints': ClusterBuster.leaders_made_hints,
             'teams_made_guesses': ClusterBuster.teams_made_guesses,
-            'teams_shared_guesses': ClusterBuster.teams_shared_guesses,
+            'score_teams': ClusterBuster.score_teams,
             'start_next_round': ClusterBuster.start_next_round,
         }[rule]

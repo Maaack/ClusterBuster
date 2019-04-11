@@ -89,27 +89,28 @@
             </tr>
         </table>
     </div>
-    {% if show_leader_hints_form_link or show_player_guesses_form_link %}
-        <div id="game-options">
-            <h2>Game Options</h2>
-            {% if is_round_leader %}
-                <div id="round-leader-options">
-                    {% if show_leader_hints_form_link %}
-                        <a href="{% url 'leader_hints' game.code %}">Submit Leader Hints</a>
-                    {% endif %}
-                    {% if show_start_next_round_link %}
-                        <a href="{% url 'start_next_round' game.code %}">Start the Next Round</a>
-                    {% endif %}
-                </div>
-            {% else %}
-                <div id="round-player-options">
-                    {% if show_player_guesses_form_link %}
-                        <a href="{% url 'player_guesses' game.code %}">Submit Guesses</a>
-                    {% endif %}
-                </div>
-            {% endif %}
-        </div>
-    {% endif %}
+    <div id="game-options">
+        <h2>Game Options</h2>
+        {% if is_round_leader %}
+            <div id="round-leader-options">
+                {% if show_leader_hints_form_link %}
+                    <a href="{% url 'leader_hints' game.code %}">Submit Leader Hints</a>
+                {% endif %}
+                {% if show_score_teams_link %}
+                    <a href="{% url 'score_teams' game.code %}">Score the Teams</a>
+                {% endif %}
+                {% if show_start_next_round_link %}
+                    <a href="{% url 'start_next_round' game.code %}">Start the Next Round</a>
+                {% endif %}
+            </div>
+        {% else %}
+            <div id="round-player-options">
+                {% if show_player_guesses_form_link %}
+                    <a href="{% url 'player_guesses' game.code %}">Submit Guesses</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
     <div id="player-and-teams">
         <h2>Players and Teams</h2>
         {% for team in game.teams.all %}

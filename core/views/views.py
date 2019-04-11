@@ -119,6 +119,7 @@ class GameDetail(generic.DetailView, GameViewAbstract):
         data = super().get_context_data(**kwargs)
         show_leader_hints_form_link = False
         show_player_guesses_form_link = False
+        show_score_teams_link = False
         show_start_next_round_link = False
         show_guesses_information = False
         all_guesses = []
@@ -133,10 +134,12 @@ class GameDetail(generic.DetailView, GameViewAbstract):
         elif fsm3_state == 'teams_share_guesses_stage':
             all_guesses = self.get_all_guesses_data()
             show_guesses_information = True
+            show_score_teams_link = True
         data['show_leader_hints_form_link'] = show_leader_hints_form_link
         data['show_player_guesses_form_link'] = show_player_guesses_form_link
         data['show_start_next_round_link'] = show_start_next_round_link
         data['show_guesses_information'] = show_guesses_information
+        data['show_score_teams_link'] = show_score_teams_link
         data['secret_words'] = self.get_secret_words_data()
         data['round_number'] = self.round_number
         data['all_guesses'] = all_guesses
@@ -269,4 +272,26 @@ class StartNextRound(generic.RedirectView, generic.detail.SingleObjectMixin, Gam
         start_next_round_method(game)
         game.update(ClusterBuster)
 
+        return super().get_redirect_url(*args, **kwargs)
+
+
+class ScoreTeams(generic.RedirectView, generic.detail.SingleObjectMixin, GameViewAbstract):
+    model = Game
+    pattern_name = 'game_detail'
+    slug_field = 'code'
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        if not self.is_round_team_leader():
+            return redirect('game_detail', slug=kwargs['slug'])
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
+        if fsm3.current_state.slug != 'teams_share_guesses_stage':
+            return redirect('game_detail', slug=kwargs['slug'])
+        return response
+
+    def get_redirect_url(self, *args, **kwargs):
+        game = get_object_or_404(Game, code=kwargs['slug'])
+        score_teams_method = ClusterBuster.method_map('score_teams')
+        score_teams_method(game)
+        game.update(ClusterBuster)
         return super().get_redirect_url(*args, **kwargs)
