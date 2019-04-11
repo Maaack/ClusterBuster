@@ -85,6 +85,24 @@ class GameViewAbstract(CheckPlayerView):
             secret_words.append(str(secret_word))
         return secret_words
 
+    def get_tokens_data(self):
+        tokens = {}
+        team_winning_tokens = self.game.get_parameter_value(('team_winning_tokens', self.team))
+        team_losing_tokens = self.game.get_parameter_value(('team_losing_tokens', self.team))
+        tokens['player'] = {
+            'name': self.team.name,
+            'winning_tokens': team_winning_tokens,
+            'losing_tokens': team_losing_tokens,
+        }
+        team_winning_tokens = self.game.get_parameter_value(('team_winning_tokens', self.opponent_team))
+        team_losing_tokens = self.game.get_parameter_value(('team_losing_tokens', self.opponent_team))
+        tokens['opponent'] = {
+            'name': self.opponent_team.name,
+            'winning_tokens': team_winning_tokens,
+            'losing_tokens': team_losing_tokens,
+        }
+        return tokens
+
     def get_all_guesses_data(self):
         fsm2 = self.game.get_parameter_value('fsm2')  # type: StateMachine
         is_first_round = fsm2.current_state.slug == 'first_round'
@@ -162,6 +180,7 @@ class GameDetail(generic.DetailView, GameViewAbstract):
         data['round_number'] = self.round_number
         data['all_guesses'] = all_guesses
         data['is_round_leader'] = self.is_round_team_leader()
+        data['tokens'] = self.get_tokens_data()
         fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
         data['round_stage'] = fsm3.current_state.name
         return data

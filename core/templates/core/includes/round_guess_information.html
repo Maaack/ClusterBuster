@@ -1,0 +1,51 @@
+<table id="code-words-table">
+    <tr>
+        {% for guessing_team, guesses in all_guesses.items %}
+            {% for hinting_team, hints in guesses.items %}
+                <th>
+                    {{ guessing_team }} --> {{ hinting_team }}
+                </th>
+            {% endfor %}
+        {% endfor %}
+    </tr>
+    <tr>
+        {% for guessing_team, guesses in all_guesses.items %}
+            {% for hinting_team, hints in guesses.items %}
+                <td>
+                    <table>
+                        <tr>
+                            <th>
+                                Hint #:
+                            </th>
+                            {% for hint in hints %}
+                                <th>
+                                    <span class="hint-number">{{ hint.hint_number }}</span>
+                                </th>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>
+                                <strong>Hint:</strong>
+                            </td>
+                            {% for hint in hints %}
+                                <td>
+                                    <span class="hint-text">{{ hint.hint }}</span>
+                                </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>
+                                <strong>Guess:</strong>
+                            </td>
+                            {% for hint in hints %}
+                                <td>
+                                    <span class="hint-guess">{{ hint.guess }}</span>
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    </table>
+                </td>
+            {% endfor %}
+        {% endfor %}
+    </tr>
+</table>
