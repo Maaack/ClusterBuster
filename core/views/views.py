@@ -45,6 +45,7 @@ class GameViewAbstract(CheckPlayerView):
         self.game = None
         self.player = None
         self.team = None
+        self.opponent_team = None
         self.round_number = 0
         super().__init__()
 
@@ -56,6 +57,9 @@ class GameViewAbstract(CheckPlayerView):
         self.team = self.get_current_player_team()
         if self.team is None:
             return redirect('room_detail', slug=self.game.room.code)
+        self.opponent_team = self.get_current_player_opponent_team()
+        if self.opponent_team is None:
+            return redirect('room_detail', slug=self.game.room.code)
         self.round_number = self.game.get_parameter_value('current_round_number')
         return super().dispatch(request, *args, **kwargs)
 
@@ -63,6 +67,13 @@ class GameViewAbstract(CheckPlayerView):
         teams = self.game.teams.all()
         for team in teams:
             if team.has_player(self.player):
+                return team
+        return None
+
+    def get_current_player_opponent_team(self):
+        teams = self.game.teams.all()
+        for team in teams:
+            if not team.has_player(self.player):
                 return team
         return None
 
@@ -119,16 +130,22 @@ class GameDetail(generic.DetailView, GameViewAbstract):
         data = super().get_context_data(**kwargs)
         show_leader_hints_form_link = False
         show_player_guesses_form_link = False
+        show_player_guesses_opponents_form_link = False
         show_score_teams_link = False
         show_start_next_round_link = False
         show_guesses_information = False
         all_guesses = []
+        fsm2 = self.game.get_parameter_value('fsm2')  # type: StateMachine
+        is_first_round = fsm2.current_state.slug == 'first_round'
         fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
         fsm3_state = fsm3.current_state.slug
         if fsm3_state == 'leaders_make_hints_stage' and self.is_round_team_leader():
             show_leader_hints_form_link = True
-        elif fsm3_state == 'teams_guess_codes_stage' and not self.is_round_team_leader():
-            show_player_guesses_form_link = True
+        elif fsm3_state == 'teams_guess_codes_stage':
+            if not self.is_round_team_leader():
+                show_player_guesses_form_link = True
+            if not is_first_round:
+                show_player_guesses_opponents_form_link = True
         elif fsm3_state == 'score_teams_stage' and self.is_round_team_leader():
             show_start_next_round_link = True
         elif fsm3_state == 'teams_share_guesses_stage':
@@ -137,6 +154,7 @@ class GameDetail(generic.DetailView, GameViewAbstract):
             show_score_teams_link = True
         data['show_leader_hints_form_link'] = show_leader_hints_form_link
         data['show_player_guesses_form_link'] = show_player_guesses_form_link
+        data['show_player_guesses_opponents_form_link'] = show_player_guesses_opponents_form_link
         data['show_start_next_round_link'] = show_start_next_round_link
         data['show_guesses_information'] = show_guesses_information
         data['show_score_teams_link'] = show_score_teams_link
@@ -245,6 +263,41 @@ class PlayerGuessesFormView(GameFormAbstractView):
             self.game.set_parameter_value(
                 (
                     'round', self.round_number, 'guessing_team', self.team, 'hinting_team', self.team, 'guess',
+                    card_i + 1),
+                guesses[card_i]
+            )
+        self.game.update(ClusterBuster)
+        return super().form_valid(form)
+
+
+class PlayerGuessesOpponentHintsFormView(GameFormAbstractView):
+    template_name = 'core/player_guess_form.html'
+    form_class = PlayerGuessForm
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
+        if fsm3.current_state.slug != 'teams_guess_codes_stage':
+            return redirect('game_detail', slug=kwargs['slug'])
+        return response
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        hints = []
+        for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+            hint = self.game.get_parameter_value(
+                ('round', self.round_number, 'team', self.opponent_team, 'hint', card_i + 1)
+            )
+            hints.append(hint)
+        data['hints'] = hints
+        return data
+
+    def form_valid(self, form):
+        guesses = [form.cleaned_data['guess_1'], form.cleaned_data['guess_2'], form.cleaned_data['guess_3']]
+        for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+            self.game.set_parameter_value(
+                (
+                    'round', self.round_number, 'guessing_team', self.team, 'hinting_team', self.opponent_team, 'guess',
                     card_i + 1),
                 guesses[card_i]
             )
