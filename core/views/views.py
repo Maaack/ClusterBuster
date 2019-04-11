@@ -152,27 +152,38 @@ class GameDetail(generic.DetailView, GameViewAbstract):
         show_score_teams_link = False
         show_start_next_round_link = False
         show_guesses_information = False
+        winning_team = None
+        losing_team = None
         all_guesses = []
-        fsm2 = self.game.get_parameter_value('fsm2')  # type: StateMachine
-        is_first_round = fsm2.current_state.slug == 'first_round'
-        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
-        fsm3_state = fsm3.current_state.slug
-        if fsm3_state == 'leaders_make_hints_stage' and self.is_round_team_leader():
-            show_leader_hints_form_link = True
-        elif fsm3_state == 'teams_guess_codes_stage':
-            if not self.is_round_team_leader():
-                show_player_guesses_form_link = True
-            if not is_first_round:
-                show_player_guesses_opponents_form_link = True
-        elif fsm3_state == 'score_teams_stage' and self.is_round_team_leader():
-            show_start_next_round_link = True
-        elif fsm3_state == 'teams_share_guesses_stage':
-            all_guesses = self.get_all_guesses_data()
-            show_guesses_information = True
-            show_score_teams_link = True
+        fsm0 = self.game.get_parameter_value('fsm0')  # type: StateMachine
+        is_game_over = fsm0.current_state.slug == 'game_over'
+        if is_game_over:
+            winning_team = self.game.get_parameter_value('game_winning_team')
+            losing_team = self.game.get_parameter_value('game_losing_team')
+        else:
+            fsm2 = self.game.get_parameter_value('fsm2')  # type: StateMachine
+            is_first_round = fsm2.current_state.slug == 'first_round'
+            fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
+            fsm3_state = fsm3.current_state.slug
+            if fsm3_state == 'leaders_make_hints_stage' and self.is_round_team_leader():
+                show_leader_hints_form_link = True
+            elif fsm3_state == 'teams_guess_codes_stage':
+                if not self.is_round_team_leader():
+                    show_player_guesses_form_link = True
+                if not is_first_round:
+                    show_player_guesses_opponents_form_link = True
+            elif fsm3_state == 'score_teams_stage' and self.is_round_team_leader():
+                show_start_next_round_link = True
+            elif fsm3_state == 'teams_share_guesses_stage':
+                all_guesses = self.get_all_guesses_data()
+                show_guesses_information = True
+                show_score_teams_link = True
         data['show_leader_hints_form_link'] = show_leader_hints_form_link
         data['show_player_guesses_form_link'] = show_player_guesses_form_link
         data['show_player_guesses_opponents_form_link'] = show_player_guesses_opponents_form_link
+        data['winning_team'] = winning_team
+        data['losing_team'] = losing_team
+        data['is_game_over'] = is_game_over
         data['show_start_next_round_link'] = show_start_next_round_link
         data['show_guesses_information'] = show_guesses_information
         data['show_score_teams_link'] = show_score_teams_link

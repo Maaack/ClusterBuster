@@ -6,6 +6,12 @@
         <div id="game-title">
             <h1>Game {{ game.code }}</h1>
         </div>
+        {% if is_game_over %}
+            <h2>Game Over!</h2>
+        {% endif %}
+        <div id="final-score-information">
+            {% include "core/includes/final_score.html" %}
+        </div>
         <div id="round-information">
             <div id="round-number-block">
                 Round:
