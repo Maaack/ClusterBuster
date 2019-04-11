@@ -1,0 +1,13 @@
+{% extends "core/base/html_base.html" %}
+
+{% block head_title %}Submit hints{% endblock %}
+{% block content %}
+    <h1>Submit Your Hints</h1>
+    {{ code_numbers }}
+    {{ code_words }}
+    <form class="hints" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+{% endblock %}

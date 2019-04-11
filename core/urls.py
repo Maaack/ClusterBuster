@@ -3,19 +3,12 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('new_player/', views.PlayerCreate.as_view(), name='player_create'),
-    path('players/<int:pk>', views.PlayerDetail.as_view(), name='player_detail'),
-    path('players/<int:pk>/update', views.PlayerUpdate.as_view(), name='player_update'),
-    path('new_room/', views.RoomCreate.as_view(), name='room_create'),
-    path('rooms/', views.RoomList.as_view(), name='room_list'),
-    path('rooms/<slug:slug>', views.RoomDetail.as_view(), name='room_detail'),
-    path('rooms/<slug:slug>/new_player', views.CreatePlayerAndJoinRoom.as_view(), name='player_create_and_join_room'),
-    path('rooms/<slug:slug>/join', views.JoinRoom.as_view(), name='join_room'),
     path('rooms/<slug:slug>/start_game', views.StartGame.as_view(), name='start_game'),
-    path('rooms/<slug:slug>/next_round', views.GameNextRound.as_view(), name='game_next_round'),
-    path('rooms/<slug:slug>/hints', views.LeaderHintFormSetView.as_view(), name='round_hints'),
-    path('rooms/<slug:slug>/guesses', views.PlayerGuessFormSetView.as_view(), name='round_guesses'),
-    path('rooms/<slug:slug>/opponent_guesses', views.OpponentGuessFormSetView.as_view(), name='round_opponent_guesses'),
+    path('games/<slug:slug>/', views.GameDetail.as_view(), name='game_detail'),
+    path('games/<slug:slug>/update_game', views.UpdateGame.as_view(), name='update_game'),
+    path('games/<slug:slug>/leader_hints', views.LeaderHintsFormView.as_view(), name='leader_hints'),
+    path('games/<slug:slug>/player_guesses', views.PlayerGuessesFormView.as_view(), name='player_guesses'),
+    path('games/<slug:slug>/start_next_round', views.StartNextRound.as_view(), name='start_next_round'),
+    path('games/<slug:slug>/score_teams', views.ScoreTeams.as_view(), name='score_teams'),
 
 ]

@@ -1,142 +1,13 @@
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404
-from django.template import loader
-from django.urls import reverse
+from django.shortcuts import get_object_or_404, redirect, reverse
 from django.views import generic
-from extra_views import ModelFormSetView
 
-from core.models import Room, Game, Player, TargetWord, LeaderHint, PlayerGuess
-from core import interfaces
-from .contexts import RoomContext, Player2RoomContext
-from .mixins import CheckPlayerView, AssignPlayerView
-from .forms import HintForm, GuessForm, OpponentGuessForm
+from rooms.models import Room, Player, Team
+from games.models import Game, StateMachine
+from core.definitions import ClusterBuster
 
+from rooms.views.mixins import CheckPlayerView
 
-# Create your views here.
-def index(request):
-    template = loader.get_template('core/index.html')
-    return HttpResponse(template.render({}, request))
-
-
-class PlayerCreate(AssignPlayerView, generic.CreateView):
-    model = Player
-    fields = ['name']
-
-    def dispatch(self, request, *args, **kwargs):
-        player_id = self.request.session.get('player_id')
-
-        if player_id:
-            return HttpResponseRedirect(reverse('player_detail', kwargs={'pk':player_id}))
-        return super(PlayerCreate, self).dispatch(request, *args, **kwargs)
-
-
-class PlayerUpdate(AssignPlayerView, CheckPlayerView, generic.UpdateView):
-    model = Player
-    fields = ['name']
-
-    def dispatch(self, request, *args, **kwargs):
-        player = self.get_object()
-
-        if not self.is_current_player(player):
-            return HttpResponseRedirect(reverse('player_detail', kwargs=kwargs))
-        return super(PlayerUpdate, self).dispatch(request, *args, **kwargs)
-
-
-class PlayerDetail(generic.DetailView, CheckPlayerView):
-    model = Player
-
-    def get_context_data(self, **kwargs):
-        data = super(PlayerDetail, self).get_context_data(**kwargs)
-        data['current_player'] = self.is_current_player(self.object)
-        return data
-
-
-class RoomCreate(generic.CreateView):
-    model = Room
-    fields = []
-
-    def form_valid(self, form):
-        self.request.session.save()
-        form.instance.session_id = self.request.session.session_key
-        response = super(RoomCreate, self).form_valid(form)
-        interfaces.RoomInterface(self.object).setup()
-        return response
-
-    def get_success_url(self):
-        return reverse('room_detail', kwargs={'slug': self.object.code})
-
-
-class RoomList(generic.ListView):
-    context_object_name = 'active_rooms'
-
-    def get_queryset(self):
-        return Room.active_rooms.all()
-
-
-class RoomDetail(generic.DetailView):
-    model = Room
-    slug_field = 'code'
-
-    def __init__(self):
-        super(RoomDetail, self).__init__()
-        self.game = None
-
-    def get_queryset(self):
-        return Room.active_rooms.all()
-
-    def dispatch(self, request, *args, **kwargs):
-        return super(RoomDetail, self).dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        data = super(RoomDetail, self).get_context_data(**kwargs)
-        room = self.get_object()
-        room_data = RoomContext.load(room)
-        data.update(room_data)
-        player_id = self.request.session.get('player_id')
-        if player_id:
-            player = get_object_or_404(Player, pk=player_id)
-            player_room_data = Player2RoomContext.load(player, room)
-            data.update(player_room_data)
-        return data
-
-
-class JoinRoom(generic.RedirectView, generic.detail.SingleObjectMixin):
-    model = Room
-    pattern_name = 'room_detail'
-    slug_field = 'code'
-
-    def get_redirect_url(self, *args, **kwargs):
-        player_id = self.request.session.get('player_id')
-        if not player_id:
-            raise Exception('Player must be logged in.')
-        player = get_object_or_404(Player, pk=player_id)
-        room = get_object_or_404(Room, code=kwargs['slug'])
-        interfaces.Player2RoomInterface(player, room).join()
-        return super().get_redirect_url(*args, **kwargs)
-
-
-class CreatePlayerAndJoinRoom(AssignPlayerView, generic.CreateView):
-    model = Player
-    fields = ['name']
-
-    def __init__(self):
-        super(CreatePlayerAndJoinRoom, self).__init__()
-        self.code = None
-
-    def dispatch(self, request, *args, **kwargs):
-        self.code = kwargs['slug']
-        player_id = self.request.session.get('player_id')
-
-        if player_id:
-            return HttpResponseRedirect(reverse('room_detail', kwargs))
-        return super(CreatePlayerAndJoinRoom, self).dispatch(request, *args, **kwargs)
-
-    def get_success_url(self):
-        if type(self.object) is Player:
-            player = self.object
-            self.assign_player(player)
-            return reverse('join_room', kwargs={'slug': self.code})
-        return reverse('room_detail', kwargs={'slug': self.code})
+from .forms import LeaderHintsForm, PlayerGuessForm
 
 
 class StartGame(generic.RedirectView, generic.detail.SingleObjectMixin):
@@ -146,155 +17,281 @@ class StartGame(generic.RedirectView, generic.detail.SingleObjectMixin):
 
     def get_redirect_url(self, *args, **kwargs):
         room = get_object_or_404(Room, code=kwargs['slug'])
-        room_interface = interfaces.RoomGamesInterface(room)
-        room_interface.setup()
-        game = room_interface.get_current_game()
-        game_interface = interfaces.GameRoundsInterface(game)
-        game_interface.setup()
+        game = Game.objects.create()
+        game.setup("cluster_buster", room=room)
+        game.start(ClusterBuster)
+        game.update(ClusterBuster)
+
         return super().get_redirect_url(*args, **kwargs)
 
 
-class GameNextRound(generic.RedirectView, generic.detail.SingleObjectMixin):
-    model = Room
-    pattern_name = 'room_detail'
+class UpdateGame(generic.RedirectView, generic.detail.SingleObjectMixin):
+    model = Game
+    pattern_name = 'game_detail'
     slug_field = 'code'
 
     def get_redirect_url(self, *args, **kwargs):
-        game = get_object_or_404(Game, room__code=kwargs['slug'])
-        interfaces.GameRoundsInterface(game).next_round()
+        game = get_object_or_404(Game, code=kwargs['slug'])
+        game.update(ClusterBuster)
+
         return super().get_redirect_url(*args, **kwargs)
 
 
-class GenericPartyRoundFormView(generic.FormView):
+class GameViewAbstract(CheckPlayerView):
     class Meta:
         abstract = True
 
     def __init__(self):
-        super(GenericPartyRoundFormView, self).__init__()
-        self.room = None
-        self.player = None
         self.game = None
-        self.player_party = None
-        self.opponent_party = None
-        self.round = None
-        self.player_party_round = None
-        self.opponent_player_round = None
+        self.player = None
+        self.team = None
+        self.round_number = 0
+        super().__init__()
 
     def dispatch(self, request, *args, **kwargs):
-        room_code = kwargs['slug']
-        self.room = get_object_or_404(Room, code=room_code)
-        player_id = self.request.session.get('player_id')
-        self.player = get_object_or_404(Player, pk=player_id)
-        self.game = self.room.current_game
-        self.round = self.game.current_round
-        player_2_game_interface = interfaces.Player2GameInterface(self.player, self.game)
-        self.player_party = player_2_game_interface.get_party()
-        self.opponent_party = player_2_game_interface.get_opponent_party()
-        self.player_party_round = self.player_party.current_party_round
-        self.opponent_player_round = self.opponent_party.current_party_round
-        return super(GenericPartyRoundFormView, self).dispatch(request, *args, **kwargs)
+        self.game = get_object_or_404(Game, code=kwargs['slug'])
+        self.player = self.get_current_player()
+        if self.player is None:
+            return redirect('room_detail', slug=self.game.room.code)
+        self.team = self.get_current_player_team()
+        if self.team is None:
+            return redirect('room_detail', slug=self.game.room.code)
+        self.round_number = self.game.get_parameter_value('current_round_number')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_current_player_team(self):
+        teams = self.game.teams.all()
+        for team in teams:
+            if team.has_player(self.player):
+                return team
+        return None
+
+    def get_secret_words_data(self):
+        secret_words = []
+        for word_i in range(ClusterBuster.SECRET_WORDS_PER_TEAM):
+            secret_word_number = word_i + 1
+            secret_word = self.game.get_parameter_value(('team', self.team, 'secret_word', secret_word_number))
+            secret_words.append(str(secret_word))
+        return secret_words
+
+    def get_all_guesses_data(self):
+        fsm2 = self.game.get_parameter_value('fsm2')  # type: StateMachine
+        is_first_round = fsm2.current_state.slug == 'first_round'
+        guesses = {}
+        for guessing_team in self.game.teams.all():  # type: Team
+            guesses[guessing_team.name] = {}
+            for hinting_team in self.game.teams.all():  # type: Team
+                if guessing_team != hinting_team and is_first_round:
+                    continue
+                guesses[guessing_team.name][hinting_team.name] = []
+                for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+                    hint_number = card_i + 1
+                    hint = self.game.get_parameter_value(
+                        ('round', self.round_number, 'team', hinting_team, 'hint', hint_number),
+                    )
+                    guess = self.game.get_parameter_value(
+                        ('round', self.round_number, 'guessing_team', guessing_team, 'hinting_team', hinting_team,
+                         'guess',
+                         hint_number),
+                    )
+                    guesses[guessing_team.name][hinting_team.name].append(
+                        {"hint_number": hint_number, "hint": hint, "guess": guess})
+        return guesses
+
+    def is_round_team_leader(self):
+        if self.player is None or self.team is None:
+            return False
+        round_team_leader = self.game.get_parameter_value(('round', self.round_number, 'team', self.team, 'leader'))
+        return round_team_leader == self.player
+
+
+class GameDetail(generic.DetailView, GameViewAbstract):
+    model = Game
+    slug_field = 'code'
+    template_name = 'core/game_detail.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        self.game.update(ClusterBuster)
+        return response
 
     def get_context_data(self, **kwargs):
-        data = super(GenericPartyRoundFormView, self).get_context_data(**kwargs)
-        data.update(RoomContext.load(self.room))
-        data.update(Player2RoomContext.load(self.player, self.room))
+        data = super().get_context_data(**kwargs)
+        show_leader_hints_form_link = False
+        show_player_guesses_form_link = False
+        show_score_teams_link = False
+        show_start_next_round_link = False
+        show_guesses_information = False
+        all_guesses = []
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
+        fsm3_state = fsm3.current_state.slug
+        if fsm3_state == 'leaders_make_hints_stage' and self.is_round_team_leader():
+            show_leader_hints_form_link = True
+        elif fsm3_state == 'teams_guess_codes_stage' and not self.is_round_team_leader():
+            show_player_guesses_form_link = True
+        elif fsm3_state == 'score_teams_stage' and self.is_round_team_leader():
+            show_start_next_round_link = True
+        elif fsm3_state == 'teams_share_guesses_stage':
+            all_guesses = self.get_all_guesses_data()
+            show_guesses_information = True
+            show_score_teams_link = True
+        data['show_leader_hints_form_link'] = show_leader_hints_form_link
+        data['show_player_guesses_form_link'] = show_player_guesses_form_link
+        data['show_start_next_round_link'] = show_start_next_round_link
+        data['show_guesses_information'] = show_guesses_information
+        data['show_score_teams_link'] = show_score_teams_link
+        data['secret_words'] = self.get_secret_words_data()
+        data['round_number'] = self.round_number
+        data['all_guesses'] = all_guesses
+        data['is_round_leader'] = self.is_round_team_leader()
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
+        data['round_stage'] = fsm3.current_state.name
         return data
+
+
+class GameFormAbstractView(generic.FormView, GameViewAbstract):
+    class Meta:
+        abstract = True
 
     def get_success_url(self):
-        return reverse('room_detail', kwargs={'slug': self.room.code})
+        return reverse('game_detail', kwargs={'slug': self.game.code})
 
 
-class LeaderHintFormSetView(ModelFormSetView, GenericPartyRoundFormView):
-    model = LeaderHint
-    form_class = HintForm
-    factory_kwargs = {
-        'extra': 0,
-    }
-
-    def get_context_data(self, **kwargs):
-        data = super(LeaderHintFormSetView, self).get_context_data(**kwargs)
-        data['non_target_words'] = interfaces.PartyRoundInterface(self.player_party_round).get_non_target_words()
-        return data
-
-    def get_queryset(self):
-        return LeaderHint.objects.filter(target_word__party_round=self.player_party_round)
-
-    def formset_valid(self, formset):
-        response = super(LeaderHintFormSetView, self).formset_valid(formset)
-        interfaces.PartyRoundInterface(self.player_party_round).advance_stage()
-        interfaces.RoundInterface(self.round).advance_stage()
-        interfaces.RoundGuessesInterface(self.round).setup()
-        return response
-
-
-class PlayerGuessFormSetView(ModelFormSetView, GenericPartyRoundFormView):
-    model = PlayerGuess
-    form_class = GuessForm
-    factory_kwargs = {
-        'extra': 0,
-    }
-
-    def __init__(self):
-        super(PlayerGuessFormSetView, self).__init__()
-        self.target_words = None
-
-    def get_context_data(self, **kwargs):
-        data = super(PlayerGuessFormSetView, self).get_context_data(**kwargs)
-        data['is_player_party'] = True
-        return data
+class LeaderHintsFormView(GameFormAbstractView):
+    template_name = 'core/leader_hint_form.html'
+    form_class = LeaderHintsForm
 
     def dispatch(self, request, *args, **kwargs):
-        result = super(PlayerGuessFormSetView, self).dispatch(request, *args, **kwargs)
-        interfaces.RoundGuessesInterface(self.round).setup()
-        interfaces.Player2PartyRoundGuessesInterface(self.player, self.opponent_player_round).setup()
-        return result
-
-    def get_queryset(self):
-        return PlayerGuess.objects.filter(
-            player=self.player,
-            target_word__party_round=self.player_party_round,
-        ).order_by('target_word__order')
-
-    def formset_valid(self, formset):
-        response = super(PlayerGuessFormSetView, self).formset_valid(formset)
-        interface = interfaces.PartyRoundGuessesInterface(self.player_party_round)
-        if interface.can_set_party_guess():
-            interface.set_party_guess()
+        response = super().dispatch(request, *args, **kwargs)
+        if not self.is_round_team_leader():
+            return redirect('game_detail', slug=kwargs['slug'])
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
+        if fsm3.current_state.slug != 'leaders_make_hints_stage':
+            return redirect('game_detail', slug=kwargs['slug'])
         return response
-
-
-class OpponentGuessFormSetView(ModelFormSetView, GenericPartyRoundFormView):
-    model = PlayerGuess
-    form_class = OpponentGuessForm
-    factory_kwargs = {
-        'extra': 0,
-    }
-
-    def __init__(self):
-        super(OpponentGuessFormSetView, self).__init__()
-        self.target_words = None
 
     def get_context_data(self, **kwargs):
-        data = super(OpponentGuessFormSetView, self).get_context_data(**kwargs)
-        data['is_player_party'] = False
+        data = super(LeaderHintsFormView, self).get_context_data(**kwargs)
+        code_numbers = []
+        code_words = []
+        for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+            code_number = self.game.get_parameter_value(
+                ('round', self.round_number, 'team', self.team, 'code', card_i + 1))
+            code_numbers.append(code_number)
+            secret_word = self.game.get_parameter_value(('team', self.team, 'secret_word', code_number))
+            code_words.append(str(secret_word))
+        data['code_numbers'] = code_numbers
+        data['code_words'] = code_words
         return data
 
+    def get_initial(self):
+        initial_data = super().get_initial()
+        hint_keys = ['hint_1', 'hint_2', 'hint_3']
+        for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+            current_hint = self.game.get_parameter_value(
+                ('round', self.round_number, 'team', self.team, 'hint', card_i + 1))
+            if current_hint is None:
+                code_number = self.game.get_parameter_value(
+                    ('round', self.round_number, 'team', self.team, 'code', card_i + 1))
+                current_hint = self.game.get_parameter_value(('team', self.team, 'secret_word', code_number))
+            initial_data[hint_keys[card_i]] = str(current_hint)
+        return initial_data
+
+    def form_valid(self, form):
+        hints = [form.cleaned_data['hint_1'], form.cleaned_data['hint_2'], form.cleaned_data['hint_3']]
+        for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+            self.game.set_parameter_value(
+                ('round', self.round_number, 'team', self.team, 'hint', card_i + 1),
+                hints[card_i]
+            )
+        self.game.update(ClusterBuster)
+        return super().form_valid(form)
+
+
+class PlayerGuessesFormView(GameFormAbstractView):
+    template_name = 'core/player_guess_form.html'
+    form_class = PlayerGuessForm
+
     def dispatch(self, request, *args, **kwargs):
-        result = super(OpponentGuessFormSetView, self).dispatch(request, *args, **kwargs)
-        interfaces.RoundGuessesInterface(self.round).setup()
-        interfaces.Player2PartyRoundGuessesInterface(self.player, self.opponent_player_round).setup()
-        return result
-
-    def get_queryset(self):
-        return PlayerGuess.objects.filter(
-            player=self.player,
-            target_word__party_round=self.opponent_player_round
-        ).order_by('target_word__order')
-
-    def formset_valid(self, formset):
-        response = super(OpponentGuessFormSetView, self).formset_valid(formset)
-
-        interface = interfaces.PartyRoundGuessesInterface(self.opponent_player_round)
-        if interface.can_set_party_guess():
-            interface.set_party_guess()
+        response = super().dispatch(request, *args, **kwargs)
+        # TODO: Check if player is leader guessing own hints. Currently not letting leaders guess on any hints
+        if self.is_round_team_leader():
+            return redirect('game_detail', slug=kwargs['slug'])
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
+        if fsm3.current_state.slug != 'teams_guess_codes_stage':
+            return redirect('game_detail', slug=kwargs['slug'])
         return response
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        hints = []
+        secret_words = []
+        for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+            hint = self.game.get_parameter_value(
+                ('round', self.round_number, 'team', self.team, 'hint', card_i + 1)
+            )
+            hints.append(hint)
+        for word_i in range(ClusterBuster.SECRET_WORDS_PER_TEAM):
+            secret_word_num = word_i + 1
+            secret_word = self.game.get_parameter_value(('team', self.team, 'secret_word', secret_word_num))
+            secret_words.append({secret_word_num: secret_word})
+        data['hints'] = hints
+        data['secret_words'] = secret_words
+        return data
+
+    def form_valid(self, form):
+        guesses = [form.cleaned_data['guess_1'], form.cleaned_data['guess_2'], form.cleaned_data['guess_3']]
+        for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+            self.game.set_parameter_value(
+                (
+                    'round', self.round_number, 'guessing_team', self.team, 'hinting_team', self.team, 'guess',
+                    card_i + 1),
+                guesses[card_i]
+            )
+        self.game.update(ClusterBuster)
+        return super().form_valid(form)
+
+
+class StartNextRound(generic.RedirectView, generic.detail.SingleObjectMixin, GameViewAbstract):
+    model = Game
+    pattern_name = 'game_detail'
+    slug_field = 'code'
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        if not self.is_round_team_leader():
+            return redirect('game_detail', slug=kwargs['slug'])
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
+        if fsm3.current_state.slug != 'score_teams_stage':
+            return redirect('game_detail', slug=kwargs['slug'])
+        return response
+
+    def get_redirect_url(self, *args, **kwargs):
+        game = get_object_or_404(Game, code=kwargs['slug'])
+        start_next_round_method = ClusterBuster.method_map('start_next_round')
+        start_next_round_method(game)
+        game.update(ClusterBuster)
+
+        return super().get_redirect_url(*args, **kwargs)
+
+
+class ScoreTeams(generic.RedirectView, generic.detail.SingleObjectMixin, GameViewAbstract):
+    model = Game
+    pattern_name = 'game_detail'
+    slug_field = 'code'
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        if not self.is_round_team_leader():
+            return redirect('game_detail', slug=kwargs['slug'])
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
+        if fsm3.current_state.slug != 'teams_share_guesses_stage':
+            return redirect('game_detail', slug=kwargs['slug'])
+        return response
+
+    def get_redirect_url(self, *args, **kwargs):
+        game = get_object_or_404(Game, code=kwargs['slug'])
+        score_teams_method = ClusterBuster.method_map('score_teams')
+        score_teams_method(game)
+        game.update(ClusterBuster)
+        return super().get_redirect_url(*args, **kwargs)

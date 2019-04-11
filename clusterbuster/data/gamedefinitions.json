@@ -1,0 +1,458 @@
+[
+{
+    "model": "gamedefinitions.rule",
+    "pk": 1,
+    "fields": {
+        "created": "2019-03-05T02:41:59.328Z",
+        "updated": "2019-03-31T11:18:55.048Z",
+        "slug": "cluster_buster_team_won",
+        "description": "If any team gets 2 winning tokens, they win the game. The opposing team loses."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 2,
+    "fields": {
+        "created": "2019-03-05T02:42:22.021Z",
+        "updated": "2019-03-31T11:19:04.938Z",
+        "slug": "cluster_buster_team_lost",
+        "description": "If any team gets 2 losing tokens, they lose the game."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 3,
+    "fields": {
+        "created": "2019-03-05T02:44:38.370Z",
+        "updated": "2019-03-05T03:09:01.126Z",
+        "slug": "cluster_buster_win_tokens",
+        "description": "Winning tokens are awarded to teams that successfully guess the opponent team's secret code in a round."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 4,
+    "fields": {
+        "created": "2019-03-05T02:45:10.096Z",
+        "updated": "2019-03-05T02:45:10.096Z",
+        "slug": "cluster_buster_lose_tokens",
+        "description": "Losing tokens are awarded to teams that unsuccessfully guess their team's secret code in a round."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 5,
+    "fields": {
+        "created": "2019-03-05T02:58:05.698Z",
+        "updated": "2019-03-05T03:08:31.226Z",
+        "slug": "cluster_buster_first_round_condition",
+        "description": "Once both teams have drawn their SECRET code words, they proceed to the first round of the game."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 6,
+    "fields": {
+        "created": "2019-03-05T03:03:23.098Z",
+        "updated": "2019-03-05T03:07:12.391Z",
+        "slug": "cluster_buster_start_game",
+        "description": "At the start of the game, players are divided into two teams. A deck of SECRET code words is shuffled randomly. Two identical decks of SECRET code numbers are also shuffled and assigned to each team. Winning tokens and Losing tokens are tracked by each team, and both teams start at 0. The game starts by having the players draw SECRET code words."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 7,
+    "fields": {
+        "created": "2019-03-05T03:09:39.352Z",
+        "updated": "2019-03-05T03:09:39.352Z",
+        "slug": "cluster_buster_draw_words",
+        "description": "At the start of the game, both teams draw their SECRET code words. 4 words are chosen randomly from the word deck by both teams. These words that are assigned to keys 1, 2, 3, and 4 on each team. These are meant to be kept secret from the other team."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 8,
+    "fields": {
+        "created": "2019-03-05T03:12:55.125Z",
+        "updated": "2019-03-05T03:12:55.125Z",
+        "slug": "cluster_buster_assign_team_leader",
+        "description": "At the start of any round, a team leader is assigned from the list of players in any sequential and repeating order."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 9,
+    "fields": {
+        "created": "2019-03-05T03:17:23.449Z",
+        "updated": "2019-03-05T03:17:23.449Z",
+        "slug": "cluster_buster_leaders_draw_code_numbers",
+        "description": "The leaders of each team trigger the next stage of the round by drawing from their team's assigned deck of randomly shuffled SECRET code numbers. Leaders are not to share this number with anyone, including their own teammates. At this point of the round, any information shared must be across teams and players. No secret information is allowed to be used beyond the code words assigned to slots 1-4."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 10,
+    "fields": {
+        "created": "2019-03-10T06:00:38.502Z",
+        "updated": "2019-03-10T06:00:38.502Z",
+        "slug": "cluster_buster_secret_words_drawn",
+        "description": "When each team has 4 SECRET words, the game can proceed to the first round."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 11,
+    "fields": {
+        "created": "2019-03-12T03:03:11.552Z",
+        "updated": "2019-03-12T03:03:11.552Z",
+        "slug": "cluster_buster_rounds_stage",
+        "description": "The rounds stage continues for a total of maximum of 8 rounds."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 12,
+    "fields": {
+        "created": "2019-03-13T00:54:13.998Z",
+        "updated": "2019-03-13T00:54:13.998Z",
+        "slug": "cluster_buster_team_leaders_assigned",
+        "description": "Once team leaders are assigned, they can proceed to draw the SECRET code numbers."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 13,
+    "fields": {
+        "created": "2019-03-13T00:55:57.514Z",
+        "updated": "2019-03-13T00:55:57.514Z",
+        "slug": "cluster_buster_code_numbers_drawn",
+        "description": "Once team leaders have drawn their code numbers, they come up with their hints."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 14,
+    "fields": {
+        "created": "2019-03-13T01:25:01.969Z",
+        "updated": "2019-03-24T21:31:52.491Z",
+        "slug": "cluster_buster_leaders_made_hints",
+        "description": "The round proceeds to the next stage when both team leaders have submitted their hints."
+    }
+},
+{
+    "model": "gamedefinitions.rule",
+    "pk": 15,
+    "fields": {
+        "created": "2019-03-24T21:33:56.193Z",
+        "updated": "2019-03-24T22:15:49.283Z",
+        "slug": "cluster_buster_teams_made_guesses",
+        "description": "The round proceeds to the next stage when teams have submitted their guesses for the hints given of both teams."
+    }
+},
+{
+    "model": "gamedefinitions.state",
+    "pk": 1,
+    "fields": {
+        "created": "2019-03-03T02:43:13.979Z",
+        "updated": "2019-03-29T08:36:18.734Z",
+        "slug": "game_init",
+        "name": "Game Initialization"
+    }
+},
+{
+    "model": "gamedefinitions.state",
+    "pk": 2,
+    "fields": {
+        "created": "2019-03-03T02:43:24.958Z",
+        "updated": "2019-03-09T07:23:50.526Z",
+        "slug": "game_play",
+        "name": "Game is in play"
+    }
+},
+{
+    "model": "gamedefinitions.state",
+    "pk": 3,
+    "fields": {
+        "created": "2019-03-03T02:43:28.883Z",
+        "updated": "2019-03-03T02:43:28.883Z",
+        "slug": "game_over",
+        "name": ""
+    }
+},
+{
+    "model": "gamedefinitions.state",
+    "pk": 4,
+    "fields": {
+        "created": "2019-03-03T02:43:37.652Z",
+        "updated": "2019-03-10T06:02:51.932Z",
+        "slug": "draw_words_stage",
+        "name": "Teams Draw Secret Words"
+    }
+},
+{
+    "model": "gamedefinitions.state",
+    "pk": 5,
+    "fields": {
+        "created": "2019-03-03T02:44:21.251Z",
+        "updated": "2019-03-12T03:03:22.050Z",
+        "slug": "rounds_stage",
+        "name": ""
+    }
+},
+{
+    "model": "gamedefinitions.state",
+    "pk": 6,
+    "fields": {
+        "created": "2019-03-03T02:45:37.564Z",
+        "updated": "2019-03-12T03:18:25.205Z",
+        "slug": "first_round",
+        "name": ""
+    }
+},
+{
+    "model": "gamedefinitions.state",
+    "pk": 7,
+    "fields": {
+        "created": "2019-03-03T02:45:44.294Z",
+        "updated": "2019-03-03T02:45:44.294Z",
+        "slug": "middle_rounds",
+        "name": ""
+    }
+},
+{
+    "model": "gamedefinitions.state",
+    "pk": 8,
+    "fields": {
+        "created": "2019-03-03T02:45:50.421Z",
+        "updated": "2019-03-03T02:45:50.421Z",
+        "slug": "last_round",
+        "name": ""
+    }
+},
+{
+    "model": "gamedefinitions.state",
+    "pk": 9,
+    "fields": {
+        "created": "2019-03-03T02:45:56.784Z",
+        "updated": "2019-03-13T00:56:27.700Z",
+        "slug": "select_leader_stage",
+        "name": ""
+    }
+},
+{
+    "model": "gamedefinitions.state",
+    "pk": 10,
+    "fields": {
+        "created": "2019-03-03T03:12:34.257Z",
+        "updated": "2019-03-13T00:56:54.219Z",
+        "slug": "draw_code_card_stage",
+        "name": ""
+    }
+},
+{
+    "model": "gamedefinitions.state",
+    "pk": 11,
+    "fields": {
+        "created": "2019-03-03T03:12:40.822Z",
+        "updated": "2019-04-10T22:40:44.826Z",
+        "slug": "leaders_make_hints_stage",
+        "name": "Hint Making"
+    }
+},
+{
+    "model": "gamedefinitions.state",
+    "pk": 12,
+    "fields": {
+        "created": "2019-03-03T03:12:50.372Z",
+        "updated": "2019-04-10T22:40:56.246Z",
+        "slug": "teams_share_hints_stage",
+        "name": "Teams Share Hints"
+    }
+},
+{
+    "model": "gamedefinitions.state",
+    "pk": 13,
+    "fields": {
+        "created": "2019-03-03T03:12:58.252Z",
+        "updated": "2019-04-10T22:41:06.270Z",
+        "slug": "teams_guess_codes_stage",
+        "name": "Teams Guess Codes"
+    }
+},
+{
+    "model": "gamedefinitions.state",
+    "pk": 14,
+    "fields": {
+        "created": "2019-03-03T03:13:07.564Z",
+        "updated": "2019-04-10T22:41:19.525Z",
+        "slug": "teams_share_guesses_stage",
+        "name": "Teams Share Guesses"
+    }
+},
+{
+    "model": "gamedefinitions.state",
+    "pk": 15,
+    "fields": {
+        "created": "2019-03-03T03:13:15.371Z",
+        "updated": "2019-04-10T22:41:31.309Z",
+        "slug": "score_teams_stage",
+        "name": "Teams Getting Scored"
+    }
+},
+{
+    "model": "gamedefinitions.statemachine",
+    "pk": 1,
+    "fields": {
+        "slug": "fsm0",
+        "root_state": 1
+    }
+},
+{
+    "model": "gamedefinitions.statemachine",
+    "pk": 2,
+    "fields": {
+        "slug": "fsm1",
+        "root_state": 1
+    }
+},
+{
+    "model": "gamedefinitions.statemachine",
+    "pk": 3,
+    "fields": {
+        "slug": "fsm2",
+        "root_state": 1
+    }
+},
+{
+    "model": "gamedefinitions.statemachine",
+    "pk": 4,
+    "fields": {
+        "slug": "fsm3",
+        "root_state": 1
+    }
+},
+{
+    "model": "gamedefinitions.transition",
+    "pk": 1,
+    "fields": {
+        "label": "game_is_ready",
+        "from_state": 1,
+        "to_state": 2
+    }
+},
+{
+    "model": "gamedefinitions.transition",
+    "pk": 2,
+    "fields": {
+        "label": "team_lost",
+        "from_state": 2,
+        "to_state": 3
+    }
+},
+{
+    "model": "gamedefinitions.transition",
+    "pk": 3,
+    "fields": {
+        "label": "team_won",
+        "from_state": 2,
+        "to_state": 3
+    }
+},
+{
+    "model": "gamedefinitions.transition",
+    "pk": 4,
+    "fields": {
+        "label": "secret_words_drawn",
+        "from_state": 4,
+        "to_state": 5
+    }
+},
+{
+    "model": "gamedefinitions.transition",
+    "pk": 5,
+    "fields": {
+        "label": "code_numbers_drawn",
+        "from_state": 10,
+        "to_state": 11
+    }
+},
+{
+    "model": "gamedefinitions.transition",
+    "pk": 6,
+    "fields": {
+        "label": "guesses_submitted",
+        "from_state": 13,
+        "to_state": 14
+    }
+},
+{
+    "model": "gamedefinitions.transition",
+    "pk": 7,
+    "fields": {
+        "label": "hints_submitted",
+        "from_state": 11,
+        "to_state": 13
+    }
+},
+{
+    "model": "gamedefinitions.transition",
+    "pk": 9,
+    "fields": {
+        "label": "team_leader_assigned",
+        "from_state": 9,
+        "to_state": 10
+    }
+},
+{
+    "model": "gamedefinitions.gamedefinition",
+    "pk": 1,
+    "fields": {
+        "created": "2019-03-05T01:16:17.756Z",
+        "updated": "2019-04-05T02:05:47.734Z",
+        "slug": "cluster_buster",
+        "title": "Cluster Buster v 0.1.0",
+        "description": "Cluster Buster is based on Decrypto board game. Made for web.",
+        "first_rule": 6,
+        "states": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+        ],
+        "state_machines": [
+            1,
+            2,
+            3,
+            4
+        ],
+        "rules": [
+            15,
+            14,
+            13,
+            12,
+            11,
+            10,
+            9,
+            8,
+            7,
+            6,
+            5,
+            4,
+            3,
+            2,
+            1
+        ]
+    }
+}
+]

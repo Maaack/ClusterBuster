@@ -1,33 +1,129 @@
 {% extends "core/base/html_base.html" %}
 
-{% block head_title %}Game {{ game.pk }}{% endblock %}
+{% block head_title %}Game {{ game.code }}{% endblock %}
 {% block content %}
-<h1>Game {{ game.pk }}</h1>
-<a href="{% url 'gameroom_detail' game.room.code %}">Room {{ game.room.code }}</a>
-
-<h3>Players</h3>
-<ul>
-    {% for player in game.players.all %}
-        <li>{{ player.name }}</li>
-    {% endfor %}
-</ul>
-<h3>Teams</h3>
-{% for team in game.teams.all %}
-    Team {{ forloop.counter }}
-    <ul>
-        {% for player in team.players.all %}
-            <li>{{ player.name }}</li>
-        {% empty %}
-            <p>No players!</p>
+    <div id="game-information">
+        <div id="game-title">
+            <h1>Game {{ game.code }}</h1>
+        </div>
+        <div id="round-information">
+            <div id="round-number-block">
+                Round: <span id="round-number">{{ round_number }}</span>
+            </div>
+            <div id="round-stage-block">
+                Stage: <span id="round-stage">{{ round_stage }}</span>
+            </div>
+            {% if show_guesses_information %}
+                <div id="round-guesses-information">
+                    <table id="code-words-table">
+                        <tr>
+                            {% for guessing_team, guesses in all_guesses.items %}
+                                {% for hinting_team, hints in guesses.items %}
+                                    <th>
+                                        {{ guessing_team }} --> {{ hinting_team }}
+                                    </th>
+                                {% endfor %}
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            {% for guessing_team, guesses in all_guesses.items %}
+                                {% for hinting_team, hints in guesses.items %}
+                                    <td>
+                                        <table>
+                                            <tr>
+                                                <th>
+                                                    Hint #:
+                                                </th>
+                                                {% for hint in hints %}
+                                                    <th>
+                                                        <span class="hint-number">{{ hint.hint_number }}</span>
+                                                    </th>
+                                                {% endfor %}
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <strong>Hint:</strong>
+                                                </td>
+                                                {% for hint in hints %}
+                                                    <td>
+                                                        <span class="hint-text">{{ hint.hint }}</span>
+                                                    </td>
+                                                {% endfor %}
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <strong>Guess:</strong>
+                                                </td>
+                                                {% for hint in hints %}
+                                                    <td>
+                                                        <span class="hint-guess">{{ hint.guess }}</span>
+                                                    </td>
+                                                {% endfor %}
+                                            </tr>
+                                        </table>
+                                    </td>
+                                {% endfor %}
+                            {% endfor %}
+                        </tr>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <div id="code-words-block">
+        <h2>Top Secret: Code Words</h2>
+        <table id="code-words-table">
+            <tr>
+                {% for secret_word in secret_words %}
+                    <th>
+                        {{ forloop.counter }}
+                    </th>
+                {% endfor %}
+            </tr>
+            <tr>
+                {% for secret_word in secret_words %}
+                    <td>
+                        {{ secret_word }}
+                    </td>
+                {% endfor %}
+            </tr>
+        </table>
+    </div>
+    <div id="game-options">
+        <h2>Game Options</h2>
+        {% if is_round_leader %}
+            <div id="round-leader-options">
+                {% if show_leader_hints_form_link %}
+                    <a href="{% url 'leader_hints' game.code %}">Submit Leader Hints</a>
+                {% endif %}
+                {% if show_score_teams_link %}
+                    <a href="{% url 'score_teams' game.code %}">Score the Teams</a>
+                {% endif %}
+                {% if show_start_next_round_link %}
+                    <a href="{% url 'start_next_round' game.code %}">Start the Next Round</a>
+                {% endif %}
+            </div>
+        {% else %}
+            <div id="round-player-options">
+                {% if show_player_guesses_form_link %}
+                    <a href="{% url 'player_guesses' game.code %}">Submit Guesses</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+    <div id="player-and-teams">
+        <h2>Players and Teams</h2>
+        {% for team in game.teams.all %}
+            <div class="team-name-block">
+                <span class="team-name">{{ team.name }}</span> Team
+            </div>
+            <ul>
+                {% for player in team.players.all %}
+                    <li>{{ player.name }}</li>
+                {% empty %}
+                    <p>No players!</p>
+                {% endfor %}
+            </ul>
         {% endfor %}
-    </ul>
-{% endfor %}
-<h3>Rounds</h3>
-<ul>
-    {% for round in game.rounds.all %}
-        <li>{{ round.number }}</li>
-    {% endfor %}
-</ul>
+    </div>
 {% endblock %}
-</body>
-</html>
