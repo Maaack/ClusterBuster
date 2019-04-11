@@ -11,6 +11,8 @@ class ClusterBuster(RuleLibrary):
     STARTING_LOSE_TOKENS_PER_TEAM = 0
     SECRET_WORDS_PER_TEAM = 4
     CODE_CARD_SLOTS = 3
+    LAST_ROUND_NUMBER = 8
+    FIRST_ROUND_NUMBER = 1
 
     @staticmethod
     def start_game(game: Game):
@@ -72,15 +74,17 @@ class ClusterBuster(RuleLibrary):
         condition_group.add_fsm_state_condition('fsm0', 'game_play_state')
         condition_group.add_fsm_state_condition('fsm1', 'draw_words_stage_state')
         # Rounds Trigger
-        trigger = game.add_trigger('rounds_stage')
+        trigger = game.add_trigger('start_first_round')
         condition_group = trigger.condition_group
         condition_group.add_fsm_state_condition('fsm1', 'rounds_stage_state')
         # Assign Team Leader Trigger
         trigger = game.add_trigger('assign_team_leader')
+        trigger.repeats = True
         condition_group = trigger.condition_group
         condition_group.add_fsm_state_condition('fsm3', 'select_leader_stage_state')
         # Assign Team Leader Trigger
         trigger = game.add_trigger('leaders_draw_code_numbers')
+        trigger.repeats = True
         condition_group = trigger.condition_group
         condition_group.add_fsm_state_condition('fsm3', 'draw_code_card_stage_state')
         # Game Ready Transition
@@ -92,7 +96,7 @@ class ClusterBuster(RuleLibrary):
         :param game:
         :return:
         """
-        game.transit_state_machine('fsm0', 'game_play', 'team won')
+        game.transit_state_machine('fsm0', 'game_play', 'Team won')
 
     @staticmethod
     def team_lost(game: Game):
@@ -100,7 +104,15 @@ class ClusterBuster(RuleLibrary):
         :param game:
         :return:
         """
-        game.transit_state_machine('fsm0', 'game_over', 'team lost')
+        game.transit_state_machine('fsm0', 'game_over', 'Team lost')
+
+    @staticmethod
+    def last_round_over(game: Game):
+        """
+        :param game:
+        :return:
+        """
+        game.transit_state_machine('fsm0', 'game_over', 'Last round over')
 
     @staticmethod
     def draw_words(game: Game):
@@ -120,25 +132,25 @@ class ClusterBuster(RuleLibrary):
         game.transit_state_machine('fsm1', 'rounds_stage', 'Secret words drawn')
 
     @staticmethod
-    def rounds_stage(game: Game):
-        game.set_parameter_value('current_round_count', 1)
-        game.set_parameter_value('last_round_count', 8)
+    def start_first_round(game: Game):
+        game.set_parameter_value('current_round_number', ClusterBuster.FIRST_ROUND_NUMBER)
+        game.set_parameter_value('last_round_number', ClusterBuster.LAST_ROUND_NUMBER)
         game.transit_state_machine('fsm2', 'first_round', 'Starting first round')
         game.transit_state_machine('fsm3', 'select_leader_stage', 'Starting first round')
 
     @staticmethod
     def assign_team_leader(game: Game):
-        round_number = game.get_parameter_value('current_round_count')
+        round_number = game.get_parameter_value('current_round_number')
         for team in game.teams.all():
             player_count = team.players.count()
             offset = (round_number - 1) % player_count
             round_leader = team.players.all()[offset]
             game.set_parameter_value(('round', round_number, 'team', team, 'leader'), round_leader)
-        game.transit_state_machine('fsm3', 'draw_code_card_stage', 'team leaders assigned')
+        game.transit_state_machine('fsm3', 'draw_code_card_stage', 'Team leaders assigned')
 
     @staticmethod
     def leaders_draw_code_numbers(game: Game):
-        round_number = game.get_parameter_value('current_round_count')
+        round_number = game.get_parameter_value('current_round_number')
         for team in game.teams.all():
             deck = PatternDeckBuilder.build_deck()
             # drawn_cards = self.get_drawn_cards()
@@ -162,7 +174,7 @@ class ClusterBuster(RuleLibrary):
     @staticmethod
     def leaders_made_hints(game: Game):
         game.transit_state_machine('fsm3', 'teams_guess_codes_stage', 'Leaders made hints')
-        round_number = game.get_parameter_value('current_round_count')
+        round_number = game.get_parameter_value('current_round_number')
         fsm2 = game.get_parameter_value('fsm2')  # type: StateMachine
         is_first_round = fsm2.current_state.slug == 'first_round'
         # Team Players Made Guesses Trigger
@@ -192,7 +204,7 @@ class ClusterBuster(RuleLibrary):
             'win_condition': ClusterBuster.set_win_condition,
             'lose_condition': ClusterBuster.set_lose_condition,
             'draw_words': ClusterBuster.draw_words,
-            'rounds_stage': ClusterBuster.rounds_stage,
+            'start_first_round': ClusterBuster.start_first_round,
             'assign_team_leader': ClusterBuster.assign_team_leader,
             'leaders_draw_code_numbers': ClusterBuster.leaders_draw_code_numbers,
             'leaders_made_hints': ClusterBuster.leaders_made_hints,

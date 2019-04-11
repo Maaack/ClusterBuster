@@ -13,6 +13,61 @@
             <div id="round-stage-block">
                 Stage: <span id="round-stage">{{ round_stage }}</span>
             </div>
+            {% if show_guesses_information %}
+                <div id="round-guesses-information">
+                    <table id="code-words-table">
+                        <tr>
+                            {% for guessing_team, guesses in all_guesses.items %}
+                                {% for hinting_team, hints in guesses.items %}
+                                    <th>
+                                        {{ guessing_team }} --> {{ hinting_team }}
+                                    </th>
+                                {% endfor %}
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            {% for guessing_team, guesses in all_guesses.items %}
+                                {% for hinting_team, hints in guesses.items %}
+                                    <td>
+                                        <table>
+                                            <tr>
+                                                <th>
+                                                    Hint #:
+                                                </th>
+                                                {% for hint in hints %}
+                                                    <th>
+                                                        <span class="hint-number">{{ hint.hint_number }}</span>
+                                                    </th>
+                                                {% endfor %}
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <strong>Hint:</strong>
+                                                </td>
+                                                {% for hint in hints %}
+                                                    <td>
+                                                        <span class="hint-text">{{ hint.hint }}</span>
+                                                    </td>
+                                                {% endfor %}
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <strong>Guess:</strong>
+                                                </td>
+                                                {% for hint in hints %}
+                                                    <td>
+                                                        <span class="hint-guess">{{ hint.guess }}</span>
+                                                    </td>
+                                                {% endfor %}
+                                            </tr>
+                                        </table>
+                                    </td>
+                                {% endfor %}
+                            {% endfor %}
+                        </tr>
+                    </table>
+                </div>
+            {% endif %}
         </div>
     </div>
     <div id="code-words-block">
@@ -37,13 +92,20 @@
     {% if show_leader_hints_form_link or show_player_guesses_form_link %}
         <div id="game-options">
             <h2>Game Options</h2>
-            {% if show_leader_hints_form_link %}
+            {% if is_round_leader %}
                 <div id="round-leader-options">
-                    <a href="{% url 'leader_hints' game.code %}">Submit Leader Hints</a>
+                    {% if show_leader_hints_form_link %}
+                        <a href="{% url 'leader_hints' game.code %}">Submit Leader Hints</a>
+                    {% endif %}
+                    {% if show_start_next_round_link %}
+                        <a href="{% url 'start_next_round' game.code %}">Start the Next Round</a>
+                    {% endif %}
                 </div>
-            {% elif show_player_guesses_form_link %}
+            {% else %}
                 <div id="round-player-options">
-                    <a href="{% url 'player_guesses' game.code %}">Submit Guesses</a>
+                    {% if show_player_guesses_form_link %}
+                        <a href="{% url 'player_guesses' game.code %}">Submit Guesses</a>
+                    {% endif %}
                 </div>
             {% endif %}
         </div>
