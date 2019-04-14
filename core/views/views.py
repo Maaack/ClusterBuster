@@ -127,6 +127,19 @@ class GameViewAbstract(CheckPlayerView):
                         {"hint_number": hint_number, "hint": hint, "guess": guess})
         return guesses
 
+    def get_all_hints_data(self):
+        hints = {}
+        for team in self.game.teams.all():  # type: Team
+            hints[team.name] = []
+            for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+                hint_number = card_i + 1
+                hint = self.game.get_parameter_value(
+                    ('round', self.round_number, 'team', team, 'hint', hint_number),
+                )
+                hints[team.name].append(
+                    {"hint_number": hint_number, "hint": hint})
+        return hints
+
     def is_round_team_leader(self):
         if self.player is None or self.team is None:
             return False
@@ -152,8 +165,10 @@ class GameDetail(generic.DetailView, GameViewAbstract):
         show_score_teams_link = False
         show_start_next_round_link = False
         show_guesses_information = False
+        show_hints_information = False
         winning_team = None
         losing_team = None
+        all_hints = []
         all_guesses = []
         fsm0 = self.game.get_parameter_value('fsm0')  # type: StateMachine
         is_game_over = fsm0.current_state.slug == 'game_over'
@@ -168,6 +183,8 @@ class GameDetail(generic.DetailView, GameViewAbstract):
             if fsm3_state == 'leaders_make_hints_stage' and self.is_round_team_leader():
                 show_leader_hints_form_link = True
             elif fsm3_state == 'teams_guess_codes_stage':
+                all_hints = self.get_all_hints_data()
+                show_hints_information = True
                 if not self.is_round_team_leader():
                     show_player_guesses_form_link = True
                 if not is_first_round:
@@ -185,10 +202,12 @@ class GameDetail(generic.DetailView, GameViewAbstract):
         data['losing_team'] = losing_team
         data['is_game_over'] = is_game_over
         data['show_start_next_round_link'] = show_start_next_round_link
+        data['show_hints_information'] = show_hints_information
         data['show_guesses_information'] = show_guesses_information
         data['show_score_teams_link'] = show_score_teams_link
         data['secret_words'] = self.get_secret_words_data()
         data['round_number'] = self.round_number
+        data['all_hints'] = all_hints
         data['all_guesses'] = all_guesses
         data['is_round_leader'] = self.is_round_team_leader()
         data['tokens'] = self.get_tokens_data()
