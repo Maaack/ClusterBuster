@@ -10,6 +10,9 @@
             <h2>Game Over!</h2>
             <div id="final-score-information">
                 {% include "core/includes/final_score.html" %}
+                <div class="back-to-room-link">
+                    <a href="{% url 'room_detail' game.room.code %}">Back to the Room</a>
+                </div>
             </div>
         {% endif %}
         <div class="team-information">

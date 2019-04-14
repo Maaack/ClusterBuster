@@ -11,8 +11,7 @@
         <ul>
             <li><a href="{% url 'index' %}">Home</a></li>
             <li><a href="{% url 'player_create' %}">Your Player</a></li>
-            <li><a href="{% url 'room_list' %}">View Open Rooms</a></li>
-            <li><a href="{% url 'room_create' %}">Start Room</a></li>
+            <li><a href="{% url 'room_detail' game.room.code %}">Back to the Room</a></li>
         </ul>
     {% endblock %}
 </div>
