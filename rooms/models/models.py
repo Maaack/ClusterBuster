@@ -231,6 +231,15 @@ class Room(TimeStamped, SessionOptional):
         team.join(player)
         self.save()
 
+    def get_activity_options(self):
+        player_count = self.players.count()
+        team_count = self.teams.count()
+        team_player_count = self.get_fewest_players_per_team()
+        activity_options = ActivityOption.objects.filter(minimum_player__lte=player_count,
+                                                         minimum_teams__lte=team_count,
+                                                         minimum_players_per_team__lte=team_player_count).all()
+        return activity_options
+
     def start_activity(self, name: str, link: str):
         activity = self.activities.create(name=name, link=link)
         self.current_activity = activity
@@ -253,4 +262,25 @@ class Activity(TimeStamped):
 
     def __str__(self):
         return str(self.name) + " (" + str(self.link) + ")"
+
+
+class ActivityOption(TimeStamped):
+    """
+    Activities tie Rooms to something else.
+    """
+
+    slug = models.SlugField(_("Slug"))
+    start_text = models.CharField(_("Text"), max_length=256)
+    start_url = models.CharField(_("Relative Link"), max_length=64)
+    minimum_player = models.PositiveSmallIntegerField(_("Minimum Players"), default=0)
+    minimum_teams = models.PositiveSmallIntegerField(_("Minimum Teams"), default=0)
+    minimum_players_per_team = models.PositiveSmallIntegerField(_("Minimum Players Per Team"), default=0)
+
+    class Meta:
+        verbose_name = _("Activity Option")
+        verbose_name_plural = _("Activity Options")
+        ordering = ["-created"]
+
+    def __str__(self):
+        return str(self.slug)
 
