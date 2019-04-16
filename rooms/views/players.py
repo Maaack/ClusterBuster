@@ -53,7 +53,7 @@ class CreatePlayerAndJoinRoom(AssignPlayerView, generic.CreateView):
         player = self.get_current_player()
 
         if player is not None:
-            return HttpResponseRedirect(reverse('room_detail', kwargs))
+            return HttpResponseRedirect(reverse('room_detail', **kwargs))
         return super(CreatePlayerAndJoinRoom, self).dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
