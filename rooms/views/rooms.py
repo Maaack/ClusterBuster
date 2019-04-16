@@ -76,6 +76,7 @@ class RoomDetail(generic.DetailView, CheckPlayerView):
                 team_data.update(player_team_data)
             teams_data.append(team_data)
         data['teams'] = teams_data
+        data['activity_options'] = room.get_activity_options()
 
         return data
 

@@ -1,5 +1,19 @@
 [
 {
+    "model": "rooms.activityoption",
+    "pk": 1,
+    "fields": {
+        "created": "2019-04-16T01:18:25.305Z",
+        "updated": "2019-04-16T01:36:28.423Z",
+        "slug": "cluster-buster",
+        "start_text": "Start a new Cluster Buster game",
+        "start_url": "start_cluster_buster/",
+        "minimum_player": 4,
+        "minimum_teams": 2,
+        "minimum_players_per_team": 2
+    }
+},
+{
     "model": "gamedefinitions.rule",
     "pk": 1,
     "fields": {
@@ -496,6 +510,546 @@
             2,
             1
         ]
+    }
+},
+{
+    "model": "core.word",
+    "pk": 1,
+    "fields": {
+        "created": "2018-08-07T22:40:08.962Z",
+        "updated": "2018-08-07T22:40:08.962Z",
+        "text": "biology"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 2,
+    "fields": {
+        "created": "2018-08-07T22:55:29.072Z",
+        "updated": "2018-08-07T22:55:29.072Z",
+        "text": "chemistry"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 3,
+    "fields": {
+        "created": "2018-08-07T22:55:40.262Z",
+        "updated": "2018-08-07T22:55:40.262Z",
+        "text": "mathematics"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 4,
+    "fields": {
+        "created": "2018-08-07T22:56:16.025Z",
+        "updated": "2018-08-07T22:56:16.025Z",
+        "text": "algebra"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 5,
+    "fields": {
+        "created": "2018-08-07T22:56:19.765Z",
+        "updated": "2018-08-07T22:56:19.765Z",
+        "text": "calculus"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 6,
+    "fields": {
+        "created": "2018-08-07T22:56:27.963Z",
+        "updated": "2018-08-07T22:56:27.963Z",
+        "text": "physics"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 7,
+    "fields": {
+        "created": "2018-08-07T22:56:34.095Z",
+        "updated": "2018-08-07T22:56:34.095Z",
+        "text": "astronomy"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 8,
+    "fields": {
+        "created": "2018-08-07T22:57:48.614Z",
+        "updated": "2018-08-07T22:57:48.614Z",
+        "text": "zoology"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 9,
+    "fields": {
+        "created": "2018-08-07T22:58:00.043Z",
+        "updated": "2018-08-07T22:58:00.043Z",
+        "text": "linguistics"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 10,
+    "fields": {
+        "created": "2018-08-07T22:58:46.321Z",
+        "updated": "2018-08-07T22:58:46.321Z",
+        "text": "cat"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 11,
+    "fields": {
+        "created": "2018-08-07T22:58:49.689Z",
+        "updated": "2018-08-07T22:58:49.689Z",
+        "text": "dog"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 12,
+    "fields": {
+        "created": "2018-08-07T22:58:53.304Z",
+        "updated": "2018-08-07T22:58:53.304Z",
+        "text": "horse"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 13,
+    "fields": {
+        "created": "2018-08-07T22:58:56.071Z",
+        "updated": "2018-08-07T22:58:56.071Z",
+        "text": "pig"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 14,
+    "fields": {
+        "created": "2018-08-07T22:58:58.466Z",
+        "updated": "2018-08-07T22:58:58.466Z",
+        "text": "cow"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 15,
+    "fields": {
+        "created": "2018-08-07T22:59:03.166Z",
+        "updated": "2018-08-07T22:59:03.166Z",
+        "text": "goat"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 16,
+    "fields": {
+        "created": "2018-08-07T22:59:06.437Z",
+        "updated": "2018-08-07T22:59:06.437Z",
+        "text": "sheep"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 17,
+    "fields": {
+        "created": "2018-08-07T22:59:19.253Z",
+        "updated": "2018-08-07T22:59:19.253Z",
+        "text": "wolf"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 18,
+    "fields": {
+        "created": "2018-08-07T22:59:24.455Z",
+        "updated": "2018-08-07T22:59:24.455Z",
+        "text": "bear"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 19,
+    "fields": {
+        "created": "2018-08-07T22:59:27.043Z",
+        "updated": "2018-08-07T22:59:27.043Z",
+        "text": "deer"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 20,
+    "fields": {
+        "created": "2018-08-07T22:59:36.473Z",
+        "updated": "2018-08-07T22:59:36.473Z",
+        "text": "squirrel"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 21,
+    "fields": {
+        "created": "2018-08-07T23:00:31.958Z",
+        "updated": "2018-08-07T23:00:31.958Z",
+        "text": "mouse"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 22,
+    "fields": {
+        "created": "2018-08-07T23:01:00.633Z",
+        "updated": "2018-08-07T23:01:00.633Z",
+        "text": "rat"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 23,
+    "fields": {
+        "created": "2018-08-07T23:01:13.839Z",
+        "updated": "2018-08-07T23:01:13.839Z",
+        "text": "monkey"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 24,
+    "fields": {
+        "created": "2018-08-07T23:01:17.168Z",
+        "updated": "2018-08-07T23:01:17.168Z",
+        "text": "human"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 25,
+    "fields": {
+        "created": "2018-08-07T23:01:25.318Z",
+        "updated": "2018-08-07T23:01:25.318Z",
+        "text": "dolphin"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 26,
+    "fields": {
+        "created": "2018-08-07T23:01:28.185Z",
+        "updated": "2018-08-07T23:01:28.185Z",
+        "text": "whale"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 27,
+    "fields": {
+        "created": "2018-08-07T23:01:34.170Z",
+        "updated": "2018-08-07T23:01:34.170Z",
+        "text": "fish"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 28,
+    "fields": {
+        "created": "2018-08-07T23:01:43.736Z",
+        "updated": "2018-08-07T23:01:43.736Z",
+        "text": "jellyfish"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 29,
+    "fields": {
+        "created": "2018-08-07T23:01:47.059Z",
+        "updated": "2018-08-07T23:01:47.059Z",
+        "text": "squid"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 30,
+    "fields": {
+        "created": "2018-08-07T23:01:50.484Z",
+        "updated": "2018-08-07T23:01:50.484Z",
+        "text": "octopus"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 31,
+    "fields": {
+        "created": "2018-08-07T23:02:17.746Z",
+        "updated": "2018-08-07T23:02:17.746Z",
+        "text": "coral"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 32,
+    "fields": {
+        "created": "2018-08-07T23:02:29.589Z",
+        "updated": "2018-08-07T23:02:29.589Z",
+        "text": "seaweed"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 33,
+    "fields": {
+        "created": "2018-08-07T23:02:41.539Z",
+        "updated": "2018-08-07T23:02:41.539Z",
+        "text": "clam"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 34,
+    "fields": {
+        "created": "2018-08-07T23:02:47.043Z",
+        "updated": "2018-08-07T23:02:47.043Z",
+        "text": "crab"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 35,
+    "fields": {
+        "created": "2018-08-07T23:02:49.997Z",
+        "updated": "2018-08-07T23:02:49.997Z",
+        "text": "turtle"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 36,
+    "fields": {
+        "created": "2018-08-07T23:03:10.650Z",
+        "updated": "2018-08-07T23:03:10.650Z",
+        "text": "tortoise"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 37,
+    "fields": {
+        "created": "2018-08-07T23:03:40.353Z",
+        "updated": "2018-08-07T23:03:40.353Z",
+        "text": "hare"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 38,
+    "fields": {
+        "created": "2018-08-07T23:03:44.320Z",
+        "updated": "2018-08-07T23:03:44.320Z",
+        "text": "rabbit"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 39,
+    "fields": {
+        "created": "2018-08-07T23:04:03.390Z",
+        "updated": "2018-08-07T23:04:03.390Z",
+        "text": "bunny"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 40,
+    "fields": {
+        "created": "2018-08-07T23:04:13.312Z",
+        "updated": "2018-08-07T23:04:13.312Z",
+        "text": "fox"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 41,
+    "fields": {
+        "created": "2018-08-07T23:04:36.626Z",
+        "updated": "2018-08-07T23:04:36.626Z",
+        "text": "tiger"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 42,
+    "fields": {
+        "created": "2018-08-07T23:04:39.042Z",
+        "updated": "2018-08-07T23:04:39.042Z",
+        "text": "lion"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 43,
+    "fields": {
+        "created": "2018-08-07T23:04:42.015Z",
+        "updated": "2018-08-07T23:04:42.015Z",
+        "text": "zebra"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 44,
+    "fields": {
+        "created": "2018-08-07T23:04:55.584Z",
+        "updated": "2018-08-07T23:04:55.584Z",
+        "text": "giraffe"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 45,
+    "fields": {
+        "created": "2018-08-07T23:04:59.278Z",
+        "updated": "2018-08-07T23:04:59.278Z",
+        "text": "elephant"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 46,
+    "fields": {
+        "created": "2018-08-07T23:05:08.679Z",
+        "updated": "2018-08-07T23:05:08.679Z",
+        "text": "hippo"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 47,
+    "fields": {
+        "created": "2018-08-07T23:05:19.844Z",
+        "updated": "2018-08-07T23:05:19.844Z",
+        "text": "gorilla"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 48,
+    "fields": {
+        "created": "2018-08-07T23:05:23.690Z",
+        "updated": "2018-08-07T23:05:23.690Z",
+        "text": "hyena"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 49,
+    "fields": {
+        "created": "2018-08-07T23:06:01.450Z",
+        "updated": "2018-08-07T23:06:01.450Z",
+        "text": "air"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 50,
+    "fields": {
+        "created": "2018-08-07T23:06:03.356Z",
+        "updated": "2018-08-07T23:06:03.356Z",
+        "text": "water"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 51,
+    "fields": {
+        "created": "2018-08-07T23:06:05.706Z",
+        "updated": "2018-08-07T23:06:05.706Z",
+        "text": "fire"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 52,
+    "fields": {
+        "created": "2018-08-07T23:06:13.326Z",
+        "updated": "2018-08-07T23:06:13.326Z",
+        "text": "earth"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 53,
+    "fields": {
+        "created": "2018-08-07T23:06:41.855Z",
+        "updated": "2018-08-07T23:06:41.855Z",
+        "text": "electricity"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 54,
+    "fields": {
+        "created": "2018-08-07T23:06:51.306Z",
+        "updated": "2018-08-07T23:06:51.306Z",
+        "text": "light"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 55,
+    "fields": {
+        "created": "2018-08-07T23:06:53.380Z",
+        "updated": "2018-08-07T23:06:53.380Z",
+        "text": "dark"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 56,
+    "fields": {
+        "created": "2018-08-07T23:07:02.862Z",
+        "updated": "2018-08-07T23:07:02.862Z",
+        "text": "alcohol"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 57,
+    "fields": {
+        "created": "2018-08-07T23:07:16.139Z",
+        "updated": "2018-08-07T23:07:16.139Z",
+        "text": "vodka"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 58,
+    "fields": {
+        "created": "2018-08-07T23:07:18.446Z",
+        "updated": "2018-08-07T23:07:18.446Z",
+        "text": "tequila"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 59,
+    "fields": {
+        "created": "2018-08-07T23:07:23.960Z",
+        "updated": "2018-08-07T23:07:23.960Z",
+        "text": "bourbon"
+    }
+},
+{
+    "model": "core.word",
+    "pk": 60,
+    "fields": {
+        "created": "2018-08-07T23:07:26.101Z",
+        "updated": "2018-08-07T23:07:26.101Z",
+        "text": "gin"
     }
 }
 ]

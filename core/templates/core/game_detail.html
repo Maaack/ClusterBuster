@@ -2,17 +2,50 @@
 
 {% block head_title %}Game {{ game.code }}{% endblock %}
 {% block content %}
-    <div id="game-information">
-        <div id="game-title">
-            <h1>Game {{ game.code }}</h1>
+    <div id="game-overview" class="row">
+        <div class="col">
+            <div id="game-title">
+                <h1>Game {{ game.code }}</h1>
+            </div>
+            {% if is_game_over %}
+                <h2>Game Over!</h2>
+                <div id="final-score-information">
+                    {% include "core/includes/final_score.html" %}
+                    <div class="back-to-room-link">
+                        <a href="{% url 'room_detail' game.room.code %}">Back to the Room</a>
+                    </div>
+                </div>
+            {% endif %}
         </div>
-        {% if is_game_over %}
-            <h2>Game Over!</h2>
-        {% endif %}
-        <div id="final-score-information">
-            {% include "core/includes/final_score.html" %}
+    </div>
+    <div id="game-details" class="row">
+        <div id="team-information" class="col">
+            <h2>Team Information</h2>
+            <div id="code-words-block">
+                <h3>Code Words - Top Secret!</h3>
+                <table id="code-words-table">
+                    <tr>
+                        {% for secret_word in secret_words %}
+                            <th>
+                                {{ forloop.counter }}
+                            </th>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        {% for secret_word in secret_words %}
+                            <td>
+                                {{ secret_word }}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                </table>
+            </div>
+            <div id="tokens-information">
+                {% include "core/includes/token_information.html" %}
+            </div>
         </div>
-        <div id="round-information">
+        <div id="round-information" class="col">
+            <h2>Round Information</h2>
             <div id="round-number-block">
                 Round:
                 <strong>
@@ -25,39 +58,26 @@
                     <span id="round-stage">{{ round_stage }}</span>
                 </strong>
             </div>
-            <div id="tokens-information">
-                {% include "core/includes/token_information.html" %}
-            </div>
+            {% if show_hints_information %}
+                <div id="round-hints-information">
+                    {% include "core/includes/round_hints_information.html" %}
+                </div>
+            {% endif %}
             {% if show_guesses_information %}
                 <div id="round-guesses-information">
-                    {% include "core/includes/round_guess_information.html" %}
+                    {% include "core/includes/round_guesses_information.html" %}
                 </div>
             {% endif %}
         </div>
-        <div id="code-words-block">
-            <h2>Top Secret: Code Words</h2>
-            <table id="code-words-table">
-                <tr>
-                    {% for secret_word in secret_words %}
-                        <th>
-                            {{ forloop.counter }}
-                        </th>
-                    {% endfor %}
-                </tr>
-                <tr>
-                    {% for secret_word in secret_words %}
-                        <td>
-                            {{ secret_word }}
-                        </td>
-                    {% endfor %}
-                </tr>
-            </table>
+    </div>
+    <div id="game-options-header" class="row">
+        <div class="col">
+            <h2>Options</h2>
         </div>
     </div>
-    <div id="game-options">
-        <h2>Game Options</h2>
+    <div id="game-options" class="row">
         {% if is_round_leader %}
-            <div id="round-leader-options">
+            <div id="round-leader-options" class="col">
                 {% if show_leader_hints_form_link %}
                     <a href="{% url 'leader_hints' game.code %}">Submit Leader Hints</a>
                 {% endif %}
@@ -69,7 +89,7 @@
                 {% endif %}
             </div>
         {% endif %}
-        <div id="round-player-options">
+        <div id="round-player-options" class="col">
             {% if show_player_guesses_form_link %}
                 <div>
                     <a href="{% url 'player_guesses' game.code %}">Submit Guesses for Team's Hints</a>
@@ -82,19 +102,31 @@
             {% endif %}
         </div>
     </div>
-    <div id="player-and-teams">
-        <h2>Players and Teams</h2>
+    <div id="player-and-teams-header" class="row">
+        <div class="col">
+            <h2>Players and Teams</h2>
+        </div>
+    </div>
+    <div id="player-and-teams" class="row">
         {% for team in game.teams.all %}
-            <div class="team-name-block">
-                <span class="team-name">{{ team.name }}</span> Team
+            <div class="col">
+                <div class="team-header row">
+                    <div class="col">
+                        <span class="team-name">{{ team.name }}</span> Team
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <ul>
+                            {% for player in team.players.all %}
+                                <li>{{ player.name }}</li>
+                            {% empty %}
+                                <p>No players!</p>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
             </div>
-            <ul>
-                {% for player in team.players.all %}
-                    <li>{{ player.name }}</li>
-                {% empty %}
-                    <p>No players!</p>
-                {% endfor %}
-            </ul>
         {% endfor %}
     </div>
 {% endblock %}

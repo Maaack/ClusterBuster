@@ -1,0 +1,38 @@
+<h3>Team Hints</h3>
+<table id="round-hints-table">
+    <tr>
+        {% for team, hints in all_hints.items %}
+            <th>
+                {{ team }}
+            </th>
+        {% endfor %}
+    </tr>
+    <tr>
+        {% for team, hints in all_hints.items %}
+            <td>
+                <table>
+                    <tr>
+                        <th>
+                            Hint #:
+                        </th>
+                        {% for hint in hints %}
+                            <th>
+                                <span class="hint-number">{{ hint.hint_number }}</span>
+                            </th>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>Hint:</strong>
+                        </td>
+                        {% for hint in hints %}
+                            <td>
+                                <span class="hint-text">{{ hint.hint }}</span>
+                            </td>
+                        {% endfor %}
+                    </tr>
+                </table>
+            </td>
+        {% endfor %}
+    </tr>
+</table>
