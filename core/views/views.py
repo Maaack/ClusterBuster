@@ -223,6 +223,11 @@ class GameFormAbstractView(generic.FormView, GameViewAbstract):
     def get_success_url(self):
         return reverse('game_detail', kwargs={'slug': self.game.code})
 
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data['game'] = self.game
+        return data
+
 
 class LeaderHintsFormView(GameFormAbstractView):
     template_name = 'core/leader_hint_form.html'
