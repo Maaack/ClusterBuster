@@ -10,7 +10,13 @@
                     {% if is_leader %}
                         <p>Your lead.</p>
                         <div id="room-leader-options">
-                            {% block room_leader_options %}{% endblock %}
+                            {% block room_leader_options %}
+                                {% for activity_option in activity_options %}
+                                    <div>
+                                        <a href="{{ activity_option.start_url}}">{{ activity_option.start_text }}</a>
+                                    </div>
+                                {% endfor %}
+                            {% endblock %}
                         </div>
                     {% elif is_player %}
                         <div id="room-player-options">
