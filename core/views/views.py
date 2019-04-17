@@ -103,7 +103,7 @@ class GameViewAbstract(CheckPlayerView):
         }
         return tokens
 
-    def get_all_guesses_data(self):
+    def get_round_guesses_data(self):
         fsm2 = self.game.get_parameter_value('fsm2')  # type: StateMachine
         is_first_round = fsm2.current_state.slug == 'first_round'
         guesses = {}
@@ -127,7 +127,7 @@ class GameViewAbstract(CheckPlayerView):
                         {"hint_number": hint_number, "hint": hint, "guess": guess})
         return guesses
 
-    def get_all_hints_data(self):
+    def get_round_hints_data(self):
         hints = {}
         for team in self.game.teams.all():  # type: Team
             hints[team.name] = []
@@ -168,8 +168,8 @@ class GameDetail(generic.DetailView, GameViewAbstract):
         show_hints_information = False
         winning_team = None
         losing_team = None
-        all_hints = []
-        all_guesses = []
+        round_hints = []
+        round_guesses = []
         fsm0 = self.game.get_parameter_value('fsm0')  # type: StateMachine
         is_game_over = fsm0.current_state.slug == 'game_over'
         if is_game_over:
@@ -183,7 +183,7 @@ class GameDetail(generic.DetailView, GameViewAbstract):
             if fsm3_state == 'leaders_make_hints_stage' and self.is_round_team_leader():
                 show_leader_hints_form_link = True
             elif fsm3_state == 'teams_guess_codes_stage':
-                all_hints = self.get_all_hints_data()
+                round_hints = self.get_round_hints_data()
                 show_hints_information = True
                 if not self.is_round_team_leader():
                     show_player_guesses_form_link = True
@@ -192,7 +192,7 @@ class GameDetail(generic.DetailView, GameViewAbstract):
             elif fsm3_state == 'score_teams_stage' and self.is_round_team_leader():
                 show_start_next_round_link = True
             elif fsm3_state == 'teams_share_guesses_stage':
-                all_guesses = self.get_all_guesses_data()
+                round_guesses = self.get_round_guesses_data()
                 show_guesses_information = True
                 show_score_teams_link = True
         data['show_leader_hints_form_link'] = show_leader_hints_form_link
@@ -207,8 +207,8 @@ class GameDetail(generic.DetailView, GameViewAbstract):
         data['show_score_teams_link'] = show_score_teams_link
         data['secret_words'] = self.get_secret_words_data()
         data['round_number'] = self.round_number
-        data['all_hints'] = all_hints
-        data['all_guesses'] = all_guesses
+        data['round_hints'] = round_hints
+        data['round_guesses'] = round_guesses
         data['is_round_leader'] = self.is_round_team_leader()
         data['tokens'] = self.get_tokens_data()
         fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine

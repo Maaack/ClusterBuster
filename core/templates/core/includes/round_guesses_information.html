@@ -1,7 +1,7 @@
 <h3>Team Guesses</h3>
 <table id="round-guesses-table">
     <tr>
-        {% for guessing_team, guesses in all_guesses.items %}
+        {% for guessing_team, guesses in round_guesses.items %}
             {% for hinting_team, hints in guesses.items %}
                 <th>
                     {{ guessing_team }} --> {{ hinting_team }}
@@ -10,7 +10,7 @@
         {% endfor %}
     </tr>
     <tr>
-        {% for guessing_team, guesses in all_guesses.items %}
+        {% for guessing_team, guesses in round_guesses.items %}
             {% for hinting_team, hints in guesses.items %}
                 <td>
                     <table>
