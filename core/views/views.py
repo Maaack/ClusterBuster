@@ -140,6 +140,35 @@ class GameViewAbstract(CheckPlayerView):
                     {"hint_number": hint_number, "hint": hint})
         return hints
 
+    def get_game_logs_data(self):
+        game_logs = {}
+        last_round_number = self.round_number - 1
+        for team in self.game.teams.all():  # type: Team
+            game_logs[team.name] = {}
+            rounds = []
+            words = ["?"] * ClusterBuster.SECRET_WORDS_PER_TEAM
+            if team == self.team:
+                for word_i in range(len(words)):
+                    secret_word_number = word_i + 1
+                    secret_word = self.game.get_parameter_value(('team', self.team, 'secret_word', secret_word_number))
+                    words[word_i] = str(secret_word)
+            game_logs[team.name]["words"] = words
+            for round_i in range(last_round_number):
+                round_number = round_i + 1
+                hints = [None] * ClusterBuster.SECRET_WORDS_PER_TEAM
+                for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
+                    hint_number = card_i + 1
+                    code_number = self.game.get_parameter_value(
+                        ('round', round_number, 'team', team, 'code', hint_number))
+                    hint = self.game.get_parameter_value(
+                        ('round', round_number, 'team', team, 'hint', hint_number),
+                    )
+                    code_number_index = code_number - 1
+                    hints[code_number_index] = hint
+                rounds.append(hints)
+            game_logs[team.name]["rounds"] = rounds
+        return game_logs
+
     def is_round_team_leader(self):
         if self.player is None or self.team is None:
             return False
@@ -206,6 +235,7 @@ class GameDetail(generic.DetailView, GameViewAbstract):
         data['show_guesses_information'] = show_guesses_information
         data['show_score_teams_link'] = show_score_teams_link
         data['secret_words'] = self.get_secret_words_data()
+        data['game_logs'] = self.get_game_logs_data()
         data['round_number'] = self.round_number
         data['round_hints'] = round_hints
         data['round_guesses'] = round_guesses
