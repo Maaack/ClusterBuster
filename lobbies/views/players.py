@@ -8,7 +8,6 @@ from .mixins import CheckPlayerView, AssignPlayerView
 class PlayerCreate(AssignPlayerView, generic.CreateView):
     model = Player
     fields = ['name']
-    success_url = 'player_detail'
 
     def dispatch(self, request, *args, **kwargs):
         player = self.get_current_player()

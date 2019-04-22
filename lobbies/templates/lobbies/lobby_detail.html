@@ -34,11 +34,12 @@
                     {% else %}
                         <div id="lobby-anonymous-options">
                             <p>Create a new player and join the lobby.</p>
-                            <form method="post" action="{% url 'player_create' %}?lobby_code={{ lobby.code }}">
+                            <form method="post" action="{% url 'player_create' %}">
                                 {% csrf_token %}
                                 <label>Name
                                     <input type="text" name="name" value=""/>
                                 </label>
+                                <input type="hidden" name="lobby_code" value="{{ lobby.code }}" />
                                 <input type="submit" value="Join Lobby"/>
                             </form>
                             {% block lobby_anonymous_options %}{% endblock %}

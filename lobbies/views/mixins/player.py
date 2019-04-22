@@ -24,16 +24,15 @@ class CheckPlayerView(View):
                 return Player.objects.get(pk=player_id)
             except Player.DoesNotExist:
                 return None
-        else:
-            if self.request.session.session_key is None:
-                self.request.session.save()
-            session_key = self.request.session.session_key
-            try:
-                player = Player.objects.get(session_id=session_key)
-                self.save_player_to_session(player)
-                return player
-            except Player.DoesNotExist:
-                return None
+        if self.request.session.session_key is None:
+            self.request.session.save()
+        session_key = self.request.session.session_key
+        try:
+            player = Player.objects.get(session_id=session_key)
+            self.save_player_to_session(player)
+            return player
+        except Player.DoesNotExist:
+            return None
 
 
 class AssignPlayerView(generic.edit.FormMixin, CheckPlayerView):
@@ -42,11 +41,11 @@ class AssignPlayerView(generic.edit.FormMixin, CheckPlayerView):
 
     def form_valid(self, form):
         self.request.session.save()
-        form.instance.session_id = self.request.session.session_key
+        new_player = form.instance  # type: Player
+        new_player.session_id = self.request.session.session_key
         response = super().form_valid(form)
-        if isinstance(form.instance, Player):
-            player = form.instance
-            self.save_player_to_session(player)
+        self.save_player_to_session(new_player)
         return response
 
-
+    def get_success_url(self):
+        return reverse('player_detail', kwargs={'pk': self.object.pk})
