@@ -13,7 +13,7 @@ class PlayerCreate(AssignPlayerView, generic.CreateView):
         player_id = self.request.session.get('player_id')
 
         if player_id:
-            return redirect('player_detail', kwargs={'pk': player_id})
+            return redirect('player_detail', pk=player_id)
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -25,7 +25,7 @@ class PlayerUpdate(AssignPlayerView, generic.UpdateView):
         player = self.get_object()
 
         if not self.is_current_player(player):
-            return redirect('player_detail', kwargs=kwargs)
+            return redirect('player_detail', **kwargs)
         return super().dispatch(request, *args, **kwargs)
 
 
