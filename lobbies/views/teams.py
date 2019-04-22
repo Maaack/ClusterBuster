@@ -1,7 +1,6 @@
-from django.shortcuts import reverse, redirect
 from django.views import generic
 
-from lobbies.models import Team
+from ..models import Team
 
 from .contexts import PlayerContext, Player2TeamContext
 from .mixins import CheckPlayerView

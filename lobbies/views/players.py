@@ -1,7 +1,7 @@
 from django.shortcuts import reverse, redirect
 from django.views import generic
 
-from lobbies.models import Player
+from ..models import Player
 from .mixins import CheckPlayerView, AssignPlayerView
 
 

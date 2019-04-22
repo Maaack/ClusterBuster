@@ -1,7 +1,5 @@
 from django.views import generic
-from django.http import HttpResponse
-from django.shortcuts import redirect, reverse
-from django.template import loader
+from django.shortcuts import redirect, reverse, render
 
 from ..models import Lobby
 
@@ -10,8 +8,7 @@ from .mixins import CheckPlayerView
 
 
 def index_view(request):
-    template = loader.get_template('lobbies/index.html')
-    return HttpResponse(template.render({}, request))
+    return render(request, 'lobbies/index.html')
 
 
 class LobbyCreate(generic.CreateView, CheckPlayerView):
