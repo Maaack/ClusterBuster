@@ -1,9 +1,7 @@
 from django.urls import path
 
-from .views import (
-    index_view, PlayerCreate, PlayerDetail, PlayerUpdate, LobbyCreate, LobbyList, LobbyDetail, JoinLobby,
-    CreatePlayerAndJoinLobby
-)
+from .views.lobbies import index_view, LobbyCreate, LobbyDetail, LobbyList, JoinLobby
+from .views.players import PlayerCreate, PlayerDetail, PlayerUpdate
 
 urlpatterns = [
     path('', index_view, name='index'),
@@ -14,5 +12,4 @@ urlpatterns = [
     path('lobbies/', LobbyList.as_view(), name='lobby_list'),
     path('lobbies/<slug:slug>/', LobbyDetail.as_view(), name='lobby_detail'),
     path('lobbies/<slug:slug>/join/', JoinLobby.as_view(), name='join_lobby'),
-    path('lobbies/<slug:slug>/new_player/', CreatePlayerAndJoinLobby.as_view(), name='player_create_and_join_lobby'),
 ]

@@ -34,7 +34,7 @@
                     {% else %}
                         <div id="lobby-anonymous-options">
                             <p>Create a new player and join the lobby.</p>
-                            <form method="post" action="{% url 'player_create_and_join_lobby' lobby.code %}">
+                            <form method="post" action="{% url 'player_create' %}?lobby_code={{ lobby.code }}">
                                 {% csrf_token %}
                                 <label>Name
                                     <input type="text" name="name" value=""/>

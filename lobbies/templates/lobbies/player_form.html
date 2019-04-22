@@ -5,6 +5,9 @@
 <h1>Name your Player</h1>
 <form method="post">{% csrf_token %}
     {{ form.as_p }}
+    {% if request.GET.lobby_code %}
+        <input type="hidden" name="lobby_code" value="{{ request.GET.lobby_code }}" />
+    {% endif %}
     <input type="submit" value="Save" />
 </form>
 {% endblock %}

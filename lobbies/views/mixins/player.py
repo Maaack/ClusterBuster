@@ -43,13 +43,10 @@ class AssignPlayerView(generic.edit.FormMixin, CheckPlayerView):
     def form_valid(self, form):
         self.request.session.save()
         form.instance.session_id = self.request.session.session_key
-        return super(AssignPlayerView, self).form_valid(form)
-
-    def get_success_url(self):
-        if isinstance(self.object, Player):
-            player = self.object
+        response = super().form_valid(form)
+        if isinstance(form.instance, Player):
+            player = form.instance
             self.save_player_to_session(player)
-            return reverse('player_detail', kwargs={'pk': self.object.pk})
-        return reverse('player_list')
+        return response
 
 

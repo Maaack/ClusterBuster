@@ -8,13 +8,19 @@ from .mixins import CheckPlayerView, AssignPlayerView
 class PlayerCreate(AssignPlayerView, generic.CreateView):
     model = Player
     fields = ['name']
+    success_url = 'player_detail'
 
     def dispatch(self, request, *args, **kwargs):
-        player_id = self.request.session.get('player_id')
-
-        if player_id:
-            return redirect('player_detail', pk=player_id)
+        player = self.get_current_player()
+        if player:
+            return redirect('player_detail', pk=player.pk)
         return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        lobby_code = self.request.POST.get('lobby_code')
+        if lobby_code is not None:
+            return reverse('join_lobby', kwargs={'slug': lobby_code})
+        return super().get_success_url()
 
 
 class PlayerUpdate(AssignPlayerView, generic.UpdateView):
@@ -23,7 +29,6 @@ class PlayerUpdate(AssignPlayerView, generic.UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         player = self.get_object()
-
         if not self.is_current_player(player):
             return redirect('player_detail', **kwargs)
         return super().dispatch(request, *args, **kwargs)
