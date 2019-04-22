@@ -1,1 +1,0 @@
-gameroom_detail.html
