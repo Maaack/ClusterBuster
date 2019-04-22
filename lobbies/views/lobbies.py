@@ -54,6 +54,7 @@ class LobbyDetail(generic.DetailView, CheckPlayerView):
         current_player = self.get_current_player()
         if current_player:
             player_data = PlayerContext.load(current_player)
+            player_data['is_player'] = True
             data.update(player_data)
             player_lobby_data = Player2LobbyContext.load(current_player, lobby)
             data.update(player_lobby_data)

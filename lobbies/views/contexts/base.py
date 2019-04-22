@@ -22,7 +22,7 @@ class PlayerContext:
         """
         data = dict()
         data['player'] = player
-        data['is_player'] = True
+        data['is_player'] = False
         return data
 
 
