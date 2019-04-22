@@ -2,6 +2,6 @@
 
 {% block head_title %}{{ player.name }}{% endblock %}
 {% block content %}
-<h1>{{ player.name }} {% if current_player %}(This is you!){% endif %}</h1>
+<h1>{{ player.name }} {% if is_current_player %}(This is you!){% endif %}</h1>
 <p>Nothing to say here.</p>
 {% endblock %}

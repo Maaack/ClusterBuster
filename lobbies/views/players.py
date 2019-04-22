@@ -1,6 +1,4 @@
-from django.http import HttpResponseRedirect
-
-from django.urls import reverse
+from django.shortcuts import reverse, redirect
 from django.views import generic
 
 from lobbies.models import Player
@@ -15,8 +13,8 @@ class PlayerCreate(AssignPlayerView, generic.CreateView):
         player_id = self.request.session.get('player_id')
 
         if player_id:
-            return HttpResponseRedirect(reverse('player_detail', kwargs={'pk':player_id}))
-        return super(PlayerCreate, self).dispatch(request, *args, **kwargs)
+            return redirect('player_detail', kwargs={'pk': player_id})
+        return super().dispatch(request, *args, **kwargs)
 
 
 class PlayerUpdate(AssignPlayerView, generic.UpdateView):
@@ -27,16 +25,16 @@ class PlayerUpdate(AssignPlayerView, generic.UpdateView):
         player = self.get_object()
 
         if not self.is_current_player(player):
-            return HttpResponseRedirect(reverse('player_detail', kwargs=kwargs))
-        return super(PlayerUpdate, self).dispatch(request, *args, **kwargs)
+            return redirect('player_detail', kwargs=kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
 
 class PlayerDetail(generic.DetailView, CheckPlayerView):
     model = Player
 
     def get_context_data(self, **kwargs):
-        data = super(PlayerDetail, self).get_context_data(**kwargs)
-        data['current_player'] = self.is_current_player(self.object)
+        data = super().get_context_data(**kwargs)
+        data['is_current_player'] = self.is_current_player(self.object)
         return data
 
 
@@ -53,7 +51,7 @@ class CreatePlayerAndJoinLobby(AssignPlayerView, generic.CreateView):
         player = self.get_current_player()
 
         if player is not None:
-            return HttpResponseRedirect(reverse('lobby_detail', **kwargs))
+            return redirect('lobby_detail', **kwargs)
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
