@@ -6,7 +6,7 @@
             {% if round_is_composing %}
                 <h2>Hints</h2>
                 {% if is_round_leader %}
-                    <a href="{% url 'round_hints' room.code %}">View and submit your hints!</a>
+                    <a href="{% url 'round_hints' lobby.code %}">View and submit your hints!</a>
                 {% elif player_party_round_is_waiting %}
                     <p>You are waiting on opponent leaders to come up with hints...</p>
                 {% else %}
@@ -27,7 +27,7 @@
                 <h3>Your Team's Guesses</h3>
                 <div id="player-party-round-guesses"></div>
                 {% if not is_round_leader %}
-                    <a href="{% url 'round_guesses' room.code %}">Guess on your team's hints!</a>
+                    <a href="{% url 'round_guesses' lobby.code %}">Guess on your team's hints!</a>
                 {% endif %}
                 <h2>Your Opponent Team's Hints</h2>
                 <ol>
@@ -43,7 +43,7 @@
                 <h3>Your Team's Guesses</h3>
                 <div id="opponent-party-round-guesses"></div>
                 {% if not is_round_leader %}
-                    <a href="{% url 'round_opponent_guesses' room.code %}">Guess on your opponent team's hints!</a>
+                    <a href="{% url 'round_opponent_guesses' lobby.code %}">Guess on your opponent team's hints!</a>
                 {% endif %}
                 <h2>Your Team's Guessers</h2>
                 <ol>

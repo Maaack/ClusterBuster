@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from clusterbuster.mixins import TimeStamped, CodeGenerator
 
-from rooms.models import Player, Team, Room
+from lobbies.models import Player, Team, Lobby
 from gamedefinitions.models import State, Rule
 from gamedefinitions.interfaces import (
     StateMachineAbstract, GameAbstract, ConditionAbstract, ParameterAbstract, ConditionGroupAbstract, RuleLibrary
@@ -20,7 +20,7 @@ class Game(GameAbstract, TimeStamped):
     players = models.ManyToManyField(Player, blank=True, related_name='games')
     teams = models.ManyToManyField(Team, blank=True, related_name='games')
     code = models.SlugField(_("Code"), max_length=16)
-    room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True, related_name='games')
+    lobby = models.ForeignKey(Lobby, on_delete=models.SET_NULL, null=True, blank=True, related_name='games')
     leader = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
 
     class Meta:
@@ -53,16 +53,16 @@ class Game(GameAbstract, TimeStamped):
             self.code = CodeGenerator.game_code()
             self.save()
 
-    def __setup_from_room(self, room: Room):
+    def __setup_from_lobby(self, lobby: Lobby):
         """
-        :param room: Room
+        :param lobby: Lobby
         :return:
         """
-        self.room = room
-        self.players.set(room.players.all())
-        self.teams.set(room.teams.all())
+        self.lobby = lobby
+        self.players.set(lobby.players.all())
+        self.teams.set(lobby.teams.all())
         game_url = reverse('game_detail', kwargs={'slug': self.code})
-        self.room.start_activity('Cluster Buster', game_url)
+        self.lobby.start_activity('Cluster Buster', game_url)
 
     @staticmethod
     def __get_value_param_type(raw_value):
@@ -99,7 +99,7 @@ class Game(GameAbstract, TimeStamped):
 
     def has_team(self, team: Team) -> bool:
         """
-        Returns `True` if the team is in the room.
+        Returns `True` if the team is in the lobby.
         :param team: Team
         :return: bool
         """
@@ -107,7 +107,7 @@ class Game(GameAbstract, TimeStamped):
 
     def has(self, model_object) -> bool:
         """
-        Returns `True` if the room has the player or team in it.
+        Returns `True` if the lobby has the player or team in it.
         :param model_object: Player or Team
         :return:
         """
@@ -119,7 +119,7 @@ class Game(GameAbstract, TimeStamped):
 
     def setup(self, game_definition_slug: str, *args, **kwargs):
         """
-        Sets up a Game from a GameDefinition slug and Room.
+        Sets up a Game from a GameDefinition slug and Lobby.
         :param game_definition_slug:
         :return:
         """
@@ -127,7 +127,7 @@ class Game(GameAbstract, TimeStamped):
         self.__setup_state_parameters()
         self.__setup_state_machines()
         self.__setup_code()
-        self.__setup_from_room(kwargs['room'])
+        self.__setup_from_lobby(kwargs['lobby'])
         self.save()
 
     def start(self, rule_library: RuleLibrary):

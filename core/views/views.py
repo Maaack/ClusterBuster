@@ -1,24 +1,24 @@
 from django.shortcuts import get_object_or_404, redirect, reverse
 from django.views import generic
 
-from rooms.models import Room, Player, Team
+from lobbies.models import Lobby, Player, Team
 from games.models import Game, StateMachine
 from core.definitions import ClusterBuster
 
-from rooms.views.mixins import CheckPlayerView
+from lobbies.views.mixins import CheckPlayerView
 
 from .forms import LeaderHintsForm, PlayerGuessForm
 
 
 class StartGame(generic.RedirectView, generic.detail.SingleObjectMixin):
-    model = Room
-    pattern_name = 'room_detail'
+    model = Lobby
+    pattern_name = 'lobby_detail'
     slug_field = 'code'
 
     def get_redirect_url(self, *args, **kwargs):
-        room = get_object_or_404(Room, code=kwargs['slug'])
+        lobby = get_object_or_404(Lobby, code=kwargs['slug'])
         game = Game.objects.create()
-        game.setup("cluster_buster", room=room)
+        game.setup("cluster_buster", lobby=lobby)
         game.start(ClusterBuster)
         game.update(ClusterBuster)
 
@@ -53,13 +53,13 @@ class GameViewAbstract(CheckPlayerView):
         self.game = get_object_or_404(Game, code=kwargs['slug'])
         self.player = self.get_current_player()
         if self.player is None:
-            return redirect('room_detail', slug=self.game.room.code)
+            return redirect('lobby_detail', slug=self.game.lobby.code)
         self.team = self.get_current_player_team()
         if self.team is None:
-            return redirect('room_detail', slug=self.game.room.code)
+            return redirect('lobby_detail', slug=self.game.lobby.code)
         self.opponent_team = self.get_current_player_opponent_team()
         if self.opponent_team is None:
-            return redirect('room_detail', slug=self.game.room.code)
+            return redirect('lobby_detail', slug=self.game.lobby.code)
         self.round_number = self.game.get_parameter_value('current_round_number')
         return super().dispatch(request, *args, **kwargs)
 

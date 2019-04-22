@@ -12,7 +12,7 @@
         <ul>
             <li><a href="{% url 'index' %}">Home</a></li>
             <li><a href="{% url 'player_create' %}">Your Player</a></li>
-            <li><a href="{% url 'room_detail' game.room.code %}">Back to the Room</a></li>
+            <li><a href="{% url 'lobby_detail' game.lobby.code %}">Back to the Lobby</a></li>
         </ul>
     {% endblock %}
 </div>
