@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block head_title %}Home{% endblock %}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body>
+<header>{% block header %}{% endblock %}</header>
+<div id="navigation" class="container">
+    {% block navigation %}
+        <ul>
+            <li><a href="{% url 'index' %}">Home</a></li>
+            <li><a href="{% url 'player_create' %}">View Your Player</a></li>
+            <li><a href="{% url 'lobby_list' %}">View Lobbies</a></li>
+            <li><a href="{% url 'lobby_create' %}">Start a Lobby</a></li>
+        </ul>
+    {% endblock %}
+</div>
+
+<div id="content" class="container">
+    {% block content %}{% endblock %}
+</div>
+
+<footer>{% block footer %}{% endblock %}</footer>
+</body>
+</html>

@@ -1,0 +1,95 @@
+{% extends "lobbies/base/html_base.html" %}
+
+{% block head_title %}Lobby {{ lobby.code }}{% endblock %}
+{% block content %}
+    <div class="row">
+        <div class="col">
+            <h1>Lobby {{ lobby.code }}</h1>
+            <div id="lobby-options" class="row">
+                <div class="col">
+                    {% if is_leader %}
+                        <p>Your lead.</p>
+                        <div id="lobby-leader-options">
+                            {% block lobby_leader_options %}
+                                {% for activity_option in activity_options %}
+                                    <div>
+                                        <a href="{{ activity_option.start_url}}">{{ activity_option.start_text }}</a>
+                                    </div>
+                                {% endfor %}
+                            {% endblock %}
+                        </div>
+                    {% elif is_player %}
+                        <div id="lobby-player-options">
+                            {% if can_join %}
+                                <form method="post" action="{% url 'join_lobby' lobby.code %}">
+                                    {% csrf_token %}
+                                    <input type="submit" value="Join Lobby"/>
+                                </form>
+                            {% endif %}
+                            {% if has_player %}
+                                <p>You are in this lobby.</p>
+                            {% endif %}
+                            {% block lobby_player_options %}{% endblock %}
+                        </div>
+                    {% else %}
+                        <div id="lobby-anonymous-options">
+                            <p>Create a new player and join the lobby.</p>
+                            <form method="post" action="{% url 'player_create_and_join_lobby' lobby.code %}">
+                                {% csrf_token %}
+                                <label>Name
+                                    <input type="text" name="name" value=""/>
+                                </label>
+                                <input type="submit" value="Join Lobby"/>
+                            </form>
+                            {% block lobby_anonymous_options %}{% endblock %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div id="lobby-details" class="row">
+                <div id="lobby-current-activity" class="col">
+                    {% if lobby.current_activity %}
+                        <h2>Current Activity</h2>
+                        <a href="{{ lobby.current_activity.link }}">{{ lobby.current_activity.name }}</a>
+                    {% else %}
+                        <h2>No Current Activity</h2>
+                    {% endif %}
+                </div>
+                <div id="lobby-players" class="col">
+                    <h2>Players</h2>
+                    <ul>
+                        {% for player_extra in players %}
+                            <li>
+                                {{ player_extra.player.name }}
+                                {% if player_extra.is_leader %}
+                                    (Lobby Leader)
+                                {% elif player_extra.is_player %}
+                                    (You)
+                                {% endif %}
+                            </li>
+                        {% empty %}
+                            <p>No players yet...</p>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div id="lobby-players" class="col">
+                    <h2>Teams</h2>
+                    {% for team_extra in teams %}
+                        <strong>{{ team_extra.team.name }}</strong>
+                        {% if team_extra.has_player %}(Your Team){% endif %}
+                        <ul>
+                            {% for player in team_extra.team.players.all %}
+                                <li>{{ player.name }}</li>
+                            {% empty %}
+                                <p>No players yet...</p>
+                            {% endfor %}
+                        </ul>
+                    {% empty %}
+                        <p>No teams yet...</p>
+                    {% endfor %}
+                    {% block lobby_details %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

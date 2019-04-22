@@ -1,0 +1,11 @@
+{% extends "lobbies/base/html_base.html" %}
+
+{% block head_title %}New Lobby{% endblock %}
+{% block content %}
+<h1>Start a new Lobby!</h1>
+<form method="post">{% csrf_token %}
+    {{ form.as_p }}
+    Go ahead...
+    <input type="submit" value="Push it." />
+</form>
+{% endblock %}
