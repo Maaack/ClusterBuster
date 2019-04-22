@@ -53,7 +53,7 @@ class LobbyDetail(generic.DetailView, CheckPlayerView):
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
-        lobby = self.get_object()
+        lobby = self.get_object()  # type: Lobby
         current_player = self.get_current_player()
         if current_player:
             player_data = PlayerContext.load(current_player)
