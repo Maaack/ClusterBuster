@@ -41,27 +41,3 @@ class PlayerDetail(generic.DetailView, CheckPlayerView):
         data = super().get_context_data(**kwargs)
         data['is_current_player'] = self.is_current_player(self.object)
         return data
-
-
-class CreatePlayerAndJoinLobby(AssignPlayerView, generic.CreateView):
-    model = Player
-    fields = ['name']
-
-    def __init__(self):
-        super().__init__()
-        self.code = None
-
-    def dispatch(self, request, *args, **kwargs):
-        self.code = kwargs['slug']
-        player = self.get_current_player()
-
-        if player is not None:
-            return redirect('lobby_detail', **kwargs)
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_success_url(self):
-        if isinstance(self.object, Player):
-            player = self.object
-            self.save_player_to_session(player)
-            return reverse('join_lobby', kwargs={'slug': self.code})
-        return reverse('lobby_detail', kwargs={'slug': self.code})
