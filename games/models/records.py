@@ -9,10 +9,11 @@ from clusterbuster.mixins import TimeStamped, CodeGenerator
 from lobbies.models import Player, Team, Lobby
 from gamedefinitions.models import State, Rule
 from gamedefinitions.interfaces import (
-    StateMachineAbstract, GameAbstract, ConditionAbstract, ParameterAbstract, ConditionGroupAbstract, RuleLibrary,
+    StateMachineAbstract, GameAbstract, ConditionAbstract, ConditionGroupAbstract, RuleLibrary,
 )
 
-from .mixins import BaseValue, BaseNumericValue
+
+from .mixins import BaseValue, BaseNumericValue, ParameterAbstract
 
 
 class IntegerValue(BaseNumericValue):
@@ -31,6 +32,70 @@ class BooleanValue(BaseValue):
     value = models.NullBooleanField(_("Value"), default=None)
 
 
+class ParameterDictionary(TimeStamped):
+    """
+    Parameters store all data about a specific game and the state.
+    """
+    class Meta:
+        verbose_name = _("Parameter Dictionary")
+        verbose_name_plural = _("Parameter Dictionaries")
+        ordering = ["-created"]
+
+    @staticmethod
+    def __get_model_value(raw_value):
+        if isinstance(raw_value, models.Model):
+            return raw_value
+        elif isinstance(raw_value, int):
+            return IntegerValue.objects.create(value=raw_value)
+        elif isinstance(raw_value, float):
+            return FloatValue.objects.create(value=raw_value)
+        elif isinstance(raw_value, str):
+            return CharacterValue.objects.create(value=raw_value)
+        elif isinstance(raw_value, bool):
+            return BooleanValue.objects.create(value=raw_value)
+        else:
+            raise ValueError('raw_value must be a recognized type.')
+
+    @staticmethod
+    def __get_key_from_args(*args):
+        return "_".join(str(i).lower() for i in args)
+
+    def get_parameter(self, key_args):
+        if isinstance(key_args, str):
+            key_args = (key_args,)
+        key_string = ParameterDictionary.__get_key_from_args(*key_args)
+        parameter, create = Parameter.objects.get_or_create(dictionary=self, key=key_string)
+        return parameter
+
+    def get_parameter_value(self, key_args):
+        parameter = self.get_parameter(key_args)
+        if isinstance(parameter.value, BaseValue):
+            return parameter.value.value
+        return parameter.value
+
+    def set_parameter_value(self, key_args, value):
+        parameter = self.get_parameter(key_args)
+        parameter.value = ParameterDictionary.__get_model_value(value)
+        parameter.save()
+
+
+class Parameter(TimeStamped, ParameterAbstract):
+    """
+    Parameters store key / value pairs in Parameter Dictionaries.
+    """
+    dictionary = models.ForeignKey(ParameterDictionary, on_delete=models.CASCADE, related_name='parameters')
+    key = models.SlugField(_("Key"), max_length=255, db_index=True)
+    value = GenericForeignKey('content_type', 'object_id')
+    object_id = models.PositiveIntegerField(_('Object ID'), blank=True, null=True)
+    content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, blank=True, null=True)
+
+    class Meta:
+        verbose_name = _("Parameter")
+        verbose_name_plural = _("Parameters")
+        ordering = ["-created"]
+        unique_together = ('dictionary', 'key')
+
+
 class Game(GameAbstract, TimeStamped):
     """
     Games are instances of Game Definitions, that have codes, State Machines, Players, and Teams.
@@ -40,6 +105,8 @@ class Game(GameAbstract, TimeStamped):
     code = models.SlugField(_("Code"), max_length=16)
     lobby = models.ForeignKey(Lobby, on_delete=models.SET_NULL, null=True, blank=True, related_name='games')
     leader = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    parameters = models.ForeignKey(ParameterDictionary, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name="+")
 
     class Meta:
         verbose_name = _("Game")
@@ -53,6 +120,11 @@ class Game(GameAbstract, TimeStamped):
         super().__init__(*args, **kwargs)
         self.trigger_list = []
         self.parameters_updated = False
+
+    def __setup_parameters(self):
+        if self.parameters is None:
+            self.parameters = ParameterDictionary.objects.create()
+            self.save()
 
     def __setup_state_parameters(self):
         if self.game_definition:
@@ -139,6 +211,7 @@ class Game(GameAbstract, TimeStamped):
         :return:
         """
         super(Game, self).setup(game_definition_slug, *args, **kwargs)
+        self.__setup_parameters()
         self.__setup_state_parameters()
         self.__setup_state_machines()
         self.__setup_code()
@@ -179,22 +252,13 @@ class Game(GameAbstract, TimeStamped):
             return None
 
     def get_parameter(self, key_args):
-        if isinstance(key_args, str):
-            key_args = (key_args,)
-        key_string = Game.__get_key_from_args(*key_args)
-        parameter, create = Parameter.objects.get_or_create(game=self, key=key_string)
-        return parameter
+        return self.parameters.get_parameter(key_args)
 
     def get_parameter_value(self, key_args):
-        parameter = self.get_parameter(key_args)
-        if isinstance(parameter.value, BaseValue):
-            return parameter.value.value
-        return parameter.value
+        return self.parameters.get_parameter_value(key_args)
 
     def set_parameter_value(self, key_args, value):
-        parameter = self.get_parameter(key_args)
-        parameter.set_value(Game.__get_model_value(value))
-        parameter.save()
+        self.parameters.set_parameter_value(key_args, value)
         self.parameters_updated = True
 
     def prepend_game_slug(self, slug):
@@ -266,33 +330,6 @@ class Transition(TimeStamped):
     to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
 
 
-class Parameter(TimeStamped, ParameterAbstract):
-    """
-    Parameters store all data about a specific game and the state.
-    """
-    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="parameters")
-    key = models.SlugField(_("Key"), max_length=255, db_index=True)
-    value = GenericForeignKey('content_type', 'object_id')
-    object_id = models.PositiveIntegerField(_('Object ID'), blank=True, null=True)
-    content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, blank=True, null=True)
-
-    class Meta:
-        unique_together = ('game', 'key')
-
-    def __str__(self):
-        return str(self.game) + " - " + str(self.get_key()) + ": " + str(self.get_value())
-
-    def get_key(self):
-        return self.key
-
-    def get_value(self):
-        return self.value
-
-    def set_value(self, value):
-        self.value = value
-        self.save()
-
-
 class Condition(ConditionAbstract, TimeStamped):
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="conditions")
     parameter_1 = models.ForeignKey(Parameter, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
@@ -306,14 +343,14 @@ class Condition(ConditionAbstract, TimeStamped):
 
     def passes(self):
         if self.is_has_value():
-            return self.parameter_1.get_value() is not None
+            return self.parameter_1.value is not None
         elif self.is_boolean():
-            return bool(self.parameter_1.get_value())
+            return bool(self.parameter_1.value)
         elif self.is_comparison():
             return self.compare_2_numbers(self.parameter_1, self.parameter_2)
         elif self.is_fsm_state():
-            state_machine = self.parameter_1.get_value()  # type: StateMachine
-            return state_machine.current_state == self.parameter_2.get_value()
+            state_machine = self.parameter_1.value  # type: StateMachine
+            return state_machine.current_state == self.parameter_2.value
 
 
 class ConditionGroup(ConditionGroupAbstract, TimeStamped):
@@ -360,9 +397,9 @@ class ConditionGroup(ConditionGroupAbstract, TimeStamped):
     def add_fsm_state_condition(self, key_args_1, key_args_2) -> ConditionAbstract:
         parameter_1 = self.game.get_parameter(key_args_1)
         parameter_2 = self.game.get_parameter(key_args_2)
-        if not isinstance(parameter_1.get_value(), StateMachine):
+        if not isinstance(parameter_1.value, StateMachine):
             raise ValueError('parameter_1 must be an instance of StateMachine')
-        if not isinstance(parameter_2.get_value(), State):
+        if not isinstance(parameter_2.value, State):
             raise ValueError('parameter_2 must be an instance of State')
         condition, created = self.conditions.get_or_create(game=self.game,
                                                            condition_type=ConditionAbstract.FSM_STATE,
