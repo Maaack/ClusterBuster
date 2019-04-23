@@ -20,3 +20,31 @@ class Word(TimeStamped):
 
     def __str__(self):
         return str(self.text)
+
+
+class State(TimeStamped):
+    """
+    States define sections of the Game, like stages, rounds, and turns.
+    """
+    slug = models.SlugField(_("Slug"), max_length=32)
+    name = models.CharField(_("Name"), max_length=64, blank=True)
+
+    class Meta:
+        verbose_name = _("State")
+        verbose_name_plural = _("States")
+
+    def __str__(self):
+        return str(self.slug)
+
+
+class StateMachine(models.Model):
+    slug = models.SlugField(_("Slug"), max_length=32)
+    root_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
+
+    class Meta:
+        verbose_name = _("State Machine")
+        verbose_name_plural = _("State Machines")
+
+    def __str__(self):
+        return str(self.slug)
+
