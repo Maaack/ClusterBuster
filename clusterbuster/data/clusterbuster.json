@@ -194,270 +194,6 @@
     }
 },
 {
-    "model": "gamedefinitions.state",
-    "pk": 1,
-    "fields": {
-        "created": "2019-03-03T02:43:13.979Z",
-        "updated": "2019-04-23T18:43:42.032Z",
-        "slug": "game_init",
-        "name": "Game Initialization"
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 2,
-    "fields": {
-        "created": "2019-03-03T02:43:24.958Z",
-        "updated": "2019-04-23T18:43:42.875Z",
-        "slug": "game_play",
-        "name": "Game is in play"
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 3,
-    "fields": {
-        "created": "2019-03-03T02:43:28.883Z",
-        "updated": "2019-04-23T18:43:42.092Z",
-        "slug": "game_over",
-        "name": ""
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 4,
-    "fields": {
-        "created": "2019-03-03T02:43:37.652Z",
-        "updated": "2019-04-23T18:43:42.896Z",
-        "slug": "draw_words_stage",
-        "name": "Teams Draw Secret Words"
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 5,
-    "fields": {
-        "created": "2019-03-03T02:44:21.251Z",
-        "updated": "2019-04-23T18:43:43.150Z",
-        "slug": "rounds_stage",
-        "name": ""
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 6,
-    "fields": {
-        "created": "2019-03-03T02:45:37.564Z",
-        "updated": "2019-04-23T18:43:43.255Z",
-        "slug": "first_round",
-        "name": ""
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 7,
-    "fields": {
-        "created": "2019-03-03T02:45:44.294Z",
-        "updated": "2019-04-23T18:43:42.195Z",
-        "slug": "middle_rounds",
-        "name": ""
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 8,
-    "fields": {
-        "created": "2019-03-03T02:45:50.421Z",
-        "updated": "2019-04-23T18:43:42.218Z",
-        "slug": "last_round",
-        "name": ""
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 9,
-    "fields": {
-        "created": "2019-03-03T02:45:56.784Z",
-        "updated": "2019-04-23T18:43:43.278Z",
-        "slug": "select_leader_stage",
-        "name": ""
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 10,
-    "fields": {
-        "created": "2019-03-03T03:12:34.257Z",
-        "updated": "2019-04-23T18:43:43.380Z",
-        "slug": "draw_code_card_stage",
-        "name": ""
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 11,
-    "fields": {
-        "created": "2019-03-03T03:12:40.822Z",
-        "updated": "2019-04-23T18:43:43.752Z",
-        "slug": "leaders_make_hints_stage",
-        "name": "Hint Making"
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 12,
-    "fields": {
-        "created": "2019-03-03T03:12:50.372Z",
-        "updated": "2019-04-23T18:43:42.313Z",
-        "slug": "teams_share_hints_stage",
-        "name": "Teams Share Hints"
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 13,
-    "fields": {
-        "created": "2019-03-03T03:12:58.252Z",
-        "updated": "2019-04-23T18:43:42.336Z",
-        "slug": "teams_guess_codes_stage",
-        "name": "Teams Guess Codes"
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 14,
-    "fields": {
-        "created": "2019-03-03T03:13:07.564Z",
-        "updated": "2019-04-23T18:43:42.361Z",
-        "slug": "teams_share_guesses_stage",
-        "name": "Teams Share Guesses"
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 15,
-    "fields": {
-        "created": "2019-03-03T03:13:15.371Z",
-        "updated": "2019-04-23T18:43:42.383Z",
-        "slug": "score_teams_stage",
-        "name": "Teams Getting Scored"
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 16,
-    "fields": {
-        "created": "2019-04-11T05:15:38.106Z",
-        "updated": "2019-04-23T18:43:42.407Z",
-        "slug": "final_scoring_stage",
-        "name": "Final Scoring Stage"
-    }
-},
-{
-    "model": "gamedefinitions.statemachine",
-    "pk": 1,
-    "fields": {
-        "slug": "fsm0",
-        "root_state": 1
-    }
-},
-{
-    "model": "gamedefinitions.statemachine",
-    "pk": 2,
-    "fields": {
-        "slug": "fsm1",
-        "root_state": 1
-    }
-},
-{
-    "model": "gamedefinitions.statemachine",
-    "pk": 3,
-    "fields": {
-        "slug": "fsm2",
-        "root_state": 1
-    }
-},
-{
-    "model": "gamedefinitions.statemachine",
-    "pk": 4,
-    "fields": {
-        "slug": "fsm3",
-        "root_state": 1
-    }
-},
-{
-    "model": "gamedefinitions.transition",
-    "pk": 1,
-    "fields": {
-        "label": "game_is_ready",
-        "from_state": 1,
-        "to_state": 2
-    }
-},
-{
-    "model": "gamedefinitions.transition",
-    "pk": 2,
-    "fields": {
-        "label": "team_lost",
-        "from_state": 2,
-        "to_state": 3
-    }
-},
-{
-    "model": "gamedefinitions.transition",
-    "pk": 3,
-    "fields": {
-        "label": "team_won",
-        "from_state": 2,
-        "to_state": 3
-    }
-},
-{
-    "model": "gamedefinitions.transition",
-    "pk": 4,
-    "fields": {
-        "label": "secret_words_drawn",
-        "from_state": 4,
-        "to_state": 5
-    }
-},
-{
-    "model": "gamedefinitions.transition",
-    "pk": 5,
-    "fields": {
-        "label": "code_numbers_drawn",
-        "from_state": 10,
-        "to_state": 11
-    }
-},
-{
-    "model": "gamedefinitions.transition",
-    "pk": 6,
-    "fields": {
-        "label": "guesses_submitted",
-        "from_state": 13,
-        "to_state": 14
-    }
-},
-{
-    "model": "gamedefinitions.transition",
-    "pk": 7,
-    "fields": {
-        "label": "hints_submitted",
-        "from_state": 11,
-        "to_state": 13
-    }
-},
-{
-    "model": "gamedefinitions.transition",
-    "pk": 9,
-    "fields": {
-        "label": "team_leader_assigned",
-        "from_state": 9,
-        "to_state": 10
-    }
-},
-{
     "model": "gamedefinitions.gamedefinition",
     "pk": 1,
     "fields": {
@@ -467,30 +203,6 @@
         "title": "Cluster Buster v 0.1.0",
         "description": "Cluster Buster is based on Decrypto board game. Made for web.",
         "first_rule": 6,
-        "states": [
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12,
-            13,
-            14,
-            15,
-            16
-        ],
-        "state_machines": [
-            1,
-            2,
-            3,
-            4
-        ],
         "rules": [
             17,
             16,
@@ -1057,7 +769,7 @@
     "pk": 1,
     "fields": {
         "created": "2019-03-03T02:43:13.979Z",
-        "updated": "2019-03-29T08:36:18.734Z",
+        "updated": "2019-04-23T19:30:19.023Z",
         "slug": "game_init",
         "name": "Game Initialization"
     }
@@ -1067,7 +779,7 @@
     "pk": 2,
     "fields": {
         "created": "2019-03-03T02:43:24.958Z",
-        "updated": "2019-03-09T07:23:50.526Z",
+        "updated": "2019-04-23T19:30:19.810Z",
         "slug": "game_play",
         "name": "Game is in play"
     }
@@ -1077,7 +789,7 @@
     "pk": 3,
     "fields": {
         "created": "2019-03-03T02:43:28.883Z",
-        "updated": "2019-03-03T02:43:28.883Z",
+        "updated": "2019-04-23T19:30:19.071Z",
         "slug": "game_over",
         "name": ""
     }
@@ -1087,7 +799,7 @@
     "pk": 4,
     "fields": {
         "created": "2019-03-03T02:43:37.652Z",
-        "updated": "2019-03-10T06:02:51.932Z",
+        "updated": "2019-04-23T19:30:19.829Z",
         "slug": "draw_words_stage",
         "name": "Teams Draw Secret Words"
     }
@@ -1097,7 +809,7 @@
     "pk": 5,
     "fields": {
         "created": "2019-03-03T02:44:21.251Z",
-        "updated": "2019-03-12T03:03:22.050Z",
+        "updated": "2019-04-23T19:30:20.092Z",
         "slug": "rounds_stage",
         "name": ""
     }
@@ -1107,7 +819,7 @@
     "pk": 6,
     "fields": {
         "created": "2019-03-03T02:45:37.564Z",
-        "updated": "2019-03-12T03:18:25.205Z",
+        "updated": "2019-04-23T19:30:20.185Z",
         "slug": "first_round",
         "name": ""
     }
@@ -1117,7 +829,7 @@
     "pk": 7,
     "fields": {
         "created": "2019-03-03T02:45:44.294Z",
-        "updated": "2019-03-03T02:45:44.294Z",
+        "updated": "2019-04-23T19:30:19.160Z",
         "slug": "middle_rounds",
         "name": ""
     }
@@ -1127,7 +839,7 @@
     "pk": 8,
     "fields": {
         "created": "2019-03-03T02:45:50.421Z",
-        "updated": "2019-03-03T02:45:50.421Z",
+        "updated": "2019-04-23T19:30:19.181Z",
         "slug": "last_round",
         "name": ""
     }
@@ -1137,7 +849,7 @@
     "pk": 9,
     "fields": {
         "created": "2019-03-03T02:45:56.784Z",
-        "updated": "2019-03-13T00:56:27.700Z",
+        "updated": "2019-04-23T19:30:20.204Z",
         "slug": "select_leader_stage",
         "name": ""
     }
@@ -1147,7 +859,7 @@
     "pk": 10,
     "fields": {
         "created": "2019-03-03T03:12:34.257Z",
-        "updated": "2019-03-13T00:56:54.219Z",
+        "updated": "2019-04-23T19:30:20.309Z",
         "slug": "draw_code_card_stage",
         "name": ""
     }
@@ -1157,7 +869,7 @@
     "pk": 11,
     "fields": {
         "created": "2019-03-03T03:12:40.822Z",
-        "updated": "2019-04-10T22:40:44.826Z",
+        "updated": "2019-04-23T19:30:20.662Z",
         "slug": "leaders_make_hints_stage",
         "name": "Hint Making"
     }
@@ -1167,7 +879,7 @@
     "pk": 12,
     "fields": {
         "created": "2019-03-03T03:12:50.372Z",
-        "updated": "2019-04-10T22:40:56.246Z",
+        "updated": "2019-04-23T19:30:19.269Z",
         "slug": "teams_share_hints_stage",
         "name": "Teams Share Hints"
     }
@@ -1177,7 +889,7 @@
     "pk": 13,
     "fields": {
         "created": "2019-03-03T03:12:58.252Z",
-        "updated": "2019-04-10T22:41:06.270Z",
+        "updated": "2019-04-23T19:30:19.296Z",
         "slug": "teams_guess_codes_stage",
         "name": "Teams Guess Codes"
     }
@@ -1187,7 +899,7 @@
     "pk": 14,
     "fields": {
         "created": "2019-03-03T03:13:07.564Z",
-        "updated": "2019-04-10T22:41:19.525Z",
+        "updated": "2019-04-23T19:30:19.325Z",
         "slug": "teams_share_guesses_stage",
         "name": "Teams Share Guesses"
     }
@@ -1197,7 +909,7 @@
     "pk": 15,
     "fields": {
         "created": "2019-03-03T03:13:15.371Z",
-        "updated": "2019-04-10T22:41:31.309Z",
+        "updated": "2019-04-23T19:30:19.356Z",
         "slug": "score_teams_stage",
         "name": "Teams Getting Scored"
     }
@@ -1207,7 +919,7 @@
     "pk": 16,
     "fields": {
         "created": "2019-04-11T05:15:38.106Z",
-        "updated": "2019-04-11T05:15:38.106Z",
+        "updated": "2019-04-23T19:30:19.382Z",
         "slug": "final_scoring_stage",
         "name": "Final Scoring Stage"
     }
