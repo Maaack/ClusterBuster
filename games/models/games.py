@@ -6,13 +6,11 @@ from clusterbuster.mixins import TimeStamped, CodeGenerator
 
 from lobbies.models import Player, Team, Lobby
 from gamedefinitions.models import State, Rule
-from gamedefinitions.interfaces import (
-    StateMachineAbstract, GameAbstract, ConditionAbstract, ConditionGroupAbstract, RuleLibrary,
-)
+from gamedefinitions.interfaces import GameAbstract, ConditionAbstract, ConditionGroupAbstract, RuleLibrary
 
 from .parameters import ParameterDictionary, Parameter
 
-__all__ = ['Game', 'StateMachine', 'Transition', 'Condition', 'ConditionGroup', 'Trigger']
+__all__ = ['Game', 'Condition', 'ConditionGroup', 'Trigger']
 
 
 class Game(GameAbstract, TimeStamped):
@@ -200,33 +198,6 @@ class Game(GameAbstract, TimeStamped):
         self.parameters_updated = True
 
 
-class StateMachine(StateMachineAbstract, TimeStamped):
-    """
-    State Machines manage the State and its Transitions.
-    """
-    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="state_machines")
-
-    def __str__(self):
-        return str(self.game) + " - " + str(self.current_state)
-
-    def transit(self, to_state: State, reason=""):
-        from_state = self.get_state()
-        transition = Transition(state_machine=self, from_state=from_state, to_state=to_state, reason=reason)
-        transition.save()
-        self.set_state(to_state)
-        self.save()
-
-
-class Transition(TimeStamped):
-    """
-    Transitions record a StateMachine moving from one State to another State.
-    """
-    reason = models.SlugField(_("Reason"), max_length=32)
-    state_machine = models.ForeignKey(StateMachine, on_delete=models.CASCADE, related_name="transitions")
-    from_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
-    to_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
-
-
 class Condition(ConditionAbstract, TimeStamped):
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="conditions")
     parameter_1 = models.ForeignKey(Parameter, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
@@ -245,9 +216,6 @@ class Condition(ConditionAbstract, TimeStamped):
             return bool(self.parameter_1.value)
         elif self.is_comparison():
             return self.compare_2_numbers(self.parameter_1, self.parameter_2)
-        elif self.is_fsm_state():
-            state_machine = self.parameter_1.value  # type: StateMachine
-            return state_machine.current_state == self.parameter_2.value
 
 
 class ConditionGroup(ConditionGroupAbstract, TimeStamped):
@@ -289,20 +257,6 @@ class ConditionGroup(ConditionGroupAbstract, TimeStamped):
                                                            condition_type=ConditionAbstract.COMPARISON,
                                                            parameter_1=parameter_1,
                                                            parameter_2=parameter_2, comparison_type=comparison_type)
-        self.save()
-        return condition
-
-    def add_fsm_state_condition(self, key_args_1, key_args_2) -> ConditionAbstract:
-        parameter_1 = self.game.get_parameter(key_args_1)
-        parameter_2 = self.game.get_parameter(key_args_2)
-        if not isinstance(parameter_1.value, StateMachine):
-            raise ValueError('parameter_1 must be an instance of StateMachine')
-        if not isinstance(parameter_2.value, State):
-            raise ValueError('parameter_2 must be an instance of State')
-        condition, created = self.conditions.get_or_create(game=self.game,
-                                                           condition_type=ConditionAbstract.FSM_STATE,
-                                                           parameter_1=parameter_1,
-                                                           parameter_2=parameter_2)
         self.save()
         return condition
 
