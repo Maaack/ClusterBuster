@@ -8,18 +8,18 @@ __all__ = ['BaseValue', 'BaseNumericValue', 'BaseIntegerValue', 'BaseFloatValue'
 
 
 class BaseValue(models.Model):
+    value = models.BooleanField(_("Value"), blank=True, null=True, default=None)
+
     class Meta:
         abstract = True
-
-    def __init__(self, *args, **kwargs):
-        self.value = None
-        super().__init__(*args, **kwargs)
 
     def __str__(self):
         return str(self.value)
 
 
 class BaseNumericValue(BaseValue):
+    value = models.IntegerField(_("Value"), blank=True, null=True, default=None)
+
     class Meta:
         abstract = True
 
@@ -95,4 +95,7 @@ class BaseParameter(models.Model):
         abstract = True
 
     def __str__(self):
-        return str(self.key) + ": " + str(self.value)
+        try:
+            return str(self.key) + ": " + str(self.value)
+        except AttributeError:
+            return str(self.key) + ": (Deleted)"

@@ -175,10 +175,12 @@ class Condition(ConditionAbstract, TimeStamped):
     parameter_2 = models.ForeignKey(Parameter, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
 
     def __str__(self):
-        if self.is_comparison():
-            comparison_str = self.get_readable_comparison()
-            return str(self.parameter_1) + ' ' + comparison_str + ' ' + str(self.parameter_2)
-        return str(self.parameter_1)
+        if self.parameter_1:
+            if self.parameter_2 and self.is_comparison():
+                comparison_str = self.get_readable_comparison()
+                return str(self.parameter_1) + ' ' + comparison_str + ' ' + str(self.parameter_2)
+            return str(self.parameter_1)
+        return str(None)
 
     def passes(self):
         if self.is_has_value():
