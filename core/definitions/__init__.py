@@ -1,5 +1,5 @@
-from gamedefinitions.interfaces import ComparisonConditionAbstract, RuleLibrary
-from games.models import Game, StateMachine
+from gamedefinitions.interfaces import ComparisonConditionAbstract, RuleLibrary, State
+from games.models import Game
 from core.models import Word
 from core.basics import PatternDeckBuilder
 
@@ -71,24 +71,24 @@ class ClusterBuster(RuleLibrary):
         trigger = game.add_trigger('draw_words')
         condition_group = trigger.condition_group
         condition_group.set_to_and_op()
-        condition_group.add_fsm_state_condition('fsm0', 'game_play_state')
-        condition_group.add_fsm_state_condition('fsm1', 'draw_words_stage_state')
+        condition_group.add_comparison_condition('fsm0', 'game_play_state')
+        condition_group.add_comparison_condition('fsm1', 'draw_words_stage_state')
         # Rounds Trigger
         trigger = game.add_trigger('start_first_round')
         condition_group = trigger.condition_group
-        condition_group.add_fsm_state_condition('fsm1', 'rounds_stage_state')
+        condition_group.add_comparison_condition('fsm1', 'rounds_stage_state')
         # Assign Team Leader Trigger
         trigger = game.add_trigger('assign_team_leader')
         trigger.repeats = True
         trigger.save()
         condition_group = trigger.condition_group
-        condition_group.add_fsm_state_condition('fsm3', 'select_leader_stage_state')
+        condition_group.add_comparison_condition('fsm3', 'select_leader_stage_state')
         # Assign Team Leader Trigger
         trigger = game.add_trigger('leaders_draw_code_numbers')
         trigger.repeats = True
         trigger.save()
         condition_group = trigger.condition_group
-        condition_group.add_fsm_state_condition('fsm3', 'draw_code_card_stage_state')
+        condition_group.add_comparison_condition('fsm3', 'draw_code_card_stage_state')
         # Game Ready Transition
         game.transit_state_machine('fsm0', 'game_play', 'game ready')
 
@@ -220,8 +220,8 @@ class ClusterBuster(RuleLibrary):
     def leaders_made_hints(game: Game):
         game.transit_state_machine('fsm3', 'teams_guess_codes_stage', 'Leaders made hints')
         round_number = game.get_parameter_value('current_round_number')
-        fsm2 = game.get_parameter_value('fsm2')  # type: StateMachine
-        is_first_round = fsm2.current_state.slug == 'first_round'
+        fsm2 = game.get_parameter_value('fsm2')  # type: State
+        is_first_round = fsm2.slug == 'first_round'
         # Team Players Made Guesses Trigger
         trigger = game.add_trigger('teams_made_guesses')
         condition_group = trigger.condition_group
@@ -243,8 +243,8 @@ class ClusterBuster(RuleLibrary):
     @staticmethod
     def score_teams(game: Game):
         round_number = game.get_parameter_value('current_round_number')
-        fsm2 = game.get_parameter_value('fsm2')  # type: StateMachine
-        is_first_round = fsm2.current_state.slug == 'first_round'
+        fsm2 = game.get_parameter_value('fsm2')  # type: State
+        is_first_round = fsm2.slug == 'first_round'
         game.transit_state_machine('fsm3', 'score_teams_stage', 'Teams shared guesses')
         for guessing_team in game.teams.all():
             for hinting_team in game.teams.all():
@@ -277,12 +277,12 @@ class ClusterBuster(RuleLibrary):
 
     @staticmethod
     def start_next_round(game: Game):
-        fsm3 = game.get_parameter_value('fsm3')  # type: StateMachine
-        fsm3_state = fsm3.current_state.slug
+        fsm3 = game.get_parameter_value('fsm3')  # type: State
+        fsm3_state = fsm3.slug
         if fsm3_state != 'score_teams_stage':
             return
-        fsm2 = game.get_parameter_value('fsm2')  # type: StateMachine
-        fsm2_state = fsm2.current_state.slug
+        fsm2 = game.get_parameter_value('fsm2')  # type: State
+        fsm2_state = fsm2.slug
         if fsm2_state == 'last_round':
             ClusterBuster.last_round_over(game)
             return

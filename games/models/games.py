@@ -172,9 +172,7 @@ class Game(GameAbstract, TimeStamped):
         :param state: State
         :return:
         """
-        state_machine = self.state_machines.create(root_state=state, current_state=state)
-        self.set_parameter_value(key_args, state_machine)
-        return state_machine
+        self.set_parameter_value(key_args, state)
 
     def add_trigger(self, rule_slug: str):
         """
@@ -194,12 +192,11 @@ class Game(GameAbstract, TimeStamped):
         return trigger
 
     def transit_state_machine(self, key_args, state_slug: str, reason: str):
-        state_machine = self.get_parameter_value(key_args)  # type: StateMachine
         try:
             state = State.objects.get(slug=state_slug)
         except State.DoesNotExist:
             raise ValueError('state_slug must match the label of an existing State')
-        state_machine.transit(state, reason)
+        self.set_parameter_value(key_args, state)
         self.parameters_updated = True
 
 
@@ -284,7 +281,8 @@ class ConditionGroup(ConditionGroupAbstract, TimeStamped):
         self.save()
         return condition
 
-    def add_comparison_condition(self, key_args_1, key_args_2, comparison_type) -> ConditionAbstract:
+    def add_comparison_condition(self, key_args_1, key_args_2,
+                                 comparison_type=ConditionAbstract.EQUAL) -> ConditionAbstract:
         parameter_1 = self.game.get_parameter(key_args_1)
         parameter_2 = self.game.get_parameter(key_args_2)
         condition, created = self.conditions.get_or_create(game=self.game,

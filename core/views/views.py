@@ -2,7 +2,8 @@ from django.shortcuts import get_object_or_404, redirect, reverse
 from django.views import generic
 
 from lobbies.models import Lobby, Player, Team
-from games.models import Game, StateMachine
+from gamedefinitions.models import State
+from games.models import Game
 from core.definitions import ClusterBuster
 
 from lobbies.views.mixins import CheckPlayerView
@@ -104,8 +105,8 @@ class GameViewAbstract(CheckPlayerView):
         return tokens
 
     def get_all_guesses_data(self):
-        fsm2 = self.game.get_parameter_value('fsm2')  # type: StateMachine
-        is_first_round = fsm2.current_state.slug == 'first_round'
+        fsm2 = self.game.get_parameter_value('fsm2')  # type: State
+        is_first_round = fsm2.slug == 'first_round'
         guesses = {}
         for guessing_team in self.game.teams.all():  # type: Team
             guesses[guessing_team.name] = {}
@@ -170,16 +171,16 @@ class GameDetail(generic.DetailView, GameViewAbstract):
         losing_team = None
         all_hints = []
         all_guesses = []
-        fsm0 = self.game.get_parameter_value('fsm0')  # type: StateMachine
-        is_game_over = fsm0.current_state.slug == 'game_over'
+        fsm0 = self.game.get_parameter_value('fsm0')  # type: State
+        is_game_over = fsm0.slug == 'game_over'
         if is_game_over:
             winning_team = self.game.get_parameter_value('game_winning_team')
             losing_team = self.game.get_parameter_value('game_losing_team')
         else:
-            fsm2 = self.game.get_parameter_value('fsm2')  # type: StateMachine
-            is_first_round = fsm2.current_state.slug == 'first_round'
-            fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
-            fsm3_state = fsm3.current_state.slug
+            fsm2 = self.game.get_parameter_value('fsm2')  # type: State
+            is_first_round = fsm2.slug == 'first_round'
+            fsm3 = self.game.get_parameter_value('fsm3')  # type: State
+            fsm3_state = fsm3.slug
             if fsm3_state == 'leaders_make_hints_stage' and self.is_round_team_leader():
                 show_leader_hints_form_link = True
             elif fsm3_state == 'teams_guess_codes_stage':
@@ -211,8 +212,8 @@ class GameDetail(generic.DetailView, GameViewAbstract):
         data['all_guesses'] = all_guesses
         data['is_round_leader'] = self.is_round_team_leader()
         data['tokens'] = self.get_tokens_data()
-        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
-        data['round_stage'] = fsm3.current_state.name
+        fsm3 = self.game.get_parameter_value('fsm3')
+        data['round_stage'] = fsm3.name
         return data
 
 
@@ -237,8 +238,8 @@ class LeaderHintsFormView(GameFormAbstractView):
         response = super().dispatch(request, *args, **kwargs)
         if not self.is_round_team_leader():
             return redirect('game_detail', slug=kwargs['slug'])
-        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
-        if fsm3.current_state.slug != 'leaders_make_hints_stage':
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: State
+        if fsm3.slug != 'leaders_make_hints_stage':
             return redirect('game_detail', slug=kwargs['slug'])
         return response
 
@@ -289,8 +290,8 @@ class PlayerGuessesFormView(GameFormAbstractView):
         # TODO: Check if player is leader guessing own hints. Currently not letting leaders guess on any hints
         if self.is_round_team_leader():
             return redirect('game_detail', slug=kwargs['slug'])
-        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
-        if fsm3.current_state.slug != 'teams_guess_codes_stage':
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: State
+        if fsm3.slug != 'teams_guess_codes_stage':
             return redirect('game_detail', slug=kwargs['slug'])
         return response
 
@@ -330,8 +331,8 @@ class PlayerGuessesOpponentHintsFormView(GameFormAbstractView):
 
     def dispatch(self, request, *args, **kwargs):
         response = super().dispatch(request, *args, **kwargs)
-        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
-        if fsm3.current_state.slug != 'teams_guess_codes_stage':
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: State
+        if fsm3.slug != 'teams_guess_codes_stage':
             return redirect('game_detail', slug=kwargs['slug'])
         return response
 
@@ -368,8 +369,8 @@ class StartNextRound(generic.RedirectView, generic.detail.SingleObjectMixin, Gam
         response = super().dispatch(request, *args, **kwargs)
         if not self.is_round_team_leader():
             return redirect('game_detail', slug=kwargs['slug'])
-        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
-        if fsm3.current_state.slug != 'score_teams_stage':
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: State
+        if fsm3.slug != 'score_teams_stage':
             return redirect('game_detail', slug=kwargs['slug'])
         return response
 
@@ -391,8 +392,8 @@ class ScoreTeams(generic.RedirectView, generic.detail.SingleObjectMixin, GameVie
         response = super().dispatch(request, *args, **kwargs)
         if not self.is_round_team_leader():
             return redirect('game_detail', slug=kwargs['slug'])
-        fsm3 = self.game.get_parameter_value('fsm3')  # type: StateMachine
-        if fsm3.current_state.slug != 'teams_share_guesses_stage':
+        fsm3 = self.game.get_parameter_value('fsm3')  # type: State
+        if fsm3.slug != 'teams_share_guesses_stage':
             return redirect('game_detail', slug=kwargs['slug'])
         return response
 
