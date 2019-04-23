@@ -189,7 +189,7 @@ class Game(GameAbstract, TimeStamped):
         self.parameters_updated = True
         return trigger
 
-    def transit_state_machine(self, key_args, state_slug: str, reason: str):
+    def transit_state_machine(self, key_args, state_slug: str):
         try:
             state = State.objects.get(slug=state_slug)
         except State.DoesNotExist:
