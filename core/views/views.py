@@ -2,12 +2,12 @@ from django.shortcuts import get_object_or_404, redirect, reverse
 from django.views import generic
 
 from lobbies.models import Lobby, Player, Team
-from gamedefinitions.models import State
 from games.models import Game
-from core.definitions import ClusterBuster
 
 from lobbies.views.mixins import CheckPlayerView
 
+from ..models import State
+from ..definitions import ClusterBuster
 from .forms import LeaderHintsForm, PlayerGuessForm
 
 
