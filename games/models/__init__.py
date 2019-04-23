@@ -1,2 +1,2 @@
 from .parameters import *
-from .records import *
+from .games import *
