@@ -7,7 +7,8 @@ from clusterbuster.mixins import TimeStamped
 
 from .mixins import BaseValue, BaseNumericValue
 
-__all__ = ['IntegerValue', 'FloatValue', 'CharacterValue', 'BooleanValue', 'ParameterDictionary', 'Parameter']
+__all__ = ['IntegerValue', 'FloatValue', 'CharacterValue', 'BooleanValue', 'ParameterDictionary',
+           'Parameter', 'ParameterUpdate']
 
 
 class IntegerValue(BaseNumericValue):
@@ -40,13 +41,13 @@ class ParameterDictionary(TimeStamped):
         if isinstance(raw_value, models.Model):
             return raw_value
         elif isinstance(raw_value, int):
-            return IntegerValue.objects.create(value=raw_value)
+            return IntegerValue(value=raw_value)
         elif isinstance(raw_value, float):
-            return FloatValue.objects.create(value=raw_value)
+            return FloatValue(value=raw_value)
         elif isinstance(raw_value, str):
-            return CharacterValue.objects.create(value=raw_value)
+            return CharacterValue(value=raw_value)
         elif isinstance(raw_value, bool):
-            return BooleanValue.objects.create(value=raw_value)
+            return BooleanValue(value=raw_value)
         else:
             raise ValueError('raw_value must be a recognized type.')
 
@@ -69,8 +70,13 @@ class ParameterDictionary(TimeStamped):
 
     def set_parameter_value(self, key_args, value):
         parameter = self.get_parameter(key_args)
-        parameter.value = ParameterDictionary.__get_model_value(value)
-        parameter.save()
+        old_value = parameter.value
+        new_value = ParameterDictionary.__get_model_value(value)
+        if old_value != new_value:
+            new_value.save()
+            ParameterUpdate.objects.create(parameter=parameter, old_value=old_value, new_value=new_value)
+            parameter.value = new_value
+            parameter.save()
 
 
 class Parameter(TimeStamped):
@@ -81,7 +87,7 @@ class Parameter(TimeStamped):
     key = models.SlugField(_("Key"), max_length=255, db_index=True)
     value = GenericForeignKey('content_type', 'object_id')
     object_id = models.PositiveIntegerField(_('Object ID'), blank=True, null=True)
-    content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, blank=True, null=True)
+    content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, blank=True, null=True, related_name='+')
 
     class Meta:
         verbose_name = _("Parameter")
@@ -99,7 +105,7 @@ class Parameter(TimeStamped):
 
     def __ne__(self, other):
         if not isinstance(other, Parameter):
-            return False
+            return True
         return self.value != other.value
 
     def __gt__(self, other):
@@ -122,3 +128,22 @@ class Parameter(TimeStamped):
             return False
         return self.value <= other.value
 
+
+class ParameterUpdate(TimeStamped):
+    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name='+')
+    old_value = GenericForeignKey('old_content_type', 'old_object_id')
+    old_object_id = models.PositiveIntegerField(_('Object ID'), blank=True, null=True)
+    old_content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, blank=True, null=True,
+                                         related_name='+')
+    new_value = GenericForeignKey('new_content_type', 'new_object_id')
+    new_object_id = models.PositiveIntegerField(_('Object ID'), blank=True, null=True)
+    new_content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, blank=True, null=True,
+                                         related_name='+')
+
+    class Meta:
+        verbose_name = _("Parameter Update")
+        verbose_name_plural = _("Parameter Updates")
+        ordering = ["-created"]
+
+    def __str__(self):
+        return str(self.parameter.key) + ": " + str(self.old_value) + " -> " + str(self.new_value)

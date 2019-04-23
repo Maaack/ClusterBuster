@@ -26,7 +26,7 @@ class BaseNumericValue(BaseValue):
 
     def __ne__(self, other):
         if not isinstance(other, BaseNumericValue):
-            return False
+            return True
         return self.value != other.value
 
     def __gt__(self, other):

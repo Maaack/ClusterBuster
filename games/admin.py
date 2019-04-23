@@ -5,6 +5,7 @@ from .models import *
 admin.site.register(Condition)
 admin.site.register(ConditionGroup)
 admin.site.register(Parameter)
+admin.site.register(ParameterUpdate)
 admin.site.register(Transition)
 admin.site.register(Trigger)
 admin.site.register(StateMachine)
