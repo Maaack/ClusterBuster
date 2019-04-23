@@ -1,6 +1,6 @@
-from gamedefinitions.interfaces import ComparisonConditionAbstract, RuleLibrary
+from gamedefinitions.interfaces import RuleLibrary
 from gamedefinitions.models import State
-from games.models import Game
+from games.models import Game, Condition
 from core.models import Word
 from core.basics import PatternDeckBuilder
 
@@ -48,7 +48,7 @@ class ClusterBuster(RuleLibrary):
             condition_group.add_comparison_condition(
                 ('team_winning_tokens', team),
                 'winning_tokens_required_to_win',
-                ComparisonConditionAbstract.GREATER_THAN_OR_EQUAL
+                Condition.GREATER_THAN_OR_EQUAL
             )
 
     @staticmethod
@@ -59,7 +59,7 @@ class ClusterBuster(RuleLibrary):
             condition_group.add_comparison_condition(
                 ('team_losing_tokens', team),
                 'losing_tokens_required_to_lose',
-                ComparisonConditionAbstract.GREATER_THAN_OR_EQUAL
+                Condition.GREATER_THAN_OR_EQUAL
             )
 
     @staticmethod
