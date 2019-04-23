@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from gamedefinitions.models import State, GameDefinition
+from gamedefinitions.models import GameDefinition
 
 
 class ConditionAbstractBase(models.Model):

@@ -1,4 +1,5 @@
-from gamedefinitions.interfaces import ComparisonConditionAbstract, RuleLibrary, State
+from gamedefinitions.interfaces import ComparisonConditionAbstract, RuleLibrary
+from gamedefinitions.models import State
 from games.models import Game
 from core.models import Word
 from core.basics import PatternDeckBuilder
