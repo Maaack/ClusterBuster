@@ -16,11 +16,35 @@ class ClusterBuster(RuleLibrary):
     FIRST_ROUND_NUMBER = 1
 
     @staticmethod
+    def set_state_machines(game: Game):
+        if game.game_definition:
+            for state_machine in game.game_definition.state_machines.all():
+                parameter_key = state_machine.slug
+                game.set_parameter_value(parameter_key, state_machine.root_state)
+
+    @staticmethod
+    def setup_state_parameters(game: Game):
+        if game.game_definition:
+            for state in game.game_definition.states.all():
+                parameter_key = state.slug + "_state"
+                game.set_parameter_value(parameter_key, state)
+
+    @staticmethod
+    def transit_state_machine(game: Game, key_args, state_slug: str):
+        try:
+            state = State.objects.get(slug=state_slug)
+        except State.DoesNotExist:
+            raise ValueError('state_slug must match the label of an existing State')
+        game.set_parameter_value(key_args, state)
+
+    @staticmethod
     def start_game(game: Game):
         """
         :param game:
         :return:
         """
+        ClusterBuster.set_state_machines(game)
+        ClusterBuster.setup_state_parameters(game)
         game.set_parameter_value('winning_tokens_required_to_win', ClusterBuster.WINNING_TOKENS_REQUIRED_TO_WIN)
         game.set_parameter_value('losing_tokens_required_to_lose', ClusterBuster.LOSING_TOKENS_REQUIRED_TO_LOSE)
         ClusterBuster.assign_team_win_tokens(game)
@@ -28,7 +52,7 @@ class ClusterBuster(RuleLibrary):
         ClusterBuster.set_win_condition(game)
         ClusterBuster.set_lose_condition(game)
         ClusterBuster.game_ready(game)
-        game.transit_state_machine('fsm1', 'draw_words_stage')
+        ClusterBuster.transit_state_machine(game, 'fsm1', 'draw_words_stage')
 
     @staticmethod
     def assign_team_win_tokens(game: Game):
@@ -71,8 +95,6 @@ class ClusterBuster(RuleLibrary):
         # Draw Words Trigger
         trigger = game.add_trigger('draw_words')
         condition_group = trigger.condition_group
-        condition_group.set_to_and_op()
-        condition_group.add_comparison_condition('fsm0', 'game_play_state')
         condition_group.add_comparison_condition('fsm1', 'draw_words_stage_state')
         # Rounds Trigger
         trigger = game.add_trigger('start_first_round')
@@ -91,7 +113,7 @@ class ClusterBuster(RuleLibrary):
         condition_group = trigger.condition_group
         condition_group.add_comparison_condition('fsm3', 'draw_code_card_stage_state')
         # Game Ready Transition
-        game.transit_state_machine('fsm0', 'game_play')
+        ClusterBuster.transit_state_machine(game, 'fsm0', 'game_play')
 
     @staticmethod
     def set_winning_team(game: Game):
@@ -133,9 +155,9 @@ class ClusterBuster(RuleLibrary):
         :param game:
         :return:
         """
-        game.transit_state_machine('fsm1', 'final_scoring_stage')
+        ClusterBuster.transit_state_machine(game, 'fsm1', 'final_scoring_stage')
         ClusterBuster.set_winning_team(game)
-        game.transit_state_machine('fsm0', 'game_over')
+        ClusterBuster.transit_state_machine(game, 'fsm0', 'game_over')
 
     @staticmethod
     def team_lost(game: Game):
@@ -143,9 +165,9 @@ class ClusterBuster(RuleLibrary):
         :param game:
         :return:
         """
-        game.transit_state_machine('fsm1', 'final_scoring_stage')
+        ClusterBuster.transit_state_machine(game, 'fsm1', 'final_scoring_stage')
         ClusterBuster.set_losing_team(game)
-        game.transit_state_machine('fsm0', 'game_over')
+        ClusterBuster.transit_state_machine(game, 'fsm0', 'game_over')
 
     @staticmethod
     def last_round_over(game: Game):
@@ -153,12 +175,12 @@ class ClusterBuster(RuleLibrary):
         :param game:
         :return:
         """
-        game.transit_state_machine('fsm1', 'final_scoring_stage')
+        ClusterBuster.transit_state_machine(game, 'fsm1', 'final_scoring_stage')
         ClusterBuster.set_winning_team(game)
         winning_team = game.get_parameter_value('game_winning_team')
         if winning_team is None:
             ClusterBuster.set_losing_team(game)
-        game.transit_state_machine('fsm0', 'game_over')
+        ClusterBuster.transit_state_machine(game, 'fsm0', 'game_over')
 
     @staticmethod
     def draw_words(game: Game):
@@ -175,14 +197,14 @@ class ClusterBuster(RuleLibrary):
                 for word_i, random_word in enumerate(random_words[start_word_i:end_word_i]):
                     game.set_parameter_value(('team', team, 'secret_word', word_i + 1), str(random_word))
             game.set_parameter_value('word_cards_drawn', True)
-        game.transit_state_machine('fsm1', 'rounds_stage')
+        ClusterBuster.transit_state_machine(game, 'fsm1', 'rounds_stage')
 
     @staticmethod
     def start_first_round(game: Game):
         game.set_parameter_value('current_round_number', ClusterBuster.FIRST_ROUND_NUMBER)
         game.set_parameter_value('last_round_number', ClusterBuster.LAST_ROUND_NUMBER)
-        game.transit_state_machine('fsm2', 'first_round')
-        game.transit_state_machine('fsm3', 'select_leader_stage')
+        ClusterBuster.transit_state_machine(game, 'fsm2', 'first_round')
+        ClusterBuster.transit_state_machine(game, 'fsm3', 'select_leader_stage')
 
     @staticmethod
     def assign_team_leader(game: Game):
@@ -192,7 +214,7 @@ class ClusterBuster(RuleLibrary):
             offset = (round_number - 1) % player_count
             round_leader = team.players.all()[offset]
             game.set_parameter_value(('round', round_number, 'team', team, 'leader'), round_leader)
-        game.transit_state_machine('fsm3', 'draw_code_card_stage')
+        ClusterBuster.transit_state_machine(game, 'fsm3', 'draw_code_card_stage')
 
     @staticmethod
     def leaders_draw_code_numbers(game: Game):
@@ -215,11 +237,11 @@ class ClusterBuster(RuleLibrary):
                 condition_group.add_has_value_condition(
                     ('round', round_number, 'team', team, 'hint', card_i + 1),
                 )
-        game.transit_state_machine('fsm3', 'leaders_make_hints_stage')
+        ClusterBuster.transit_state_machine(game, 'fsm3', 'leaders_make_hints_stage')
 
     @staticmethod
     def leaders_made_hints(game: Game):
-        game.transit_state_machine('fsm3', 'teams_guess_codes_stage')
+        ClusterBuster.transit_state_machine(game, 'fsm3', 'teams_guess_codes_stage')
         round_number = game.get_parameter_value('current_round_number')
         fsm2 = game.get_parameter_value('fsm2')  # type: State
         is_first_round = fsm2.slug == 'first_round'
@@ -239,14 +261,14 @@ class ClusterBuster(RuleLibrary):
 
     @staticmethod
     def teams_made_guesses(game: Game):
-        game.transit_state_machine('fsm3', 'teams_share_guesses_stage')
+        ClusterBuster.transit_state_machine(game, 'fsm3', 'teams_share_guesses_stage')
 
     @staticmethod
     def score_teams(game: Game):
         round_number = game.get_parameter_value('current_round_number')
         fsm2 = game.get_parameter_value('fsm2')  # type: State
         is_first_round = fsm2.slug == 'first_round'
-        game.transit_state_machine('fsm3', 'score_teams_stage')
+        ClusterBuster.transit_state_machine(game, 'fsm3', 'score_teams_stage')
         for guessing_team in game.teams.all():
             for hinting_team in game.teams.all():
                 if guessing_team != hinting_team and is_first_round:
@@ -291,10 +313,10 @@ class ClusterBuster(RuleLibrary):
         round_number += 1
         game.set_parameter_value('current_round_number', round_number)
         if round_number == ClusterBuster.LAST_ROUND_NUMBER:
-            game.transit_state_machine('fsm2', 'last_round')
+            ClusterBuster.transit_state_machine(game, 'fsm2', 'last_round')
         elif fsm2_state == 'first_round' and round_number > ClusterBuster.FIRST_ROUND_NUMBER:
-            game.transit_state_machine('fsm2', 'middle_rounds')
-        game.transit_state_machine('fsm3', 'select_leader_stage')
+            ClusterBuster.transit_state_machine(game, 'fsm2', 'middle_rounds')
+        ClusterBuster.transit_state_machine(game, 'fsm3', 'select_leader_stage')
 
     @staticmethod
     def method_map(rule):

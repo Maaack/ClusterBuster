@@ -43,18 +43,6 @@ class Game(GameAbstract, TimeStamped):
             self.parameters = ParameterDictionary.objects.create()
             self.save()
 
-    def __setup_state_parameters(self):
-        if self.game_definition:
-            for state in self.game_definition.states.all():
-                parameter_key = state.slug + "_state"
-                self.set_parameter_value(parameter_key, state)
-
-    def __setup_state_machines(self):
-        if self.game_definition:
-            for state_machine in self.game_definition.state_machines.all():
-                parameter_key = state_machine.slug
-                self.set_parameter_value(parameter_key, state_machine.root_state)
-
     def __setup_code(self):
         if not self.code:
             self.code = CodeGenerator.game_code()
@@ -110,10 +98,10 @@ class Game(GameAbstract, TimeStamped):
         """
         super(Game, self).setup(game_definition_slug, *args, **kwargs)
         self.__setup_parameters()
-        self.__setup_state_parameters()
-        self.__setup_state_machines()
         self.__setup_code()
-        self.__setup_from_lobby(kwargs['lobby'])
+        lobby = kwargs.get('lobby')
+        if lobby:
+            self.__setup_from_lobby(lobby)
         self.save()
 
     def start(self, rule_library: RuleLibrary):
@@ -179,14 +167,6 @@ class Game(GameAbstract, TimeStamped):
         self.trigger_list.append(trigger)
         self.parameters_updated = True
         return trigger
-
-    def transit_state_machine(self, key_args, state_slug: str):
-        try:
-            state = State.objects.get(slug=state_slug)
-        except State.DoesNotExist:
-            raise ValueError('state_slug must match the label of an existing State')
-        self.set_parameter_value(key_args, state)
-        self.parameters_updated = True
 
 
 class Condition(ConditionAbstract, TimeStamped):
