@@ -140,26 +140,6 @@ class ConditionGroupAbstract(models.Model):
         raise NotImplementedError('ConditionGroupAbstract subclasses must override add_comparison_condition()')
 
 
-class StateMachineAbstract(models.Model):
-    root_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
-    current_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
-    previous_state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
-
-    class Meta:
-        abstract = True
-
-    def get_state(self):
-        return self.current_state
-
-    def set_state(self, state: State):
-        self.previous_state = self.current_state
-        self.current_state = state
-        self.save()
-
-    def transit(self, state: State, reason: str):
-        raise NotImplementedError('StateMachineAbstract subclasses must override transit()')
-
-
 class RuleLibrary(ABC):
     """
     RuleLibraries help map a State's Rules to methods that alter the Game.
