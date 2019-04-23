@@ -9,8 +9,26 @@ from clusterbuster.mixins import TimeStamped, CodeGenerator
 from lobbies.models import Player, Team, Lobby
 from gamedefinitions.models import State, Rule
 from gamedefinitions.interfaces import (
-    StateMachineAbstract, GameAbstract, ConditionAbstract, ParameterAbstract, ConditionGroupAbstract, RuleLibrary
+    StateMachineAbstract, GameAbstract, ConditionAbstract, ParameterAbstract, ConditionGroupAbstract, RuleLibrary,
 )
+
+from .mixins import BaseValue, BaseNumericValue
+
+
+class IntegerValue(BaseNumericValue):
+    value = models.IntegerField(_("Value"), blank=True, null=True, default=None)
+
+
+class FloatValue(BaseNumericValue):
+    value = models.FloatField(_("Value"), blank=True, null=True, default=None)
+
+
+class CharacterValue(BaseValue):
+    value = models.CharField(_("Value"), max_length=255, blank=True, null=True, default=None)
+
+
+class BooleanValue(BaseValue):
+    value = models.NullBooleanField(_("Value"), default=None)
 
 
 class Game(GameAbstract, TimeStamped):
@@ -65,26 +83,23 @@ class Game(GameAbstract, TimeStamped):
         self.lobby.start_activity('Cluster Buster', game_url)
 
     @staticmethod
-    def __get_value_param_type(raw_value):
-        if isinstance(raw_value, int) or isinstance(raw_value, float) or isinstance(raw_value, str) or isinstance(
-                raw_value, bool):
-            return MixedValue
-        else:
-            return type(raw_value)
-
-    @staticmethod
     def __get_key_from_args(*args):
         return "_".join(str(i).lower() for i in args)
 
     @staticmethod
     def __get_model_value(raw_value):
-        value_type = Game.__get_value_param_type(raw_value)
-        if value_type == MixedValue:
-            value = value_type()
-            value.set(raw_value)
-            return value
-        elif isinstance(raw_value, models.Model):
+        if isinstance(raw_value, models.Model):
             return raw_value
+        elif isinstance(raw_value, int):
+            return IntegerValue.objects.create(value=raw_value)
+        elif isinstance(raw_value, float):
+            return FloatValue.objects.create(value=raw_value)
+        elif isinstance(raw_value, str):
+            return CharacterValue.objects.create(value=raw_value)
+        elif isinstance(raw_value, bool):
+            return BooleanValue.objects.create(value=raw_value)
+        else:
+            raise ValueError('raw_value must be a recognized type.')
 
     def save(self, *args, **kwargs):
         super(Game, self).save(*args, **kwargs)
@@ -172,8 +187,8 @@ class Game(GameAbstract, TimeStamped):
 
     def get_parameter_value(self, key_args):
         parameter = self.get_parameter(key_args)
-        if isinstance(parameter.value, MixedValue):
-            return parameter.value.get()
+        if isinstance(parameter.value, BaseValue):
+            return parameter.value.value
         return parameter.value
 
     def set_parameter_value(self, key_args, value):
