@@ -1,7 +1,6 @@
 from gamedefinitions.interfaces import RuleLibrary
-from gamedefinitions.models import State
 from games.models import Game, Condition
-from core.models import Word
+from core.models import Word, State, StateMachine
 from core.basics import PatternDeckBuilder
 
 
@@ -17,17 +16,15 @@ class ClusterBuster(RuleLibrary):
 
     @staticmethod
     def set_state_machines(game: Game):
-        if game.game_definition:
-            for state_machine in game.game_definition.state_machines.all():
-                parameter_key = state_machine.slug
-                game.set_parameter_value(parameter_key, state_machine.root_state)
+        for state_machine in StateMachine.objects.all():
+            parameter_key = state_machine.slug
+            game.set_parameter_value(parameter_key, state_machine.root_state)
 
     @staticmethod
     def setup_state_parameters(game: Game):
-        if game.game_definition:
-            for state in game.game_definition.states.all():
-                parameter_key = state.slug + "_state"
-                game.set_parameter_value(parameter_key, state)
+        for state in State.objects.all():
+            parameter_key = state.slug + "_state"
+            game.set_parameter_value(parameter_key, state)
 
     @staticmethod
     def transit_state_machine(game: Game, key_args, state_slug: str):
