@@ -5,26 +5,26 @@ from django.contrib.contenttypes.models import ContentType
 
 from clusterbuster.mixins import TimeStamped
 
-from .mixins import BaseValue, BaseNumericValue
+from gamedefinitions.models.mixins import *
 
 __all__ = ['IntegerValue', 'FloatValue', 'CharacterValue', 'BooleanValue', 'ParameterDictionary',
            'Parameter', 'ParameterUpdate']
 
 
-class IntegerValue(BaseNumericValue):
-    value = models.IntegerField(_("Value"), blank=True, null=True, default=None)
+class IntegerValue(BaseIntegerValue):
+    pass
 
 
-class FloatValue(BaseNumericValue):
-    value = models.FloatField(_("Value"), blank=True, null=True, default=None)
+class FloatValue(BaseFloatValue):
+    pass
 
 
-class CharacterValue(BaseValue):
-    value = models.CharField(_("Value"), max_length=255, blank=True, null=True, default=None)
+class CharacterValue(BaseCharacterValue):
+    pass
 
 
-class BooleanValue(BaseValue):
-    value = models.NullBooleanField(_("Value"), default=None)
+class BooleanValue(BaseBooleanValue):
+    pass
 
 
 class ParameterDictionary(TimeStamped):
@@ -79,24 +79,17 @@ class ParameterDictionary(TimeStamped):
             parameter.save()
 
 
-class Parameter(TimeStamped):
+class Parameter(BaseParameter, TimeStamped):
     """
     Parameters store key / value pairs in Parameter Dictionaries.
     """
     dictionary = models.ForeignKey(ParameterDictionary, on_delete=models.CASCADE, related_name='parameters')
-    key = models.SlugField(_("Key"), max_length=255, db_index=True)
-    value = GenericForeignKey('content_type', 'object_id')
-    object_id = models.PositiveIntegerField(_('Object ID'), blank=True, null=True)
-    content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, blank=True, null=True, related_name='+')
 
     class Meta:
         verbose_name = _("Parameter")
         verbose_name_plural = _("Parameters")
         ordering = ["-created"]
         unique_together = ('dictionary', 'key')
-
-    def __str__(self):
-        return str(self.key) + ": " + str(self.value)
 
     def __eq__(self, other):
         if not isinstance(other, Parameter):
