@@ -13,7 +13,7 @@ from gamedefinitions.interfaces import (
 )
 
 
-from .mixins import BaseValue, BaseNumericValue, ParameterAbstract
+from .mixins import BaseValue, BaseNumericValue
 
 
 class IntegerValue(BaseNumericValue):
@@ -79,7 +79,7 @@ class ParameterDictionary(TimeStamped):
         parameter.save()
 
 
-class Parameter(TimeStamped, ParameterAbstract):
+class Parameter(TimeStamped):
     """
     Parameters store key / value pairs in Parameter Dictionaries.
     """
@@ -94,6 +94,39 @@ class Parameter(TimeStamped, ParameterAbstract):
         verbose_name_plural = _("Parameters")
         ordering = ["-created"]
         unique_together = ('dictionary', 'key')
+
+    def __str__(self):
+        return str(self.key) + ": " + str(self.value)
+
+    def __eq__(self, other):
+        if not isinstance(other, Parameter):
+            return False
+        return self.value == other.value
+
+    def __ne__(self, other):
+        if not isinstance(other, Parameter):
+            return False
+        return self.value != other.value
+
+    def __gt__(self, other):
+        if not isinstance(other, Parameter):
+            return False
+        return self.value > other.value
+
+    def __lt__(self, other):
+        if not isinstance(other, Parameter):
+            return False
+        return self.value < other.value
+
+    def __ge__(self, other):
+        if not isinstance(other, Parameter):
+            return False
+        return self.value >= other.value
+
+    def __le__(self, other):
+        if not isinstance(other, Parameter):
+            return False
+        return self.value <= other.value
 
 
 class Game(GameAbstract, TimeStamped):
