@@ -291,9 +291,9 @@ class ClusterBuster(RuleLibrary):
         round_number += 1
         game.set_parameter_value('current_round_number', round_number)
         if round_number == ClusterBuster.LAST_ROUND_NUMBER:
-            game.transit_state_machine('fsm2', 'last_round', 'round == last round')
+            game.transit_state_machine('fsm2', 'last_round')
         elif fsm2_state == 'first_round' and round_number > ClusterBuster.FIRST_ROUND_NUMBER:
-            game.transit_state_machine('fsm2', 'middle_rounds', 'first round < round < last round')
+            game.transit_state_machine('fsm2', 'middle_rounds')
         game.transit_state_machine('fsm3', 'select_leader_stage')
 
     @staticmethod
