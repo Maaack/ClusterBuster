@@ -105,50 +105,6 @@ class ConditionAbstract(ConditionAbstractBase, ComparisonConditionAbstract):
         raise NotImplementedError('ConditionAbstract subclasses must override passes()')
 
 
-class ParameterAbstract(models.Model):
-    class Meta:
-        abstract = True
-
-    def __eq__(self, other):
-        if not isinstance(other, ParameterAbstract):
-            return False
-        return self.get_value() == other.get_value()
-
-    def __ne__(self, other):
-        if not isinstance(other, ParameterAbstract):
-            return False
-        return self.get_value() != other.get_value()
-
-    def __gt__(self, other):
-        if not isinstance(other, ParameterAbstract):
-            return False
-        return self.get_value() > other.get_value()
-
-    def __lt__(self, other):
-        if not isinstance(other, ParameterAbstract):
-            return False
-        return self.get_value() < other.get_value()
-
-    def __ge__(self, other):
-        if not isinstance(other, ParameterAbstract):
-            return False
-        return self.get_value() >= other.get_value()
-
-    def __le__(self, other):
-        if not isinstance(other, ParameterAbstract):
-            return False
-        return self.get_value() <= other.get_value()
-
-    def get_key(self):
-        raise NotImplementedError('ParameterAbstract subclasses must override get_value()')
-
-    def get_value(self):
-        raise NotImplementedError('ParameterAbstract subclasses must override get_value()')
-
-    def set_value(self, value):
-        raise NotImplementedError('ParameterAbstract subclasses must override set_value()')
-
-
 class ConditionGroupAbstract(models.Model):
     OR_OP = 0
     AND_OP = 1
