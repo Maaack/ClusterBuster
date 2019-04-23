@@ -53,7 +53,7 @@ class Game(GameAbstract, TimeStamped):
         if self.game_definition:
             for state_machine in self.game_definition.state_machines.all():
                 parameter_key = state_machine.slug
-                self.add_state_machine(parameter_key, state_machine.root_state)
+                self.set_parameter_value(parameter_key, state_machine.root_state)
 
     def __setup_code(self):
         if not self.code:
@@ -162,15 +162,6 @@ class Game(GameAbstract, TimeStamped):
     def prepend_game_slug(self, slug):
         game_definition_slug = self.game_definition.slug
         return game_definition_slug + "_" + slug
-
-    def add_state_machine(self, key_args, state: State):
-        """
-        Adds a StateMachine to the Game object.
-        :param key_args: mixed
-        :param state: State
-        :return:
-        """
-        self.set_parameter_value(key_args, state)
 
     def add_trigger(self, rule_slug: str):
         """
