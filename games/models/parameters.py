@@ -130,7 +130,7 @@ class Parameter(TimeStamped):
 
 
 class ParameterUpdate(TimeStamped):
-    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name='+')
+    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name='updates')
     old_value = GenericForeignKey('old_content_type', 'old_object_id')
     old_object_id = models.PositiveIntegerField(_('Object ID'), blank=True, null=True)
     old_content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, blank=True, null=True,
