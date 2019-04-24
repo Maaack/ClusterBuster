@@ -166,7 +166,7 @@ class GameAbstract(models.Model):
     def setup(self, game_definition_slug: str, *args, **kwargs):
         self.__setup_game_definition(game_definition_slug)
 
-    def update(self, rule_library: RuleLibrary):
+    def update(self):
         raise NotImplementedError('GameAbstract subclasses must override update()')
 
     def get_parameter(self, *args):

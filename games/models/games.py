@@ -104,12 +104,12 @@ class Game(GameAbstract, TimeStamped):
             self.__setup_from_lobby(lobby)
         self.save()
 
-    def start(self, rule_library: RuleLibrary):
+    def start(self):
         if self.game_definition:
             first_rule = self.game_definition.first_rule
-            self.evaluate_rule(first_rule, rule_library)
+            self.evaluate_rule(first_rule)
 
-    def update(self, rule_library: RuleLibrary):
+    def update(self):
         self.trigger_list = list(self.triggers.filter(active=True).all())
         self.parameters_updated = True
         while self.parameters_updated:
@@ -117,14 +117,14 @@ class Game(GameAbstract, TimeStamped):
             self.parameters_updated = False
             while len(active_trigger_list) > 0:
                 trigger = active_trigger_list.pop()
-                trigger.squeeze(rule_library)
+                trigger.squeeze()
 
-    def evaluate_rule(self, rule: Rule, rule_library: RuleLibrary):
-        rule_method = self.get_rule_method(rule, rule_library)
+    def evaluate_rule(self, rule: Rule):
+        rule_method = self.get_rule_method(rule)
         if rule_method is not None:
-            rule_method(self)
+            rule_method()
 
-    def get_rule_method(self, rule: Rule, rule_library: RuleLibrary):
+    def get_rule_method(self, rule: Rule):
         prefix = self.game_definition.slug + "_"
         prefix_length = len(prefix)
         rule_slug = rule.slug
@@ -132,9 +132,9 @@ class Game(GameAbstract, TimeStamped):
             rule_slug = rule_slug[prefix_length:]
         print("%s rule lookup" % (rule_slug,))
         try:
-            return getattr(rule_library, rule_slug)
+            return getattr(self, rule_slug)
         except AttributeError:
-            print("%s didn't exist in %s" % (rule_slug, rule_library))
+            print("%s didn't exist in %s" % (rule_slug, self))
             return None
 
     def get_parameter(self, key_args):
@@ -245,15 +245,15 @@ class Trigger(TimeStamped):
     def __str__(self):
         return str(self.game) + " - " + str(self.rule)
 
-    def squeeze(self, rule_library: RuleLibrary):
+    def squeeze(self):
         if self.active is False:
             return
         if self.condition_group.passes():
-            self.pull(rule_library)
+            self.pull()
 
-    def pull(self, rule_library: RuleLibrary):
+    def pull(self):
         self.trigger_count += 1
-        self.game.evaluate_rule(self.rule, rule_library)
+        self.game.evaluate_rule(self.rule)
         if self.repeats is False:
             self.active = False
         self.save()
