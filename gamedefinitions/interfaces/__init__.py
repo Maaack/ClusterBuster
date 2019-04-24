@@ -142,7 +142,7 @@ class ConditionGroupAbstract(models.Model):
 
 class GameAbstract(models.Model):
     """
-    RuleLibraries help map a State's Rules to methods that alter the Game.
+    Games are meant to be played.
     """
     game_definition = models.ForeignKey(GameDefinition, on_delete=models.SET_NULL, null=True, blank=True)
 
