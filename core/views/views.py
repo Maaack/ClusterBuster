@@ -1,10 +1,8 @@
 from django.shortcuts import get_object_or_404, redirect, reverse
 from django.views import generic
 
-from lobbies.models import Lobby, Player, Team
-from games.models import Game
-
 from lobbies.views.mixins import CheckPlayerView
+from lobbies.models import Lobby, Player, Team
 
 from ..models import State, ClusterBuster
 from .forms import LeaderHintsForm, PlayerGuessForm
@@ -21,19 +19,18 @@ class StartGame(generic.RedirectView, generic.detail.SingleObjectMixin):
         game.setup("cluster_buster", lobby=lobby)
         game.start()
         game.update()
-
         return super().get_redirect_url(*args, **kwargs)
 
 
 class UpdateGame(generic.RedirectView, generic.detail.SingleObjectMixin):
-    model = Game
+    model = ClusterBuster
+    context_object_name = 'game'
     pattern_name = 'game_detail'
     slug_field = 'code'
 
     def get_redirect_url(self, *args, **kwargs):
         game = get_object_or_404(ClusterBuster, code=kwargs['slug'])
         game.update()
-
         return super().get_redirect_url(*args, **kwargs)
 
 
@@ -177,7 +174,8 @@ class GameViewAbstract(CheckPlayerView):
 
 
 class GameDetail(generic.DetailView, GameViewAbstract):
-    model = Game
+    model = ClusterBuster
+    context_object_name = 'game'
     slug_field = 'code'
     template_name = 'core/game_detail.html'
 
@@ -390,7 +388,8 @@ class PlayerGuessesOpponentHintsFormView(GameFormAbstractView):
 
 
 class StartNextRound(generic.RedirectView, generic.detail.SingleObjectMixin, GameViewAbstract):
-    model = Game
+    model = ClusterBuster
+    context_object_name = 'game'
     pattern_name = 'game_detail'
     slug_field = 'code'
 
@@ -412,7 +411,8 @@ class StartNextRound(generic.RedirectView, generic.detail.SingleObjectMixin, Gam
 
 
 class ScoreTeams(generic.RedirectView, generic.detail.SingleObjectMixin, GameViewAbstract):
-    model = Game
+    model = ClusterBuster
+    context_object_name = 'game'
     pattern_name = 'game_detail'
     slug_field = 'code'
 
