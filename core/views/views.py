@@ -6,8 +6,7 @@ from games.models import Game
 
 from lobbies.views.mixins import CheckPlayerView
 
-from ..models import State
-from ..definitions import ClusterBuster
+from ..models import State, ClusterBuster
 from .forms import LeaderHintsForm, PlayerGuessForm
 
 
@@ -18,10 +17,10 @@ class StartGame(generic.RedirectView, generic.detail.SingleObjectMixin):
 
     def get_redirect_url(self, *args, **kwargs):
         lobby = get_object_or_404(Lobby, code=kwargs['slug'])
-        game = Game.objects.create()
+        game = ClusterBuster.objects.create()
         game.setup("cluster_buster", lobby=lobby)
-        game.start(ClusterBuster)
-        game.update(ClusterBuster)
+        game.start()
+        game.update()
 
         return super().get_redirect_url(*args, **kwargs)
 
@@ -32,8 +31,8 @@ class UpdateGame(generic.RedirectView, generic.detail.SingleObjectMixin):
     slug_field = 'code'
 
     def get_redirect_url(self, *args, **kwargs):
-        game = get_object_or_404(Game, code=kwargs['slug'])
-        game.update(ClusterBuster)
+        game = get_object_or_404(ClusterBuster, code=kwargs['slug'])
+        game.update()
 
         return super().get_redirect_url(*args, **kwargs)
 
@@ -51,7 +50,7 @@ class GameViewAbstract(CheckPlayerView):
         super().__init__()
 
     def dispatch(self, request, *args, **kwargs):
-        self.game = get_object_or_404(Game, code=kwargs['slug'])
+        self.game = get_object_or_404(ClusterBuster, code=kwargs['slug'])
         self.player = self.get_current_player()
         if self.player is None:
             return redirect('lobby_detail', slug=self.game.lobby.code)
@@ -184,7 +183,7 @@ class GameDetail(generic.DetailView, GameViewAbstract):
 
     def dispatch(self, request, *args, **kwargs):
         response = super().dispatch(request, *args, **kwargs)
-        self.game.update(ClusterBuster)
+        self.game.update()
         return response
 
     def get_context_data(self, **kwargs):
@@ -307,7 +306,7 @@ class LeaderHintsFormView(GameFormAbstractView):
                 ('round', self.round_number, 'team', self.team, 'hint', card_i + 1),
                 hints[card_i]
             )
-        self.game.update(ClusterBuster)
+        self.game.update()
         return super().form_valid(form)
 
 
@@ -351,7 +350,7 @@ class PlayerGuessesFormView(GameFormAbstractView):
                     card_i + 1),
                 guesses[card_i]
             )
-        self.game.update(ClusterBuster)
+        self.game.update()
         return super().form_valid(form)
 
 
@@ -386,7 +385,7 @@ class PlayerGuessesOpponentHintsFormView(GameFormAbstractView):
                     card_i + 1),
                 guesses[card_i]
             )
-        self.game.update(ClusterBuster)
+        self.game.update()
         return super().form_valid(form)
 
 
@@ -405,9 +404,9 @@ class StartNextRound(generic.RedirectView, generic.detail.SingleObjectMixin, Gam
         return response
 
     def get_redirect_url(self, *args, **kwargs):
-        game = get_object_or_404(Game, code=kwargs['slug'])
-        ClusterBuster.start_next_round(game)
-        game.update(ClusterBuster)
+        game = get_object_or_404(ClusterBuster, code=kwargs['slug'])
+        game.start_next_round()
+        game.update()
 
         return super().get_redirect_url(*args, **kwargs)
 
@@ -427,7 +426,7 @@ class ScoreTeams(generic.RedirectView, generic.detail.SingleObjectMixin, GameVie
         return response
 
     def get_redirect_url(self, *args, **kwargs):
-        game = get_object_or_404(Game, code=kwargs['slug'])
-        ClusterBuster.score_teams(game)
-        game.update(ClusterBuster)
+        game = get_object_or_404(ClusterBuster, code=kwargs['slug'])
+        game.score_teams()
+        game.update()
         return super().get_redirect_url(*args, **kwargs)
