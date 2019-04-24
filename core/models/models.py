@@ -62,6 +62,10 @@ class ClusterBuster(Game):
     LAST_ROUND_NUMBER = 8
     FIRST_ROUND_NUMBER = 1
 
+    class Meta:
+        verbose_name = _("Cluster Buster")
+        verbose_name_plural = _("Cluster Busters")
+
     def set_state_machines(self):
         for state_machine in StateMachine.objects.all():
             parameter_key = state_machine.slug
