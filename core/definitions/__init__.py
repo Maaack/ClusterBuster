@@ -314,24 +314,3 @@ class ClusterBuster(RuleLibrary):
         elif fsm2_state == 'first_round' and round_number > ClusterBuster.FIRST_ROUND_NUMBER:
             ClusterBuster.transit_state_machine(game, 'fsm2', 'middle_rounds')
         ClusterBuster.transit_state_machine(game, 'fsm3', 'select_leader_stage')
-
-    @staticmethod
-    def method_map(rule):
-        return {
-            'start_game': ClusterBuster.start_game,
-            'win_tokens': ClusterBuster.assign_team_win_tokens,
-            'lose_tokens': ClusterBuster.assign_team_lose_tokens,
-            'win_condition': ClusterBuster.set_win_condition,
-            'lose_condition': ClusterBuster.set_lose_condition,
-            'draw_words': ClusterBuster.draw_words,
-            'start_first_round': ClusterBuster.start_first_round,
-            'assign_team_leader': ClusterBuster.assign_team_leader,
-            'leaders_draw_code_numbers': ClusterBuster.leaders_draw_code_numbers,
-            'leaders_made_hints': ClusterBuster.leaders_made_hints,
-            'teams_made_guesses': ClusterBuster.teams_made_guesses,
-            'score_teams': ClusterBuster.score_teams,
-            'start_next_round': ClusterBuster.start_next_round,
-            'team_lost': ClusterBuster.team_lost,
-            'team_won': ClusterBuster.team_won,
-            'last_round_over': ClusterBuster.last_round_over,
-        }[rule]

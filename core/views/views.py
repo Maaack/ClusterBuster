@@ -406,8 +406,7 @@ class StartNextRound(generic.RedirectView, generic.detail.SingleObjectMixin, Gam
 
     def get_redirect_url(self, *args, **kwargs):
         game = get_object_or_404(Game, code=kwargs['slug'])
-        start_next_round_method = ClusterBuster.method_map('start_next_round')
-        start_next_round_method(game)
+        ClusterBuster.start_next_round(game)
         game.update(ClusterBuster)
 
         return super().get_redirect_url(*args, **kwargs)
@@ -429,7 +428,6 @@ class ScoreTeams(generic.RedirectView, generic.detail.SingleObjectMixin, GameVie
 
     def get_redirect_url(self, *args, **kwargs):
         game = get_object_or_404(Game, code=kwargs['slug'])
-        score_teams_method = ClusterBuster.method_map('score_teams')
-        score_teams_method(game)
+        ClusterBuster.score_teams(game)
         game.update(ClusterBuster)
         return super().get_redirect_url(*args, **kwargs)

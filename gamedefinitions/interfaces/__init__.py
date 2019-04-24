@@ -145,15 +145,6 @@ class RuleLibrary(ABC):
     RuleLibraries help map a State's Rules to methods that alter the Game.
     """
 
-    @staticmethod
-    @abstractmethod
-    def method_map(rule: str):
-        """
-        :param rule: str
-        :return:
-        """
-        pass
-
 
 class GameAbstract(models.Model):
     """

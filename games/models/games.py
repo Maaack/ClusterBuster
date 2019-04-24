@@ -132,9 +132,9 @@ class Game(GameAbstract, TimeStamped):
             rule_slug = rule_slug[prefix_length:]
         print("%s rule lookup" % (rule_slug,))
         try:
-            return rule_library.method_map(rule_slug)
-        except KeyError:
-            print("%s didn't exist" % (rule_slug,))
+            return getattr(rule_library, rule_slug)
+        except AttributeError:
+            print("%s didn't exist in %s" % (rule_slug, rule_library))
             return None
 
     def get_parameter(self, key_args):
