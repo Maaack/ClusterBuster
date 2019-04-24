@@ -140,12 +140,6 @@ class ConditionGroupAbstract(models.Model):
         raise NotImplementedError('ConditionGroupAbstract subclasses must override add_comparison_condition()')
 
 
-class RuleLibrary(ABC):
-    """
-    RuleLibraries help map a State's Rules to methods that alter the Game.
-    """
-
-
 class GameAbstract(models.Model):
     """
     RuleLibraries help map a State's Rules to methods that alter the Game.
