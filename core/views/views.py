@@ -16,7 +16,7 @@ class StartGame(generic.RedirectView, generic.detail.SingleObjectMixin):
     def get_redirect_url(self, *args, **kwargs):
         lobby = get_object_or_404(Lobby, code=kwargs['slug'])
         game = ClusterBuster.objects.create()
-        game.setup("cluster_buster", lobby=lobby)
+        game.setup(lobby=lobby)
         game.start()
         game.update()
         return super().get_redirect_url(*args, **kwargs)

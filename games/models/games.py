@@ -16,6 +16,8 @@ class Game(GameAbstract, TimeStamped):
     """
     Games are instances of Game Definitions, that have codes, State Machines, Players, and Teams.
     """
+    SLUG = 'no_game'
+
     players = models.ManyToManyField(Player, blank=True, related_name='games')
     teams = models.ManyToManyField(Team, blank=True, related_name='games')
     code = models.SlugField(_("Code"), max_length=16)
@@ -89,19 +91,20 @@ class Game(GameAbstract, TimeStamped):
             return self.has_team(team=model_object)
         return False
 
-    def setup(self, game_definition_slug: str, *args, **kwargs):
+    def setup(self, *args, **kwargs):
         """
         Sets up a Game from a GameDefinition slug and Lobby.
-        :param game_definition_slug:
         :return:
         """
-        super(Game, self).setup(game_definition_slug, *args, **kwargs)
         self.__setup_parameters()
         self.__setup_code()
         lobby = kwargs.get('lobby')
         if lobby:
             self.__setup_from_lobby(lobby)
         self.save()
+
+    def get_game_slug(self):
+        return self.SLUG
 
     def start(self):
         self.first_rule()
@@ -144,11 +147,11 @@ class Game(GameAbstract, TimeStamped):
         self.parameters_updated = True
 
     def prepend_game_slug(self, string: str):
-        prefix = self.game_definition.slug + "_"
+        prefix = self.get_game_slug() + "_"
         return prefix + string
 
     def strip_game_slug(self, string: str):
-        prefix = self.game_definition.slug + "_"
+        prefix = self.get_game_slug() + "_"
         prefix_length = len(prefix)
         if string.startswith(prefix):
             return string[prefix_length:]

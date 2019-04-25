@@ -53,6 +53,7 @@ class StateMachine(models.Model):
 
 
 class ClusterBuster(Game):
+    SLUG = 'cluster_buster'
     WINNING_TOKENS_REQUIRED_TO_WIN = 2
     LOSING_TOKENS_REQUIRED_TO_LOSE = 2
     STARTING_WIN_TOKENS_PER_TEAM = 0

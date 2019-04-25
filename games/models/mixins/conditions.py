@@ -1,8 +1,6 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from gamedefinitions.models import GameDefinition
-
 __all__ = ['ConditionAbstractBase', 'ComparisonConditionAbstract', 'ConditionAbstract', 'ConditionGroupAbstract',
            'GameAbstract']
 
@@ -145,21 +143,15 @@ class GameAbstract(models.Model):
     """
     Games are meant to be played.
     """
-    game_definition = models.ForeignKey(GameDefinition, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         abstract = True
 
-    def __setup_game_definition(self, game_definition_slug: str):
-        """
-        :param game_definition_slug: str
-        :return:
-        """
-        self.game_definition = GameDefinition.objects.get(slug=game_definition_slug)
-        self.save()
+    def get_game_slug(self):
+        raise NotImplementedError('GameAbstract subclasses must override get_game_slug()')
 
-    def setup(self, game_definition_slug: str, *args, **kwargs):
-        self.__setup_game_definition(game_definition_slug)
+    def setup(self, *args, **kwargs):
+        raise NotImplementedError('GameAbstract subclasses must override setup()')
 
     def start(self):
         raise NotImplementedError('GameAbstract subclasses must override start()')
