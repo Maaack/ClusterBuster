@@ -5,7 +5,6 @@ from django.urls import reverse
 from clusterbuster.mixins import TimeStamped, CodeGenerator
 
 from lobbies.models import Player, Team, Lobby
-from gamedefinitions.models import Rule
 from gamedefinitions.interfaces import GameAbstract, ConditionAbstract, ConditionGroupAbstract
 
 from .parameters import ParameterDictionary, Parameter
