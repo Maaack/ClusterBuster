@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from clusterbuster.mixins import TimeStamped
 
-from gamedefinitions.models.mixins import *
+from .mixins.parameters import *
 
 __all__ = ['IntegerValue', 'FloatValue', 'CharacterValue', 'BooleanValue', 'ParameterDictionary',
            'Parameter', 'ParameterUpdate']

@@ -5,9 +5,9 @@ from django.urls import reverse
 from clusterbuster.mixins import TimeStamped, CodeGenerator
 
 from lobbies.models import Player, Team, Lobby
-from gamedefinitions.interfaces import GameAbstract, ConditionAbstract, ConditionGroupAbstract
 
 from .parameters import ParameterDictionary, Parameter
+from .mixins.conditions import *
 
 __all__ = ['Game', 'Condition', 'ConditionGroup', 'Trigger']
 
