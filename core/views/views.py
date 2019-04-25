@@ -314,7 +314,6 @@ class PlayerGuessesFormView(GameFormAbstractView):
 
     def dispatch(self, request, *args, **kwargs):
         response = super().dispatch(request, *args, **kwargs)
-        # TODO: Check if player is leader guessing own hints. Currently not letting leaders guess on any hints
         if self.is_round_team_leader():
             return redirect('game_detail', slug=kwargs['slug'])
         fsm3 = self.game.get_parameter_value('fsm3')  # type: State
