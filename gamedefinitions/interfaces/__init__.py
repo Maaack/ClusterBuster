@@ -160,8 +160,14 @@ class GameAbstract(models.Model):
     def setup(self, game_definition_slug: str, *args, **kwargs):
         self.__setup_game_definition(game_definition_slug)
 
+    def start(self):
+        raise NotImplementedError('GameAbstract subclasses must override start()')
+
     def update(self):
         raise NotImplementedError('GameAbstract subclasses must override update()')
+
+    def first_rule(self):
+        raise NotImplementedError('GameAbstract subclasses must override first_rule()')
 
     def get_parameter(self, *args):
         raise NotImplementedError('GameAbstract subclasses must override get_parameter()')

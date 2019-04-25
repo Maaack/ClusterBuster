@@ -105,9 +105,10 @@ class Game(GameAbstract, TimeStamped):
         self.save()
 
     def start(self):
-        if self.game_definition:
-            first_rule = self.game_definition.first_rule
-            self.evaluate_rule(first_rule)
+        self.first_rule()
+
+    def first_rule(self):
+        pass
 
     def update(self):
         self.trigger_list = list(self.triggers.filter(active=True).all())

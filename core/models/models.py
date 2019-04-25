@@ -83,7 +83,7 @@ class ClusterBuster(Game):
             raise ValueError('state_slug must match the label of an existing State')
         self.set_parameter_value(key_args, state)
 
-    def start_game(self):
+    def first_rule(self):
         self.set_state_machines()
         self.setup_state_parameters()
         self.set_parameter_value('winning_tokens_required_to_win', ClusterBuster.WINNING_TOKENS_REQUIRED_TO_WIN)
