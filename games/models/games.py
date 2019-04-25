@@ -120,22 +120,18 @@ class Game(GameAbstract, TimeStamped):
                 trigger = active_trigger_list.pop()
                 trigger.squeeze()
 
-    def evaluate_rule(self, rule: Rule):
+    def evaluate_rule(self, rule: str):
         rule_method = self.get_rule_method(rule)
         if rule_method is not None:
             rule_method()
 
-    def get_rule_method(self, rule: Rule):
-        prefix = self.game_definition.slug + "_"
-        prefix_length = len(prefix)
-        rule_slug = rule.slug
-        if rule_slug.startswith(prefix):
-            rule_slug = rule_slug[prefix_length:]
-        print("%s rule lookup" % (rule_slug,))
+    def get_rule_method(self, rule: str):
+        rule = self.strip_game_slug(rule)
+        print("%s rule lookup" % (rule,))
         try:
-            return getattr(self, rule_slug)
+            return getattr(self, rule)
         except AttributeError:
-            print("%s didn't exist in %s" % (rule_slug, self))
+            print("%s didn't exist in %s" % (rule, self))
             return None
 
     def get_parameter(self, key_args):
@@ -148,22 +144,25 @@ class Game(GameAbstract, TimeStamped):
         self.parameters.set_parameter_value(key_args, value)
         self.parameters_updated = True
 
-    def prepend_game_slug(self, slug):
-        game_definition_slug = self.game_definition.slug
-        return game_definition_slug + "_" + slug
+    def prepend_game_slug(self, string: str):
+        prefix = self.game_definition.slug + "_"
+        return prefix + string
 
-    def add_trigger(self, rule_slug: str):
+    def strip_game_slug(self, string: str):
+        prefix = self.game_definition.slug + "_"
+        prefix_length = len(prefix)
+        if string.startswith(prefix):
+            return string[prefix_length:]
+        return string
+
+    def add_trigger(self, rule: str):
         """
         Adds a Trigger to the Game object.
-        :param rule_slug:
+        :param rule:
         :return:
         """
-        rule_slug = self.prepend_game_slug(rule_slug)
+        rule = self.prepend_game_slug(rule)
         condition_group = self.condition_groups.create()
-        try:
-            rule = Rule.objects.get(slug=rule_slug)
-        except Rule.DoesNotExist:
-            raise ValueError('rule_slug must match the label of an existing Rule')
         trigger = self.triggers.create(condition_group=condition_group, rule=rule)
         self.trigger_list.append(trigger)
         self.parameters_updated = True
@@ -238,7 +237,7 @@ class ConditionGroup(ConditionGroupAbstract, TimeStamped):
 class Trigger(TimeStamped):
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="triggers")
     condition_group = models.ForeignKey(ConditionGroup, on_delete=models.CASCADE, related_name="triggers")
-    rule = models.ForeignKey(Rule, on_delete=models.CASCADE, related_name="+")
+    rule = models.CharField(_("Rule"), max_length=128)
     active = models.BooleanField(_("Active"), db_index=True, default=True)
     repeats = models.BooleanField(_("Repeats"), default=False)
     trigger_count = models.PositiveSmallIntegerField(_("Trigger Count"), default=0)
