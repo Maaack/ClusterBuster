@@ -52,24 +52,26 @@ class ParameterDictionary(TimeStamped):
             raise ValueError('raw_value must be a recognized type.')
 
     @staticmethod
-    def __get_key_from_args(*args):
-        return "_".join(str(i).lower() for i in args)
+    def __get_str_from_iter(args):
+        try:
+            return "_".join(str(i) for i in args)
+        except TypeError:
+            return str(args)
 
-    def get_parameter(self, key_args):
-        if isinstance(key_args, str):
-            key_args = (key_args,)
-        key_string = ParameterDictionary.__get_key_from_args(*key_args)
-        parameter, create = Parameter.objects.get_or_create(dictionary=self, key=key_string)
+    def get_parameter(self, key):
+        if not isinstance(key, str):
+            key = ParameterDictionary.__get_str_from_iter(key)
+        parameter, create = Parameter.objects.get_or_create(dictionary=self, key=key)
         return parameter
 
-    def get_parameter_value(self, key_args):
-        parameter = self.get_parameter(key_args)
+    def get_parameter_value(self, key):
+        parameter = self.get_parameter(key)
         if isinstance(parameter.value, BaseValue):
             return parameter.value.value
         return parameter.value
 
-    def set_parameter_value(self, key_args, value):
-        parameter = self.get_parameter(key_args)
+    def set_parameter_value(self, key, value):
+        parameter = self.get_parameter(key)
         old_value = parameter.value
         new_value = ParameterDictionary.__get_model_value(value)
         if old_value != new_value:
