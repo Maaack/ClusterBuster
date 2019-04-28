@@ -109,9 +109,8 @@ class ClusterBuster(Game):
 
     def set_win_condition(self):
         trigger = self.add_trigger('team_won')
-        condition_group = trigger.condition_group
         for team in self.teams.all():
-            condition_group.add_comparison_condition(
+            trigger.add_comparison_condition(
                 ('team_winning_tokens', team),
                 'winning_tokens_required_to_win',
                 Condition.GREATER_THAN_OR_EQUAL
@@ -119,9 +118,8 @@ class ClusterBuster(Game):
 
     def set_lose_condition(self):
         trigger = self.add_trigger('team_lost')
-        condition_group = trigger.condition_group
         for team in self.teams.all():
-            condition_group.add_comparison_condition(
+            trigger.add_comparison_condition(
                 ('team_losing_tokens', team),
                 'losing_tokens_required_to_lose',
                 Condition.GREATER_THAN_OR_EQUAL
@@ -129,25 +127,17 @@ class ClusterBuster(Game):
 
     def set_draw_words_fsm_trigger(self):
         trigger = self.add_trigger('draw_words')
-        condition_group = trigger.condition_group
-        condition_group.add_comparison_condition('fsm1', 'draw_words_stage_state')
+        trigger.add_comparison_condition('fsm1', 'draw_words_stage_state')
 
     def set_rounds_fsm_trigger(self):
         trigger = self.add_trigger('start_first_round')
-        condition_group = trigger.condition_group
-        condition_group.add_comparison_condition('fsm1', 'rounds_stage_state')
+        trigger.add_comparison_condition('fsm1', 'rounds_stage_state')
 
     def set_rounds_fsm_repeat_triggers(self):
-        trigger = self.add_trigger('assign_team_leader')
-        trigger.repeats = True
-        trigger.save()
-        condition_group = trigger.condition_group
-        condition_group.add_comparison_condition('fsm3', 'select_leader_stage_state')
-        trigger = self.add_trigger('leaders_draw_code_numbers')
-        trigger.repeats = True
-        trigger.save()
-        condition_group = trigger.condition_group
-        condition_group.add_comparison_condition('fsm3', 'draw_code_card_stage_state')
+        trigger = self.add_trigger('assign_team_leader', repeats=True)
+        trigger.add_comparison_condition('fsm3', 'select_leader_stage_state')
+        trigger = self.add_trigger('leaders_draw_code_numbers', repeats=True)
+        trigger.add_comparison_condition('fsm3', 'draw_code_card_stage_state')
 
     def first_rule(self):
         self.set_start_parameters()
@@ -258,11 +248,10 @@ class ClusterBuster(Game):
                 self.set_value(('round', round_number, 'team', team, 'code', card_i + 1), value)
         # Team Leader Made Hints Trigger
         trigger = self.add_trigger('leaders_made_hints')
-        condition_group = trigger.condition_group
-        condition_group.set_to_and_op()
+        trigger.set_to_and_op()
         for team in self.teams.all():
             for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
-                condition_group.add_has_value_condition(
+                trigger.add_has_value_condition(
                     ('round', round_number, 'team', team, 'hint', card_i + 1),
                 )
         self.set_state('fsm3', 'leaders_make_hints_stage')
@@ -274,14 +263,13 @@ class ClusterBuster(Game):
         is_first_round = fsm2.slug == 'first_round'
         # Team Players Made Guesses Trigger
         trigger = self.add_trigger('teams_made_guesses')
-        condition_group = trigger.condition_group
-        condition_group.set_to_and_op()
+        trigger.set_to_and_op()
         for guessing_team in self.teams.all():
             for hinting_team in self.teams.all():
                 if guessing_team != hinting_team and is_first_round:
                     continue
                 for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
-                    condition_group.add_has_value_condition(
+                    trigger.add_has_value_condition(
                         ('round', round_number, 'guessing_team', guessing_team, 'hinting_team', hinting_team, 'guess',
                          card_i + 1),
                     )
