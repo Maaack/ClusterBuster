@@ -67,6 +67,13 @@ class ClusterBuster(Game):
         verbose_name = _("Cluster Buster")
         verbose_name_plural = _("Cluster Busters")
 
+    @staticmethod
+    def get_state(state_slug: str):
+        try:
+            return State.objects.get(slug=state_slug)
+        except State.DoesNotExist:
+            raise ValueError('state_slug must match the label of an existing State')
+
     def set_state_machines(self):
         for state_machine in StateMachine.objects.all():
             parameter_key = state_machine.slug
@@ -78,10 +85,7 @@ class ClusterBuster(Game):
             self.set_parameter_value(parameter_key, state)
 
     def transit_state_machine(self, key_args, state_slug: str):
-        try:
-            state = State.objects.get(slug=state_slug)
-        except State.DoesNotExist:
-            raise ValueError('state_slug must match the label of an existing State')
+        state = ClusterBuster.get_state(state_slug)
         self.set_parameter_value(key_args, state)
 
     def first_rule(self):
