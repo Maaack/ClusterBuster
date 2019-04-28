@@ -165,8 +165,8 @@ class GameAbstract(models.Model):
     def get_parameter(self, *args):
         raise NotImplementedError('GameAbstract subclasses must override get_parameter()')
 
-    def get_parameter_value(self, *args):
-        raise NotImplementedError('GameAbstract subclasses must override get_parameter_value()')
+    def get_value(self, *args):
+        raise NotImplementedError('GameAbstract subclasses must override get_value()')
 
-    def set_parameter_value(self, key, value):
-        raise NotImplementedError('GameAbstract subclasses must override set_parameter_value()')
+    def set_value(self, key, value):
+        raise NotImplementedError('GameAbstract subclasses must override set_value()')

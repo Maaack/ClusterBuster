@@ -64,13 +64,13 @@ class ParameterDictionary(TimeStamped):
         parameter, create = Parameter.objects.get_or_create(dictionary=self, key=key)
         return parameter
 
-    def get_parameter_value(self, key):
+    def get_value(self, key):
         parameter = self.get_parameter(key)
         if isinstance(parameter.value, BaseValue):
             return parameter.value.value
         return parameter.value
 
-    def set_parameter_value(self, key, value):
+    def set_value(self, key, value):
         parameter = self.get_parameter(key)
         old_value = parameter.value
         new_value = ParameterDictionary.__get_model_value(value)

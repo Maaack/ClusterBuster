@@ -57,7 +57,7 @@ class GameViewAbstract(CheckPlayerView):
         self.opponent_team = self.get_current_player_opponent_team()
         if self.opponent_team is None:
             return redirect('lobby_detail', slug=self.game.lobby.code)
-        self.round_number = self.game.get_parameter_value('current_round_number')
+        self.round_number = self.game.get_value('current_round_number')
         return super().dispatch(request, *args, **kwargs)
 
     def get_current_player_team(self):
@@ -78,21 +78,21 @@ class GameViewAbstract(CheckPlayerView):
         secret_words = []
         for word_i in range(ClusterBuster.SECRET_WORDS_PER_TEAM):
             secret_word_number = word_i + 1
-            secret_word = self.game.get_parameter_value(('team', self.team, 'secret_word', secret_word_number))
+            secret_word = self.game.get_value(('team', self.team, 'secret_word', secret_word_number))
             secret_words.append(str(secret_word))
         return secret_words
 
     def get_tokens_data(self):
         tokens = {}
-        team_winning_tokens = self.game.get_parameter_value(('team_winning_tokens', self.team))
-        team_losing_tokens = self.game.get_parameter_value(('team_losing_tokens', self.team))
+        team_winning_tokens = self.game.get_value(('team_winning_tokens', self.team))
+        team_losing_tokens = self.game.get_value(('team_losing_tokens', self.team))
         tokens['player'] = {
             'name': self.team.name,
             'winning_tokens': team_winning_tokens,
             'losing_tokens': team_losing_tokens,
         }
-        team_winning_tokens = self.game.get_parameter_value(('team_winning_tokens', self.opponent_team))
-        team_losing_tokens = self.game.get_parameter_value(('team_losing_tokens', self.opponent_team))
+        team_winning_tokens = self.game.get_value(('team_winning_tokens', self.opponent_team))
+        team_losing_tokens = self.game.get_value(('team_losing_tokens', self.opponent_team))
         tokens['opponent'] = {
             'name': self.opponent_team.name,
             'winning_tokens': team_winning_tokens,
@@ -101,7 +101,7 @@ class GameViewAbstract(CheckPlayerView):
         return tokens
 
     def get_round_guesses_data(self):
-        fsm2 = self.game.get_parameter_value('fsm2')  # type: State
+        fsm2 = self.game.get_value('fsm2')  # type: State
         is_first_round = fsm2.slug == 'first_round'
         guesses = {}
         for guessing_team in self.game.teams.all():  # type: Team
@@ -112,10 +112,10 @@ class GameViewAbstract(CheckPlayerView):
                 guesses[guessing_team.name][hinting_team.name] = []
                 for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
                     hint_number = card_i + 1
-                    hint = self.game.get_parameter_value(
+                    hint = self.game.get_value(
                         ('round', self.round_number, 'team', hinting_team, 'hint', hint_number),
                     )
-                    guess = self.game.get_parameter_value(
+                    guess = self.game.get_value(
                         ('round', self.round_number, 'guessing_team', guessing_team, 'hinting_team', hinting_team,
                          'guess',
                          hint_number),
@@ -130,7 +130,7 @@ class GameViewAbstract(CheckPlayerView):
             hints[team.name] = []
             for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
                 hint_number = card_i + 1
-                hint = self.game.get_parameter_value(
+                hint = self.game.get_value(
                     ('round', self.round_number, 'team', team, 'hint', hint_number),
                 )
                 hints[team.name].append(
@@ -147,7 +147,7 @@ class GameViewAbstract(CheckPlayerView):
             if team == self.team:
                 for word_i in range(len(words)):
                     secret_word_number = word_i + 1
-                    secret_word = self.game.get_parameter_value(('team', self.team, 'secret_word', secret_word_number))
+                    secret_word = self.game.get_value(('team', self.team, 'secret_word', secret_word_number))
                     words[word_i] = str(secret_word)
             game_logs[team.name]["words"] = words
             for round_i in range(last_round_number):
@@ -155,9 +155,9 @@ class GameViewAbstract(CheckPlayerView):
                 hints = [None] * ClusterBuster.SECRET_WORDS_PER_TEAM
                 for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
                     hint_number = card_i + 1
-                    code_number = self.game.get_parameter_value(
+                    code_number = self.game.get_value(
                         ('round', round_number, 'team', team, 'code', hint_number))
-                    hint = self.game.get_parameter_value(
+                    hint = self.game.get_value(
                         ('round', round_number, 'team', team, 'hint', hint_number),
                     )
                     code_number_index = code_number - 1
@@ -169,7 +169,7 @@ class GameViewAbstract(CheckPlayerView):
     def is_round_team_leader(self):
         if self.player is None or self.team is None:
             return False
-        round_team_leader = self.game.get_parameter_value(('round', self.round_number, 'team', self.team, 'leader'))
+        round_team_leader = self.game.get_value(('round', self.round_number, 'team', self.team, 'leader'))
         return round_team_leader == self.player
 
 
@@ -197,15 +197,15 @@ class GameDetail(generic.DetailView, GameViewAbstract):
         losing_team = None
         round_hints = []
         round_guesses = []
-        fsm0 = self.game.get_parameter_value('fsm0')  # type: State
+        fsm0 = self.game.get_value('fsm0')  # type: State
         is_game_over = fsm0.slug == 'game_over'
         if is_game_over:
-            winning_team = self.game.get_parameter_value('game_winning_team')
-            losing_team = self.game.get_parameter_value('game_losing_team')
+            winning_team = self.game.get_value('game_winning_team')
+            losing_team = self.game.get_value('game_losing_team')
         else:
-            fsm2 = self.game.get_parameter_value('fsm2')  # type: State
+            fsm2 = self.game.get_value('fsm2')  # type: State
             is_first_round = fsm2.slug == 'first_round'
-            fsm3 = self.game.get_parameter_value('fsm3')  # type: State
+            fsm3 = self.game.get_value('fsm3')  # type: State
             fsm3_state = fsm3.slug
             if fsm3_state == 'leaders_make_hints_stage' and self.is_round_team_leader():
                 show_leader_hints_form_link = True
@@ -239,7 +239,7 @@ class GameDetail(generic.DetailView, GameViewAbstract):
         data['round_guesses'] = round_guesses
         data['is_round_leader'] = self.is_round_team_leader()
         data['tokens'] = self.get_tokens_data()
-        fsm3 = self.game.get_parameter_value('fsm3')
+        fsm3 = self.game.get_value('fsm3')
         data['round_stage'] = fsm3.name
         return data
 
@@ -265,7 +265,7 @@ class LeaderHintsFormView(GameFormAbstractView):
         response = super().dispatch(request, *args, **kwargs)
         if not self.is_round_team_leader():
             return redirect('game_detail', slug=kwargs['slug'])
-        fsm3 = self.game.get_parameter_value('fsm3')  # type: State
+        fsm3 = self.game.get_value('fsm3')  # type: State
         if fsm3.slug != 'leaders_make_hints_stage':
             return redirect('game_detail', slug=kwargs['slug'])
         return response
@@ -275,10 +275,10 @@ class LeaderHintsFormView(GameFormAbstractView):
         code_numbers = []
         code_words = []
         for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
-            code_number = self.game.get_parameter_value(
+            code_number = self.game.get_value(
                 ('round', self.round_number, 'team', self.team, 'code', card_i + 1))
             code_numbers.append(code_number)
-            secret_word = self.game.get_parameter_value(('team', self.team, 'secret_word', code_number))
+            secret_word = self.game.get_value(('team', self.team, 'secret_word', code_number))
             code_words.append(str(secret_word))
         data['code_numbers'] = code_numbers
         data['code_words'] = code_words
@@ -288,19 +288,19 @@ class LeaderHintsFormView(GameFormAbstractView):
         initial_data = super().get_initial()
         hint_keys = ['hint_1', 'hint_2', 'hint_3']
         for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
-            current_hint = self.game.get_parameter_value(
+            current_hint = self.game.get_value(
                 ('round', self.round_number, 'team', self.team, 'hint', card_i + 1))
             if current_hint is None:
-                code_number = self.game.get_parameter_value(
+                code_number = self.game.get_value(
                     ('round', self.round_number, 'team', self.team, 'code', card_i + 1))
-                current_hint = self.game.get_parameter_value(('team', self.team, 'secret_word', code_number))
+                current_hint = self.game.get_value(('team', self.team, 'secret_word', code_number))
             initial_data[hint_keys[card_i]] = str(current_hint)
         return initial_data
 
     def form_valid(self, form):
         hints = [form.cleaned_data['hint_1'], form.cleaned_data['hint_2'], form.cleaned_data['hint_3']]
         for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
-            self.game.set_parameter_value(
+            self.game.set_value(
                 ('round', self.round_number, 'team', self.team, 'hint', card_i + 1),
                 hints[card_i]
             )
@@ -316,7 +316,7 @@ class PlayerGuessesFormView(GameFormAbstractView):
         response = super().dispatch(request, *args, **kwargs)
         if self.is_round_team_leader():
             return redirect('game_detail', slug=kwargs['slug'])
-        fsm3 = self.game.get_parameter_value('fsm3')  # type: State
+        fsm3 = self.game.get_value('fsm3')  # type: State
         if fsm3.slug != 'teams_guess_codes_stage':
             return redirect('game_detail', slug=kwargs['slug'])
         return response
@@ -326,13 +326,13 @@ class PlayerGuessesFormView(GameFormAbstractView):
         hints = []
         secret_words = []
         for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
-            hint = self.game.get_parameter_value(
+            hint = self.game.get_value(
                 ('round', self.round_number, 'team', self.team, 'hint', card_i + 1)
             )
             hints.append(hint)
         for word_i in range(ClusterBuster.SECRET_WORDS_PER_TEAM):
             secret_word_num = word_i + 1
-            secret_word = self.game.get_parameter_value(('team', self.team, 'secret_word', secret_word_num))
+            secret_word = self.game.get_value(('team', self.team, 'secret_word', secret_word_num))
             secret_words.append({secret_word_num: secret_word})
         data['hints'] = hints
         data['secret_words'] = secret_words
@@ -341,7 +341,7 @@ class PlayerGuessesFormView(GameFormAbstractView):
     def form_valid(self, form):
         guesses = [form.cleaned_data['guess_1'], form.cleaned_data['guess_2'], form.cleaned_data['guess_3']]
         for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
-            self.game.set_parameter_value(
+            self.game.set_value(
                 (
                     'round', self.round_number, 'guessing_team', self.team, 'hinting_team', self.team, 'guess',
                     card_i + 1),
@@ -357,7 +357,7 @@ class PlayerGuessesOpponentHintsFormView(GameFormAbstractView):
 
     def dispatch(self, request, *args, **kwargs):
         response = super().dispatch(request, *args, **kwargs)
-        fsm3 = self.game.get_parameter_value('fsm3')  # type: State
+        fsm3 = self.game.get_value('fsm3')  # type: State
         if fsm3.slug != 'teams_guess_codes_stage':
             return redirect('game_detail', slug=kwargs['slug'])
         return response
@@ -366,7 +366,7 @@ class PlayerGuessesOpponentHintsFormView(GameFormAbstractView):
         data = super().get_context_data(**kwargs)
         hints = []
         for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
-            hint = self.game.get_parameter_value(
+            hint = self.game.get_value(
                 ('round', self.round_number, 'team', self.opponent_team, 'hint', card_i + 1)
             )
             hints.append(hint)
@@ -376,7 +376,7 @@ class PlayerGuessesOpponentHintsFormView(GameFormAbstractView):
     def form_valid(self, form):
         guesses = [form.cleaned_data['guess_1'], form.cleaned_data['guess_2'], form.cleaned_data['guess_3']]
         for card_i in range(ClusterBuster.CODE_CARD_SLOTS):
-            self.game.set_parameter_value(
+            self.game.set_value(
                 (
                     'round', self.round_number, 'guessing_team', self.team, 'hinting_team', self.opponent_team, 'guess',
                     card_i + 1),
@@ -396,7 +396,7 @@ class StartNextRound(generic.RedirectView, generic.detail.SingleObjectMixin, Gam
         response = super().dispatch(request, *args, **kwargs)
         if not self.is_round_team_leader():
             return redirect('game_detail', slug=kwargs['slug'])
-        fsm3 = self.game.get_parameter_value('fsm3')  # type: State
+        fsm3 = self.game.get_value('fsm3')  # type: State
         if fsm3.slug != 'score_teams_stage':
             return redirect('game_detail', slug=kwargs['slug'])
         return response
@@ -419,7 +419,7 @@ class ScoreTeams(generic.RedirectView, generic.detail.SingleObjectMixin, GameVie
         response = super().dispatch(request, *args, **kwargs)
         if not self.is_round_team_leader():
             return redirect('game_detail', slug=kwargs['slug'])
-        fsm3 = self.game.get_parameter_value('fsm3')  # type: State
+        fsm3 = self.game.get_value('fsm3')  # type: State
         if fsm3.slug != 'teams_share_guesses_stage':
             return redirect('game_detail', slug=kwargs['slug'])
         return response

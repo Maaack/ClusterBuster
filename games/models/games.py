@@ -139,11 +139,11 @@ class Game(GameAbstract, TimeStamped):
     def get_parameter(self, key_args):
         return self.parameters.get_parameter(key_args)
 
-    def get_parameter_value(self, key_args):
-        return self.parameters.get_parameter_value(key_args)
+    def get_value(self, key_args):
+        return self.parameters.get_value(key_args)
 
-    def set_parameter_value(self, key_args, value):
-        self.parameters.set_parameter_value(key_args, value)
+    def set_value(self, key_args, value):
+        self.parameters.set_value(key_args, value)
         self.parameters_updated = True
 
     def prepend_game_slug(self, string: str):
