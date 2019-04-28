@@ -136,15 +136,23 @@ class Game(GameAbstract, TimeStamped):
             print("%s didn't exist in %s" % (rule, self))
             return None
 
-    def get_parameter(self, key_args):
-        return self.parameters.get_parameter(key_args)
+    def get_parameter(self, key):
+        return self.parameters.get_parameter(key)
 
-    def get_parameter_value(self, key_args):
-        return self.parameters.get_parameter_value(key_args)
+    def get_value(self, key):
+        return self.parameters.get_value(key)
 
-    def set_parameter_value(self, key_args, value):
-        self.parameters.set_parameter_value(key_args, value)
+    def set_value(self, key, value):
+        self.parameters.set_value(key, value)
         self.parameters_updated = True
+
+    def set_values(self, **kwargs):
+        for key, value in kwargs.items():
+            self.set_value(key, value)
+
+    def update_parameters(self, **kwargs):
+        self.set_values(**kwargs)
+        self.update()
 
     def prepend_game_slug(self, string: str):
         prefix = self.get_game_slug() + "_"
@@ -157,15 +165,15 @@ class Game(GameAbstract, TimeStamped):
             return string[prefix_length:]
         return string
 
-    def add_trigger(self, rule: str):
+    def add_trigger(self, rule: str, repeats=False, **kwargs):
         """
         Adds a Trigger to the Game object.
         :param rule:
+        :param repeats:
         :return:
         """
         rule = self.prepend_game_slug(rule)
-        condition_group = self.condition_groups.create()
-        trigger = self.triggers.create(condition_group=condition_group, rule=rule)
+        trigger = self.triggers.create(rule=rule, repeats=repeats, **kwargs)
         self.trigger_list.append(trigger)
         self.parameters_updated = True
         return trigger
@@ -208,26 +216,26 @@ class ConditionGroup(ConditionGroupAbstract, TimeStamped):
             return False
         return True
 
-    def add_has_value_condition(self, key_args) -> ConditionAbstract:
-        parameter = self.game.get_parameter(key_args)
+    def add_has_value_condition(self, key) -> Condition:
+        parameter = self.game.get_parameter(key)
         condition, created = self.conditions.get_or_create(game=self.game,
                                                            condition_type=ConditionAbstract.HAS_VALUE,
                                                            parameter_1=parameter)
         self.save()
         return condition
 
-    def add_boolean_condition(self, key_args) -> ConditionAbstract:
-        parameter = self.game.get_parameter(key_args)
+    def add_boolean_condition(self, key) -> Condition:
+        parameter = self.game.get_parameter(key)
         condition, created = self.conditions.get_or_create(game=self.game,
                                                            condition_type=ConditionAbstract.BOOLEAN,
                                                            parameter_1=parameter)
         self.save()
         return condition
 
-    def add_comparison_condition(self, key_args_1, key_args_2,
-                                 comparison_type=ConditionAbstract.EQUAL) -> ConditionAbstract:
-        parameter_1 = self.game.get_parameter(key_args_1)
-        parameter_2 = self.game.get_parameter(key_args_2)
+    def add_comparison_condition(self, key_1, key_2,
+                                 comparison_type=Condition.EQUAL) -> Condition:
+        parameter_1 = self.game.get_parameter(key_1)
+        parameter_2 = self.game.get_parameter(key_2)
         condition, created = self.conditions.get_or_create(game=self.game,
                                                            condition_type=ConditionAbstract.COMPARISON,
                                                            parameter_1=parameter_1,
@@ -247,6 +255,14 @@ class Trigger(TimeStamped):
     def __str__(self):
         return str(self.game) + " - " + str(self.rule)
 
+    def save(self, *args, **kwargs):
+        if not self.id:
+            try:
+                _ = self.condition_group
+            except ConditionGroup.DoesNotExist:
+                self.condition_group = self.game.condition_groups.create()
+        super().save(*args, **kwargs)
+
     def squeeze(self):
         if self.active is False:
             return
@@ -259,3 +275,18 @@ class Trigger(TimeStamped):
         if self.repeats is False:
             self.active = False
         self.save()
+
+    def add_has_value_condition(self, key) -> Condition:
+        return self.condition_group.add_has_value_condition(key)
+
+    def add_boolean_condition(self, key) -> Condition:
+        return self.condition_group.add_boolean_condition(key)
+
+    def add_comparison_condition(self, key_1, key_2, comparison_type=Condition.EQUAL) -> Condition:
+        return self.condition_group.add_comparison_condition(key_1, key_2, comparison_type)
+
+    def set_to_and_op(self):
+        self.condition_group.set_to_and_op()
+
+    def set_to_or_op(self):
+        self.condition_group.set_to_or_op()
