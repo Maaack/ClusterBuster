@@ -62,6 +62,14 @@ class ClusterBuster(Game):
     CODE_CARD_SLOTS = 3
     LAST_ROUND_NUMBER = 8
     FIRST_ROUND_NUMBER = 1
+    START_PARAMETERS = {
+        'winning_tokens_required_to_win': WINNING_TOKENS_REQUIRED_TO_WIN,
+        'losing_tokens_required_to_lose': LOSING_TOKENS_REQUIRED_TO_LOSE,
+        'secret_words_per_team': SECRET_WORDS_PER_TEAM,
+        'code_card_numbers': CODE_CARD_SLOTS,
+        'last_round_number': LAST_ROUND_NUMBER,
+        'first_round_number': FIRST_ROUND_NUMBER,
+    }
 
     class Meta:
         verbose_name = _("Cluster Buster")
@@ -73,6 +81,9 @@ class ClusterBuster(Game):
             return State.objects.get(slug=state_slug)
         except State.DoesNotExist:
             raise ValueError('state_slug must match the label of an existing State')
+
+    def set_start_parameters(self):
+        self.set_values(**ClusterBuster.START_PARAMETERS)
 
     def set_state_machines(self):
         for state_machine in StateMachine.objects.all():
@@ -89,10 +100,9 @@ class ClusterBuster(Game):
         self.set_value(key_args, state)
 
     def first_rule(self):
+        self.set_start_parameters()
         self.set_state_machines()
         self.setup_state_parameters()
-        self.set_value('winning_tokens_required_to_win', ClusterBuster.WINNING_TOKENS_REQUIRED_TO_WIN)
-        self.set_value('losing_tokens_required_to_lose', ClusterBuster.LOSING_TOKENS_REQUIRED_TO_LOSE)
         self.assign_team_win_tokens()
         self.assign_team_lose_tokens()
         self.set_win_condition()

@@ -146,9 +146,12 @@ class Game(GameAbstract, TimeStamped):
         self.parameters.set_value(key, value)
         self.parameters_updated = True
 
-    def update_parameters(self, **kwargs):
+    def set_values(self, **kwargs):
         for key, value in kwargs.items():
             self.set_value(key, value)
+
+    def update_parameters(self, **kwargs):
+        self.set_values(**kwargs)
         self.update()
 
     def prepend_game_slug(self, string: str):
