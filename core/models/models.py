@@ -90,7 +90,7 @@ class ClusterBuster(Game):
             parameter_key = state_machine.slug
             self.set_value(parameter_key, state_machine.root_state)
 
-    def setup_state_parameters(self):
+    def set_state_parameters(self):
         for state in State.objects.all():
             parameter_key = state.slug + "_state"
             self.set_value(parameter_key, state)
@@ -102,19 +102,22 @@ class ClusterBuster(Game):
     def first_rule(self):
         self.set_start_parameters()
         self.set_state_machines()
-        self.setup_state_parameters()
-        self.assign_team_win_tokens()
-        self.assign_team_lose_tokens()
+        self.set_state_parameters()
+        self.set_team_win_tokens()
+        self.set_team_lose_tokens()
         self.set_win_condition()
         self.set_lose_condition()
-        self.game_ready()
+        self.set_draw_words_fsm_trigger()
+        self.set_rounds_fsm_trigger()
+        self.set_rounds_fsm_repeat_triggers()
+        self.transit_state_machine('fsm0', 'game_play')
         self.transit_state_machine('fsm1', 'draw_words_stage')
 
-    def assign_team_win_tokens(self):
+    def set_team_win_tokens(self):
         for team in self.teams.all():
             self.set_value(('team_winning_tokens', team), ClusterBuster.STARTING_WIN_TOKENS_PER_TEAM)
 
-    def assign_team_lose_tokens(self):
+    def set_team_lose_tokens(self):
         for team in self.teams.all():
             self.set_value(('team_losing_tokens', team), ClusterBuster.STARTING_LOSE_TOKENS_PER_TEAM)
 
@@ -138,30 +141,27 @@ class ClusterBuster(Game):
                 Condition.GREATER_THAN_OR_EQUAL
             )
 
-    def game_ready(self):
-
-        # Draw Words Trigger
+    def set_draw_words_fsm_trigger(self):
         trigger = self.add_trigger('draw_words')
         condition_group = trigger.condition_group
         condition_group.add_comparison_condition('fsm1', 'draw_words_stage_state')
-        # Rounds Trigger
+
+    def set_rounds_fsm_trigger(self):
         trigger = self.add_trigger('start_first_round')
         condition_group = trigger.condition_group
         condition_group.add_comparison_condition('fsm1', 'rounds_stage_state')
-        # Assign Team Leader Trigger
+
+    def set_rounds_fsm_repeat_triggers(self):
         trigger = self.add_trigger('assign_team_leader')
         trigger.repeats = True
         trigger.save()
         condition_group = trigger.condition_group
         condition_group.add_comparison_condition('fsm3', 'select_leader_stage_state')
-        # Assign Team Leader Trigger
         trigger = self.add_trigger('leaders_draw_code_numbers')
         trigger.repeats = True
         trigger.save()
         condition_group = trigger.condition_group
         condition_group.add_comparison_condition('fsm3', 'draw_code_card_stage_state')
-        # Game Ready Transition
-        self.transit_state_machine('fsm0', 'game_play')
 
     def set_winning_team(self):
         winning_team = None
