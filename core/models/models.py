@@ -95,23 +95,9 @@ class ClusterBuster(Game):
             parameter_key = state.slug + "_state"
             self.set_value(parameter_key, state)
 
-    def transit_state_machine(self, key_args, state_slug: str):
+    def set_state(self, key, state_slug: str):
         state = ClusterBuster.get_state(state_slug)
-        self.set_value(key_args, state)
-
-    def first_rule(self):
-        self.set_start_parameters()
-        self.set_state_machines()
-        self.set_state_parameters()
-        self.set_team_win_tokens()
-        self.set_team_lose_tokens()
-        self.set_win_condition()
-        self.set_lose_condition()
-        self.set_draw_words_fsm_trigger()
-        self.set_rounds_fsm_trigger()
-        self.set_rounds_fsm_repeat_triggers()
-        self.transit_state_machine('fsm0', 'game_play')
-        self.transit_state_machine('fsm1', 'draw_words_stage')
+        self.set_value(key, state)
 
     def set_team_win_tokens(self):
         for team in self.teams.all():
@@ -163,6 +149,20 @@ class ClusterBuster(Game):
         condition_group = trigger.condition_group
         condition_group.add_comparison_condition('fsm3', 'draw_code_card_stage_state')
 
+    def first_rule(self):
+        self.set_start_parameters()
+        self.set_state_machines()
+        self.set_state_parameters()
+        self.set_team_win_tokens()
+        self.set_team_lose_tokens()
+        self.set_win_condition()
+        self.set_lose_condition()
+        self.set_draw_words_fsm_trigger()
+        self.set_rounds_fsm_trigger()
+        self.set_rounds_fsm_repeat_triggers()
+        self.set_state('fsm0', 'game_play')
+        self.set_state('fsm1', 'draw_words_stage')
+
     def set_winning_team(self):
         winning_team = None
         losing_team = None
@@ -196,23 +196,23 @@ class ClusterBuster(Game):
         self.set_value('game_losing_team', losing_team)
 
     def team_won(self):
-        self.transit_state_machine('fsm1', 'final_scoring_stage')
+        self.set_state('fsm1', 'final_scoring_stage')
         self.set_winning_team()
-        self.transit_state_machine('fsm0', 'game_over')
+        self.set_state('fsm0', 'game_over')
 
     def team_lost(self):
 
-        self.transit_state_machine('fsm1', 'final_scoring_stage')
+        self.set_state('fsm1', 'final_scoring_stage')
         self.set_losing_team()
-        self.transit_state_machine('fsm0', 'game_over')
+        self.set_state('fsm0', 'game_over')
 
     def last_round_over(self):
-        self.transit_state_machine('fsm1', 'final_scoring_stage')
+        self.set_state('fsm1', 'final_scoring_stage')
         self.set_winning_team()
         winning_team = self.get_value('game_winning_team')
         if winning_team is None:
             self.set_losing_team()
-        self.transit_state_machine('fsm0', 'game_over')
+        self.set_state('fsm0', 'game_over')
 
     def draw_words(self):
         if not bool(self.get_value('word_cards_drawn')):
@@ -228,13 +228,13 @@ class ClusterBuster(Game):
                 for word_i, random_word in enumerate(random_words[start_word_i:end_word_i]):
                     self.set_value(('team', team, 'secret_word', word_i + 1), str(random_word))
             self.set_value('word_cards_drawn', True)
-        self.transit_state_machine('fsm1', 'rounds_stage')
+        self.set_state('fsm1', 'rounds_stage')
 
     def start_first_round(self):
         self.set_value('current_round_number', ClusterBuster.FIRST_ROUND_NUMBER)
         self.set_value('last_round_number', ClusterBuster.LAST_ROUND_NUMBER)
-        self.transit_state_machine('fsm2', 'first_round')
-        self.transit_state_machine('fsm3', 'select_leader_stage')
+        self.set_state('fsm2', 'first_round')
+        self.set_state('fsm3', 'select_leader_stage')
 
     def assign_team_leader(self):
         round_number = self.get_value('current_round_number')
@@ -243,7 +243,7 @@ class ClusterBuster(Game):
             offset = (round_number - 1) % player_count
             round_leader = team.players.all()[offset]
             self.set_value(('round', round_number, 'team', team, 'leader'), round_leader)
-        self.transit_state_machine('fsm3', 'draw_code_card_stage')
+        self.set_state('fsm3', 'draw_code_card_stage')
 
     def leaders_draw_code_numbers(self):
         round_number = self.get_value('current_round_number')
@@ -265,10 +265,10 @@ class ClusterBuster(Game):
                 condition_group.add_has_value_condition(
                     ('round', round_number, 'team', team, 'hint', card_i + 1),
                 )
-        self.transit_state_machine('fsm3', 'leaders_make_hints_stage')
+        self.set_state('fsm3', 'leaders_make_hints_stage')
 
     def leaders_made_hints(self):
-        self.transit_state_machine('fsm3', 'teams_guess_codes_stage')
+        self.set_state('fsm3', 'teams_guess_codes_stage')
         round_number = self.get_value('current_round_number')
         fsm2 = self.get_value('fsm2')  # type: State
         is_first_round = fsm2.slug == 'first_round'
@@ -287,13 +287,13 @@ class ClusterBuster(Game):
                     )
 
     def teams_made_guesses(self):
-        self.transit_state_machine('fsm3', 'teams_share_guesses_stage')
+        self.set_state('fsm3', 'teams_share_guesses_stage')
 
     def score_teams(self):
         round_number = self.get_value('current_round_number')
         fsm2 = self.get_value('fsm2')  # type: State
         is_first_round = fsm2.slug == 'first_round'
-        self.transit_state_machine('fsm3', 'score_teams_stage')
+        self.set_state('fsm3', 'score_teams_stage')
         for guessing_team in self.teams.all():
             for hinting_team in self.teams.all():
                 if guessing_team != hinting_team and is_first_round:
@@ -337,7 +337,7 @@ class ClusterBuster(Game):
         round_number += 1
         self.set_value('current_round_number', round_number)
         if round_number == ClusterBuster.LAST_ROUND_NUMBER:
-            self.transit_state_machine('fsm2', 'last_round')
+            self.set_state('fsm2', 'last_round')
         elif fsm2_state == 'first_round' and round_number > ClusterBuster.FIRST_ROUND_NUMBER:
-            self.transit_state_machine('fsm2', 'middle_rounds')
-        self.transit_state_machine('fsm3', 'select_leader_stage')
+            self.set_state('fsm2', 'middle_rounds')
+        self.set_state('fsm3', 'select_leader_stage')
