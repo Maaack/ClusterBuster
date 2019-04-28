@@ -136,15 +136,20 @@ class Game(GameAbstract, TimeStamped):
             print("%s didn't exist in %s" % (rule, self))
             return None
 
-    def get_parameter(self, key_args):
-        return self.parameters.get_parameter(key_args)
+    def get_parameter(self, key):
+        return self.parameters.get_parameter(key)
 
-    def get_value(self, key_args):
-        return self.parameters.get_value(key_args)
+    def get_value(self, key):
+        return self.parameters.get_value(key)
 
-    def set_value(self, key_args, value):
-        self.parameters.set_value(key_args, value)
+    def set_value(self, key, value):
+        self.parameters.set_value(key, value)
         self.parameters_updated = True
+
+    def update_parameters(self, **kwargs):
+        for key, value in kwargs.items():
+            self.set_value(key, value)
+        self.update()
 
     def prepend_game_slug(self, string: str):
         prefix = self.get_game_slug() + "_"
