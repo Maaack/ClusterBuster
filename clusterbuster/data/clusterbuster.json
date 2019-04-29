@@ -1,6 +1,6 @@
 [
 {
-    "model": "rooms.activityoption",
+    "model": "lobbies.activityoption",
     "pk": 1,
     "fields": {
         "created": "2019-04-16T01:18:25.305Z",
@@ -11,505 +11,6 @@
         "minimum_player": 4,
         "minimum_teams": 2,
         "minimum_players_per_team": 2
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 1,
-    "fields": {
-        "created": "2019-03-05T02:41:59.328Z",
-        "updated": "2019-03-31T11:18:55.048Z",
-        "slug": "cluster_buster_team_won",
-        "description": "If any team gets 2 winning tokens, they win the game. The opposing team loses."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 2,
-    "fields": {
-        "created": "2019-03-05T02:42:22.021Z",
-        "updated": "2019-03-31T11:19:04.938Z",
-        "slug": "cluster_buster_team_lost",
-        "description": "If any team gets 2 losing tokens, they lose the game."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 3,
-    "fields": {
-        "created": "2019-03-05T02:44:38.370Z",
-        "updated": "2019-03-05T03:09:01.126Z",
-        "slug": "cluster_buster_win_tokens",
-        "description": "Winning tokens are awarded to teams that successfully guess the opponent team's secret code in a round."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 4,
-    "fields": {
-        "created": "2019-03-05T02:45:10.096Z",
-        "updated": "2019-03-05T02:45:10.096Z",
-        "slug": "cluster_buster_lose_tokens",
-        "description": "Losing tokens are awarded to teams that unsuccessfully guess their team's secret code in a round."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 5,
-    "fields": {
-        "created": "2019-03-05T02:58:05.698Z",
-        "updated": "2019-03-05T03:08:31.226Z",
-        "slug": "cluster_buster_first_round_condition",
-        "description": "Once both teams have drawn their SECRET code words, they proceed to the first round of the game."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 6,
-    "fields": {
-        "created": "2019-03-05T03:03:23.098Z",
-        "updated": "2019-03-05T03:07:12.391Z",
-        "slug": "cluster_buster_start_game",
-        "description": "At the start of the game, players are divided into two teams. A deck of SECRET code words is shuffled randomly. Two identical decks of SECRET code numbers are also shuffled and assigned to each team. Winning tokens and Losing tokens are tracked by each team, and both teams start at 0. The game starts by having the players draw SECRET code words."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 7,
-    "fields": {
-        "created": "2019-03-05T03:09:39.352Z",
-        "updated": "2019-03-05T03:09:39.352Z",
-        "slug": "cluster_buster_draw_words",
-        "description": "At the start of the game, both teams draw their SECRET code words. 4 words are chosen randomly from the word deck by both teams. These words that are assigned to keys 1, 2, 3, and 4 on each team. These are meant to be kept secret from the other team."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 8,
-    "fields": {
-        "created": "2019-03-05T03:12:55.125Z",
-        "updated": "2019-03-05T03:12:55.125Z",
-        "slug": "cluster_buster_assign_team_leader",
-        "description": "At the start of any round, a team leader is assigned from the list of players in any sequential and repeating order."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 9,
-    "fields": {
-        "created": "2019-03-05T03:17:23.449Z",
-        "updated": "2019-03-05T03:17:23.449Z",
-        "slug": "cluster_buster_leaders_draw_code_numbers",
-        "description": "The leaders of each team trigger the next stage of the round by drawing from their team's assigned deck of randomly shuffled SECRET code numbers. Leaders are not to share this number with anyone, including their own teammates. At this point of the round, any information shared must be across teams and players. No secret information is allowed to be used beyond the code words assigned to slots 1-4."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 10,
-    "fields": {
-        "created": "2019-03-10T06:00:38.502Z",
-        "updated": "2019-03-10T06:00:38.502Z",
-        "slug": "cluster_buster_secret_words_drawn",
-        "description": "When each team has 4 SECRET words, the game can proceed to the first round."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 11,
-    "fields": {
-        "created": "2019-03-12T03:03:11.552Z",
-        "updated": "2019-04-10T23:56:56.198Z",
-        "slug": "cluster_buster_start_first_round",
-        "description": "Sets the current round to the first round (1) of the game, and defines the last round (8) as the limit."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 12,
-    "fields": {
-        "created": "2019-03-13T00:54:13.998Z",
-        "updated": "2019-03-13T00:54:13.998Z",
-        "slug": "cluster_buster_team_leaders_assigned",
-        "description": "Once team leaders are assigned, they can proceed to draw the SECRET code numbers."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 13,
-    "fields": {
-        "created": "2019-03-13T00:55:57.514Z",
-        "updated": "2019-03-13T00:55:57.514Z",
-        "slug": "cluster_buster_code_numbers_drawn",
-        "description": "Once team leaders have drawn their code numbers, they come up with their hints."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 14,
-    "fields": {
-        "created": "2019-03-13T01:25:01.969Z",
-        "updated": "2019-03-24T21:31:52.491Z",
-        "slug": "cluster_buster_leaders_made_hints",
-        "description": "The round proceeds to the next stage when both team leaders have submitted their hints."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 15,
-    "fields": {
-        "created": "2019-03-24T21:33:56.193Z",
-        "updated": "2019-03-24T22:15:49.283Z",
-        "slug": "cluster_buster_teams_made_guesses",
-        "description": "The round proceeds to the next stage when teams have submitted their guesses for the hints given of both teams."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 16,
-    "fields": {
-        "created": "2019-04-10T23:58:13.960Z",
-        "updated": "2019-04-11T02:18:43.367Z",
-        "slug": "cluster_buster_start_next_round",
-        "description": "If this is not the last round of the game, then increment the current round by one (1). Set the round stage back to the selecting leaders stage."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 17,
-    "fields": {
-        "created": "2019-04-11T02:52:08.860Z",
-        "updated": "2019-04-11T02:52:08.860Z",
-        "slug": "cluster_buster_score_teams",
-        "description": "Teams are scored together. When a team guesses correctly their opponent's code, they collect one (1) winning token. When a team guesses incorrectly their team's code, they collect one (1) losing token."
-    }
-},
-{
-    "model": "gamedefinitions.rule",
-    "pk": 18,
-    "fields": {
-        "created": "2019-04-11T05:46:09.958Z",
-        "updated": "2019-04-11T05:46:09.958Z",
-        "slug": "cluster_buster_final_scoring",
-        "description": "When either team has reached the required number of tokens for winning or losing, or the final round is concluded, then the game is scored to get the winning and losing teams. Two winning tokens result in a team winning the game, while two losing tokens result in a team losing the game. Otherwise, the team with the most winning tokens wins the game, or the team with most losing tokens loses the game."
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 1,
-    "fields": {
-        "created": "2019-03-03T02:43:13.979Z",
-        "updated": "2019-03-29T08:36:18.734Z",
-        "slug": "game_init",
-        "name": "Game Initialization"
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 2,
-    "fields": {
-        "created": "2019-03-03T02:43:24.958Z",
-        "updated": "2019-03-09T07:23:50.526Z",
-        "slug": "game_play",
-        "name": "Game is in play"
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 3,
-    "fields": {
-        "created": "2019-03-03T02:43:28.883Z",
-        "updated": "2019-03-03T02:43:28.883Z",
-        "slug": "game_over",
-        "name": ""
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 4,
-    "fields": {
-        "created": "2019-03-03T02:43:37.652Z",
-        "updated": "2019-03-10T06:02:51.932Z",
-        "slug": "draw_words_stage",
-        "name": "Teams Draw Secret Words"
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 5,
-    "fields": {
-        "created": "2019-03-03T02:44:21.251Z",
-        "updated": "2019-03-12T03:03:22.050Z",
-        "slug": "rounds_stage",
-        "name": ""
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 6,
-    "fields": {
-        "created": "2019-03-03T02:45:37.564Z",
-        "updated": "2019-03-12T03:18:25.205Z",
-        "slug": "first_round",
-        "name": ""
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 7,
-    "fields": {
-        "created": "2019-03-03T02:45:44.294Z",
-        "updated": "2019-03-03T02:45:44.294Z",
-        "slug": "middle_rounds",
-        "name": ""
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 8,
-    "fields": {
-        "created": "2019-03-03T02:45:50.421Z",
-        "updated": "2019-03-03T02:45:50.421Z",
-        "slug": "last_round",
-        "name": ""
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 9,
-    "fields": {
-        "created": "2019-03-03T02:45:56.784Z",
-        "updated": "2019-03-13T00:56:27.700Z",
-        "slug": "select_leader_stage",
-        "name": ""
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 10,
-    "fields": {
-        "created": "2019-03-03T03:12:34.257Z",
-        "updated": "2019-03-13T00:56:54.219Z",
-        "slug": "draw_code_card_stage",
-        "name": ""
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 11,
-    "fields": {
-        "created": "2019-03-03T03:12:40.822Z",
-        "updated": "2019-04-10T22:40:44.826Z",
-        "slug": "leaders_make_hints_stage",
-        "name": "Hint Making"
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 12,
-    "fields": {
-        "created": "2019-03-03T03:12:50.372Z",
-        "updated": "2019-04-10T22:40:56.246Z",
-        "slug": "teams_share_hints_stage",
-        "name": "Teams Share Hints"
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 13,
-    "fields": {
-        "created": "2019-03-03T03:12:58.252Z",
-        "updated": "2019-04-10T22:41:06.270Z",
-        "slug": "teams_guess_codes_stage",
-        "name": "Teams Guess Codes"
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 14,
-    "fields": {
-        "created": "2019-03-03T03:13:07.564Z",
-        "updated": "2019-04-10T22:41:19.525Z",
-        "slug": "teams_share_guesses_stage",
-        "name": "Teams Share Guesses"
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 15,
-    "fields": {
-        "created": "2019-03-03T03:13:15.371Z",
-        "updated": "2019-04-10T22:41:31.309Z",
-        "slug": "score_teams_stage",
-        "name": "Teams Getting Scored"
-    }
-},
-{
-    "model": "gamedefinitions.state",
-    "pk": 16,
-    "fields": {
-        "created": "2019-04-11T05:15:38.106Z",
-        "updated": "2019-04-11T05:15:38.106Z",
-        "slug": "final_scoring_stage",
-        "name": "Final Scoring Stage"
-    }
-},
-{
-    "model": "gamedefinitions.statemachine",
-    "pk": 1,
-    "fields": {
-        "slug": "fsm0",
-        "root_state": 1
-    }
-},
-{
-    "model": "gamedefinitions.statemachine",
-    "pk": 2,
-    "fields": {
-        "slug": "fsm1",
-        "root_state": 1
-    }
-},
-{
-    "model": "gamedefinitions.statemachine",
-    "pk": 3,
-    "fields": {
-        "slug": "fsm2",
-        "root_state": 1
-    }
-},
-{
-    "model": "gamedefinitions.statemachine",
-    "pk": 4,
-    "fields": {
-        "slug": "fsm3",
-        "root_state": 1
-    }
-},
-{
-    "model": "gamedefinitions.transition",
-    "pk": 1,
-    "fields": {
-        "label": "game_is_ready",
-        "from_state": 1,
-        "to_state": 2
-    }
-},
-{
-    "model": "gamedefinitions.transition",
-    "pk": 2,
-    "fields": {
-        "label": "team_lost",
-        "from_state": 2,
-        "to_state": 3
-    }
-},
-{
-    "model": "gamedefinitions.transition",
-    "pk": 3,
-    "fields": {
-        "label": "team_won",
-        "from_state": 2,
-        "to_state": 3
-    }
-},
-{
-    "model": "gamedefinitions.transition",
-    "pk": 4,
-    "fields": {
-        "label": "secret_words_drawn",
-        "from_state": 4,
-        "to_state": 5
-    }
-},
-{
-    "model": "gamedefinitions.transition",
-    "pk": 5,
-    "fields": {
-        "label": "code_numbers_drawn",
-        "from_state": 10,
-        "to_state": 11
-    }
-},
-{
-    "model": "gamedefinitions.transition",
-    "pk": 6,
-    "fields": {
-        "label": "guesses_submitted",
-        "from_state": 13,
-        "to_state": 14
-    }
-},
-{
-    "model": "gamedefinitions.transition",
-    "pk": 7,
-    "fields": {
-        "label": "hints_submitted",
-        "from_state": 11,
-        "to_state": 13
-    }
-},
-{
-    "model": "gamedefinitions.transition",
-    "pk": 9,
-    "fields": {
-        "label": "team_leader_assigned",
-        "from_state": 9,
-        "to_state": 10
-    }
-},
-{
-    "model": "gamedefinitions.gamedefinition",
-    "pk": 1,
-    "fields": {
-        "created": "2019-03-05T01:16:17.756Z",
-        "updated": "2019-04-11T05:17:04.485Z",
-        "slug": "cluster_buster",
-        "title": "Cluster Buster v 0.1.0",
-        "description": "Cluster Buster is based on Decrypto board game. Made for web.",
-        "first_rule": 6,
-        "states": [
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12,
-            13,
-            14,
-            15,
-            16
-        ],
-        "state_machines": [
-            1,
-            2,
-            3,
-            4
-        ],
-        "rules": [
-            17,
-            16,
-            15,
-            14,
-            13,
-            12,
-            11,
-            10,
-            9,
-            8,
-            7,
-            6,
-            5,
-            4,
-            3,
-            2,
-            1
-        ]
     }
 },
 {
@@ -1050,6 +551,462 @@
         "created": "2018-08-07T23:07:26.101Z",
         "updated": "2018-08-07T23:07:26.101Z",
         "text": "gin"
+    }
+},
+{
+    "model": "core.state",
+    "pk": 1,
+    "fields": {
+        "created": "2019-03-03T02:43:13.979Z",
+        "updated": "2019-04-29T01:00:52.572Z",
+        "slug": "game_init",
+        "name": "Game Initialization"
+    }
+},
+{
+    "model": "core.state",
+    "pk": 2,
+    "fields": {
+        "created": "2019-03-03T02:43:24.958Z",
+        "updated": "2019-04-29T01:00:53.444Z",
+        "slug": "game_play",
+        "name": "Game is in play"
+    }
+},
+{
+    "model": "core.state",
+    "pk": 3,
+    "fields": {
+        "created": "2019-03-03T02:43:28.883Z",
+        "updated": "2019-04-29T01:00:52.619Z",
+        "slug": "game_over",
+        "name": ""
+    }
+},
+{
+    "model": "core.state",
+    "pk": 4,
+    "fields": {
+        "created": "2019-03-03T02:43:37.652Z",
+        "updated": "2019-04-29T01:00:53.461Z",
+        "slug": "draw_words_stage",
+        "name": "Teams Draw Secret Words"
+    }
+},
+{
+    "model": "core.state",
+    "pk": 5,
+    "fields": {
+        "created": "2019-03-03T02:44:21.251Z",
+        "updated": "2019-04-29T01:00:53.712Z",
+        "slug": "rounds_stage",
+        "name": ""
+    }
+},
+{
+    "model": "core.state",
+    "pk": 6,
+    "fields": {
+        "created": "2019-03-03T02:45:37.564Z",
+        "updated": "2019-04-29T01:00:53.794Z",
+        "slug": "first_round",
+        "name": ""
+    }
+},
+{
+    "model": "core.state",
+    "pk": 7,
+    "fields": {
+        "created": "2019-03-03T02:45:44.294Z",
+        "updated": "2019-04-29T01:00:52.709Z",
+        "slug": "middle_rounds",
+        "name": ""
+    }
+},
+{
+    "model": "core.state",
+    "pk": 8,
+    "fields": {
+        "created": "2019-03-03T02:45:50.421Z",
+        "updated": "2019-04-29T01:00:52.736Z",
+        "slug": "last_round",
+        "name": ""
+    }
+},
+{
+    "model": "core.state",
+    "pk": 9,
+    "fields": {
+        "created": "2019-03-03T02:45:56.784Z",
+        "updated": "2019-04-29T01:00:53.814Z",
+        "slug": "select_leader_stage",
+        "name": ""
+    }
+},
+{
+    "model": "core.state",
+    "pk": 10,
+    "fields": {
+        "created": "2019-03-03T03:12:34.257Z",
+        "updated": "2019-04-29T01:00:53.919Z",
+        "slug": "draw_code_card_stage",
+        "name": ""
+    }
+},
+{
+    "model": "core.state",
+    "pk": 11,
+    "fields": {
+        "created": "2019-03-03T03:12:40.822Z",
+        "updated": "2019-04-29T01:00:54.350Z",
+        "slug": "leaders_make_hints_stage",
+        "name": "Hint Making"
+    }
+},
+{
+    "model": "core.state",
+    "pk": 12,
+    "fields": {
+        "created": "2019-03-03T03:12:50.372Z",
+        "updated": "2019-04-29T01:00:52.822Z",
+        "slug": "teams_share_hints_stage",
+        "name": "Teams Share Hints"
+    }
+},
+{
+    "model": "core.state",
+    "pk": 13,
+    "fields": {
+        "created": "2019-03-03T03:12:58.252Z",
+        "updated": "2019-04-29T01:01:07.696Z",
+        "slug": "teams_guess_codes_stage",
+        "name": "Teams Guess Codes"
+    }
+},
+{
+    "model": "core.state",
+    "pk": 14,
+    "fields": {
+        "created": "2019-03-03T03:13:07.564Z",
+        "updated": "2019-04-29T01:01:21.636Z",
+        "slug": "teams_share_guesses_stage",
+        "name": "Teams Share Guesses"
+    }
+},
+{
+    "model": "core.state",
+    "pk": 15,
+    "fields": {
+        "created": "2019-03-03T03:13:15.371Z",
+        "updated": "2019-04-29T01:01:25.099Z",
+        "slug": "score_teams_stage",
+        "name": "Teams Getting Scored"
+    }
+},
+{
+    "model": "core.state",
+    "pk": 16,
+    "fields": {
+        "created": "2019-04-11T05:15:38.106Z",
+        "updated": "2019-04-29T01:00:52.918Z",
+        "slug": "final_scoring_stage",
+        "name": "Final Scoring Stage"
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 1,
+    "fields": {
+        "created": "2019-04-29T00:26:18.343Z",
+        "updated": "2019-04-29T00:26:18.343Z",
+        "number_1": 1,
+        "number_2": 2,
+        "number_3": 3
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 2,
+    "fields": {
+        "created": "2019-04-29T00:26:18.348Z",
+        "updated": "2019-04-29T00:26:18.348Z",
+        "number_1": 1,
+        "number_2": 2,
+        "number_3": 4
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 3,
+    "fields": {
+        "created": "2019-04-29T00:26:18.352Z",
+        "updated": "2019-04-29T00:26:18.352Z",
+        "number_1": 1,
+        "number_2": 3,
+        "number_3": 2
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 4,
+    "fields": {
+        "created": "2019-04-29T00:26:18.357Z",
+        "updated": "2019-04-29T00:26:18.357Z",
+        "number_1": 1,
+        "number_2": 3,
+        "number_3": 4
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 5,
+    "fields": {
+        "created": "2019-04-29T00:26:18.361Z",
+        "updated": "2019-04-29T00:26:18.361Z",
+        "number_1": 1,
+        "number_2": 4,
+        "number_3": 2
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 6,
+    "fields": {
+        "created": "2019-04-29T00:26:18.369Z",
+        "updated": "2019-04-29T00:26:18.369Z",
+        "number_1": 1,
+        "number_2": 4,
+        "number_3": 3
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 7,
+    "fields": {
+        "created": "2019-04-29T00:26:18.377Z",
+        "updated": "2019-04-29T00:26:18.377Z",
+        "number_1": 2,
+        "number_2": 1,
+        "number_3": 3
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 8,
+    "fields": {
+        "created": "2019-04-29T00:26:18.382Z",
+        "updated": "2019-04-29T00:26:18.382Z",
+        "number_1": 2,
+        "number_2": 1,
+        "number_3": 4
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 9,
+    "fields": {
+        "created": "2019-04-29T00:26:18.386Z",
+        "updated": "2019-04-29T00:26:18.386Z",
+        "number_1": 2,
+        "number_2": 3,
+        "number_3": 1
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 10,
+    "fields": {
+        "created": "2019-04-29T00:26:18.391Z",
+        "updated": "2019-04-29T00:26:18.391Z",
+        "number_1": 2,
+        "number_2": 3,
+        "number_3": 4
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 11,
+    "fields": {
+        "created": "2019-04-29T00:26:18.398Z",
+        "updated": "2019-04-29T01:00:53.987Z",
+        "number_1": 2,
+        "number_2": 4,
+        "number_3": 1
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 12,
+    "fields": {
+        "created": "2019-04-29T00:26:18.404Z",
+        "updated": "2019-04-29T00:26:18.404Z",
+        "number_1": 2,
+        "number_2": 4,
+        "number_3": 3
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 13,
+    "fields": {
+        "created": "2019-04-29T00:26:18.410Z",
+        "updated": "2019-04-29T00:26:18.410Z",
+        "number_1": 3,
+        "number_2": 1,
+        "number_3": 2
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 14,
+    "fields": {
+        "created": "2019-04-29T00:26:18.415Z",
+        "updated": "2019-04-29T00:26:18.415Z",
+        "number_1": 3,
+        "number_2": 1,
+        "number_3": 4
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 15,
+    "fields": {
+        "created": "2019-04-29T00:26:18.421Z",
+        "updated": "2019-04-29T00:26:18.421Z",
+        "number_1": 3,
+        "number_2": 2,
+        "number_3": 1
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 16,
+    "fields": {
+        "created": "2019-04-29T00:26:18.426Z",
+        "updated": "2019-04-29T00:26:18.426Z",
+        "number_1": 3,
+        "number_2": 2,
+        "number_3": 4
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 17,
+    "fields": {
+        "created": "2019-04-29T00:26:18.435Z",
+        "updated": "2019-04-29T00:26:18.435Z",
+        "number_1": 3,
+        "number_2": 4,
+        "number_3": 1
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 18,
+    "fields": {
+        "created": "2019-04-29T00:26:18.441Z",
+        "updated": "2019-04-29T00:26:18.441Z",
+        "number_1": 3,
+        "number_2": 4,
+        "number_3": 2
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 19,
+    "fields": {
+        "created": "2019-04-29T00:26:18.446Z",
+        "updated": "2019-04-29T00:57:51.821Z",
+        "number_1": 4,
+        "number_2": 1,
+        "number_3": 2
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 20,
+    "fields": {
+        "created": "2019-04-29T00:26:18.452Z",
+        "updated": "2019-04-29T00:26:18.452Z",
+        "number_1": 4,
+        "number_2": 1,
+        "number_3": 3
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 21,
+    "fields": {
+        "created": "2019-04-29T00:26:18.459Z",
+        "updated": "2019-04-29T00:26:18.459Z",
+        "number_1": 4,
+        "number_2": 2,
+        "number_3": 1
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 22,
+    "fields": {
+        "created": "2019-04-29T00:26:18.465Z",
+        "updated": "2019-04-29T00:26:18.465Z",
+        "number_1": 4,
+        "number_2": 2,
+        "number_3": 3
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 23,
+    "fields": {
+        "created": "2019-04-29T00:26:18.471Z",
+        "updated": "2019-04-29T01:00:54.085Z",
+        "number_1": 4,
+        "number_2": 3,
+        "number_3": 1
+    }
+},
+{
+    "model": "core.codecard",
+    "pk": 24,
+    "fields": {
+        "created": "2019-04-29T00:26:18.477Z",
+        "updated": "2019-04-29T00:26:18.477Z",
+        "number_1": 4,
+        "number_2": 3,
+        "number_3": 2
+    }
+},
+{
+    "model": "core.statemachine",
+    "pk": 1,
+    "fields": {
+        "slug": "fsm0",
+        "root_state": 1
+    }
+},
+{
+    "model": "core.statemachine",
+    "pk": 2,
+    "fields": {
+        "slug": "fsm1",
+        "root_state": 1
+    }
+},
+{
+    "model": "core.statemachine",
+    "pk": 3,
+    "fields": {
+        "slug": "fsm2",
+        "root_state": 1
+    }
+},
+{
+    "model": "core.statemachine",
+    "pk": 4,
+    "fields": {
+        "slug": "fsm3",
+        "root_state": 1
     }
 }
 ]

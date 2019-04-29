@@ -1,0 +1,15 @@
+{% extends "lobbies/base/html_base.html" %}
+
+{% block head_title %}Lobbies{% endblock %}
+{% block content %}
+<h1>Lobbies</h1>
+<ul>
+    {% for lobby in active_lobbies %}
+        <li><a href="{% url 'lobby_detail' lobby.code %}">{{ lobby.code }}
+            - {{ lobby.players.count }} Player(s) </a></li>
+    {% empty %}
+        <p>No lobbies are open.</p>
+        <a href="{% url 'lobby_create' %}">Start a Lobby!</a>
+    {% endfor %}
+</ul>
+{% endblock %}

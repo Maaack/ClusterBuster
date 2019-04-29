@@ -27,13 +27,23 @@ def get_user_model_name():
 
 class CodeGenerator:
     ROOM_CODE_LENGTH = 4
+    DEFAULT_CODE_LENGTH = 4
+    LOBBY_CODE_LENGTH = 4
     GAME_CODE_LENGTH = 6
 
     @staticmethod
-    def room_code(length=ROOM_CODE_LENGTH):
+    def get_code(length=DEFAULT_CODE_LENGTH):
         return ''.join(random.choice(string.ascii_uppercase) for _ in range(length))
 
     @staticmethod
+    def room_code(length=ROOM_CODE_LENGTH):
+        return CodeGenerator.get_code(length)
+
+    @staticmethod
+    def lobby_code(length=LOBBY_CODE_LENGTH):
+        return CodeGenerator.get_code(length)
+
+    @staticmethod
     def game_code(length=GAME_CODE_LENGTH):
-        return ''.join(random.choice(string.ascii_uppercase) for _ in range(length))
+        return CodeGenerator.get_code(length)
 
