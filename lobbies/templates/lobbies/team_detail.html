@@ -1,0 +1,14 @@
+{% extends "lobbies/base/html_base.html" %}
+
+{% block head_title %}{{ team.name }}{% endblock %}
+{% block content %}
+<h1>{{ team.name }}</h1>
+        {% if has_player %}(Your Team){% endif %}
+        <ul>
+            {% for player in team.players.all %}
+                <li>{{ player.name }}</li>
+            {% empty %}
+                <p>No players yet...</p>
+            {% endfor %}
+        </ul>
+{% endblock %}

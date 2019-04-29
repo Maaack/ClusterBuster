@@ -1,0 +1,46 @@
+<div class="row">
+    <div class="col">
+        <h2>Game Play Log</h2>
+    </div>
+</div>
+<div class="row">
+    {% for team, team_log in game_logs.items %}
+        <div class="col">
+            <div>
+                <h4>{{ team }}</h4>
+            </div>
+            <div>
+                <table class="game-log-table">
+                    <tr>
+                        <th></th>
+                        {% for word in team_log.words %}
+                            <th>
+                                {{ forloop.counter }}
+                            </th>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <td></td>
+                        {% for word in team_log.words %}
+                            <td>
+                                <strong>{{ word }}</strong>
+                            </td>
+                        {% endfor %}
+                    </tr>
+                    {% for round in team_log.rounds %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            {% for hint in round %}
+                                <td>
+                                    {% if hint %}
+                                        {{ hint }}
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    {% endfor %}
+</div>

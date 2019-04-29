@@ -11,8 +11,8 @@
                 <h2>Game Over!</h2>
                 <div id="final-score-information">
                     {% include "core/includes/final_score.html" %}
-                    <div class="back-to-room-link">
-                        <a href="{% url 'room_detail' game.room.code %}">Back to the Room</a>
+                    <div class="back-to-lobby-link">
+                        <a href="{% url 'lobby_detail' game.lobby.code %}">Back to the Lobby</a>
                     </div>
                 </div>
             {% endif %}
@@ -70,6 +70,7 @@
             {% endif %}
         </div>
     </div>
+    {% include "core/includes/all_hints_information.html" %}
     <div id="game-options-header" class="row">
         <div class="col">
             <h2>Options</h2>
