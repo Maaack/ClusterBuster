@@ -40,6 +40,38 @@ class State(TimeStamped):
         return str(self.slug)
 
 
+class CodeCard(TimeStamped):
+    CODE_CARD_NUMBER_CHOICES = (
+        (1, 1),
+        (2, 2),
+        (3, 3),
+        (4, 4),
+    )
+    number_1 = models.PositiveSmallIntegerField(_("Number 1"), choices=CODE_CARD_NUMBER_CHOICES)
+    number_2 = models.PositiveSmallIntegerField(_("Number 2"), choices=CODE_CARD_NUMBER_CHOICES)
+    number_3 = models.PositiveSmallIntegerField(_("Number 3"), choices=CODE_CARD_NUMBER_CHOICES)
+
+    class Meta:
+        verbose_name = _("Code Card")
+        verbose_name_plural = _("Code Cards")
+
+    def __str__(self):
+        return "%d %d %d" % (self.number_1, self.number_2, self.number_3)
+
+
+class Deck(TimeStamped):
+    cards = models.ManyToManyField(CodeCard, related_name="+")
+
+    def __str__(self):
+        return str(self.cards.count())
+
+    def draw(self) -> CodeCard:
+        card = self.cards.order_by('?').first()
+        self.cards.remove(card)
+        self.save()
+        return card
+
+
 class StateMachine(models.Model):
     slug = models.SlugField(_("Slug"), max_length=32)
     root_state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="+")
@@ -76,6 +108,18 @@ class ClusterBuster(Game):
         verbose_name_plural = _("Cluster Busters")
 
     @staticmethod
+    def install_game():
+        deck = PatternDeckBuilder.build_deck()
+        for card in deck:
+            kwargs = {}
+            for card_i, value in enumerate(card.value):
+                code_i = card_i + 1
+                key = "number_%d" % (code_i,)
+                kwargs[key] = value
+            CodeCard.objects.get_or_create(**kwargs)
+        return
+
+    @staticmethod
     def get_state(state_slug: str):
         try:
             return State.objects.get(slug=state_slug)
@@ -106,6 +150,16 @@ class ClusterBuster(Game):
     def set_team_lose_tokens(self):
         for team in self.teams.all():
             self.set_value(('team_losing_tokens', team), ClusterBuster.STARTING_LOSE_TOKENS_PER_TEAM)
+
+    def set_code_card_decks(self):
+        for team in self.teams.all():
+            cards = CodeCard.objects.all()
+            draw = Deck.objects.create()
+            discard = Deck.objects.create()
+            draw.cards.set(cards)
+            draw.save()
+            self.set_value(('team', team, 'code_card_draw_deck'), draw)
+            self.set_value(('team', team, 'code_card_discard_deck'), discard)
 
     def set_win_condition(self):
         trigger = self.add_trigger('team_won')
@@ -147,6 +201,7 @@ class ClusterBuster(Game):
         self.set_team_lose_tokens()
         self.set_win_condition()
         self.set_lose_condition()
+        self.set_code_card_decks()
         self.set_draw_words_fsm_trigger()
         self.set_rounds_fsm_trigger()
         self.set_rounds_fsm_repeat_triggers()
@@ -238,14 +293,12 @@ class ClusterBuster(Game):
     def leaders_draw_code_numbers(self):
         round_number = self.get_value('current_round_number')
         for team in self.teams.all():
-            deck = PatternDeckBuilder.build_deck()
-            # drawn_cards = self.get_drawn_cards()
-            # deck.reduce(drawn_cards)
-            deck.shuffle()
+            deck = self.get_value(('team', team, 'code_card_draw_deck'))  # type: Deck
             card = deck.draw()
-            print(card, card.value)
-            for card_i, value in enumerate(card.value):
-                self.set_value(('round', round_number, 'team', team, 'code', card_i + 1), value)
+            self.set_value(('round', round_number, 'team', team, 'card'), card)
+            self.set_value(('round', round_number, 'team', team, 'code_1'), card.number_1)
+            self.set_value(('round', round_number, 'team', team, 'code_2'), card.number_2)
+            self.set_value(('round', round_number, 'team', team, 'code_3'), card.number_3)
         # Team Leader Made Hints Trigger
         trigger = self.add_trigger('leaders_made_hints')
         trigger.set_to_and_op()
@@ -282,8 +335,12 @@ class ClusterBuster(Game):
         fsm2 = self.get_value('fsm2')  # type: State
         is_first_round = fsm2.slug == 'first_round'
         self.set_state('fsm3', 'score_teams_stage')
-        for guessing_team in self.teams.all():
-            for hinting_team in self.teams.all():
+        for hinting_team in self.teams.all():
+            code_card = self.get_value(('round', round_number, 'team', hinting_team, 'card'))  # type: CodeCard
+            discard = self.get_value(('team', hinting_team, 'code_card_discard_deck'))  # type: Deck
+            discard.cards.add(code_card)
+            discard.save()
+            for guessing_team in self.teams.all():
                 if guessing_team != hinting_team and is_first_round:
                     continue
                 correct_guesses = 0
@@ -293,10 +350,7 @@ class ClusterBuster(Game):
                         ('round', round_number, 'guessing_team', guessing_team, 'hinting_team', hinting_team, 'guess',
                          card_slot),
                     )
-                    actual = self.get_value(
-                        ('round', round_number, 'team', hinting_team, 'code',
-                         card_slot),
-                    )
+                    actual = self.get_value(('round', round_number, 'team', hinting_team, 'code', card_slot))
                     if int(guess) == int(actual):
                         correct_guesses += 1
 
