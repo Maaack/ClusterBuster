@@ -20,4 +20,6 @@ urlpatterns = [
     path('', include('lobbies.urls')),
     path('', include('core.urls')),
     path('admin/', admin.site.urls),
+    path('api/', include('api.urls')),
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
