@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'lobbies',
     'games',
     'core',
+    'api',
 ]
 
 REST_FRAMEWORK = {
